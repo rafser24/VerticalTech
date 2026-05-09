@@ -1,0 +1,94 @@
+<?php
+
+namespace App\Models\Catalogos;
+
+use App\Traits\Auditable;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+
+class Producto extends Model
+{
+    use HasFactory, SoftDeletes, Auditable;
+
+    protected $table = 'productos';
+
+    protected $fillable = [
+        'codigo',
+        'nombre',
+        'descripcion',
+        'precio_compra',
+        'precio_venta',
+        'stock',
+        'stock_minimo',
+        'unidad',
+        'activo',
+        'categoria_id',
+        'proveedor_id',
+    ];
+
+    protected $casts = [
+        'activo'        => 'boolean',
+        'precio_compra' => 'decimal:2',
+        'precio_venta'  => 'decimal:2',
+        'stock'         => 'integer',
+        'stock_minimo'  => 'integer',
+    ];
+
+    // ──────────────────────────────────────────
+    // Relationships
+    // ──────────────────────────────────────────
+
+    public function categoria()
+    {
+        return $this->belongsTo(Categoria::class, 'categoria_id');
+    }
+
+    public function proveedor()
+    {
+        return $this->belongsTo(Proveedor::class, 'proveedor_id');
+    }
+
+    public function detallesVenta()
+    {
+        return $this->hasMany(\App\Models\Ventas\DetalleVenta::class, 'producto_id');
+    }
+
+    public function detallesCompra()
+    {
+        return $this->hasMany(\App\Models\Compras\DetalleCompra::class, 'producto_id');
+    }
+
+    // ──────────────────────────────────────────
+    // Scopes
+    // ──────────────────────────────────────────
+
+    public function scopeActivo($query)
+    {
+        return $query->where('activo', true);
+    }
+
+    public function scopeStockBajo($query)
+    {
+        return $query->whereColumn('stock', '<=', 'stock_minimo');
+    }
+
+    // ──────────────────────────────────────────
+    // Helpers
+    // ──────────────────────────────────────────
+
+    public function tieneStock(int $cantidad): bool
+    {
+        return $this->stock >= $cantidad;
+    }
+
+    public function decrementarStock(int $cantidad): void
+    {
+        $this->decrement('stock', $cantidad);
+    }
+
+    public function incrementarStock(int $cantidad): void
+    {
+        $this->increment('stock', $cantidad);
+    }
+}

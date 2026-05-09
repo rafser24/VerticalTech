@@ -1,0 +1,53 @@
+export const formatCurrency = (value, currency = 'USD') =>
+  new Intl.NumberFormat('es-SV', { style: 'currency', currency }).format(value);
+
+export const formatDate = (dateStr) => {
+  if (!dateStr) return '—';
+  return new Date(dateStr).toLocaleDateString('es-SV', {
+    day: '2-digit', month: 'short', year: 'numeric',
+  });
+};
+
+export const formatDatetime = (dateStr) => {
+  if (!dateStr) return '—';
+  return new Date(dateStr).toLocaleString('es-SV', {
+    day: '2-digit', month: 'short', year: 'numeric',
+    hour: '2-digit', minute: '2-digit',
+  });
+};
+
+export const statusColors = {
+  completada: 'bg-pastel-secondary text-green-800',
+  pendiente: 'bg-pastel-warning text-yellow-800',
+  cancelada: 'bg-pastel-accent text-red-800',
+  activo: 'bg-pastel-secondary text-green-800',
+  inactivo: 'bg-gray-100 text-gray-600',
+};
+
+export const roleColors = {
+  admin: 'bg-pastel-purple text-purple-800',
+  user: 'bg-pastel-primary text-blue-800',
+};
+
+export const getInitials = (name) => {
+  if (!name) return '?';
+  return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+};
+
+export const paginate = (data, page, perPage = 10) => {
+  const start = (page - 1) * perPage;
+  return {
+    data: data.slice(start, start + perPage),
+    total: data.length,
+    totalPages: Math.ceil(data.length / perPage),
+    currentPage: page,
+  };
+};
+
+export const filterData = (data, search, fields) => {
+  if (!search) return data;
+  const lower = search.toLowerCase();
+  return data.filter(item =>
+    fields.some(field => String(item[field] || '').toLowerCase().includes(lower))
+  );
+};
