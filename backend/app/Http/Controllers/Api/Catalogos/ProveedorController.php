@@ -16,10 +16,10 @@ class ProveedorController extends Controller
         $query = Proveedor::query()
             ->when($request->search, fn($q, $s) =>
                 $q->where(fn($q) =>
-                    $q->where('nombre', 'ilike', "%{$s}%")
-                      ->orWhere('nit', 'ilike', "%{$s}%")
-                      ->orWhere('email', 'ilike', "%{$s}%")
-                      ->orWhere('contacto', 'ilike', "%{$s}%")
+                    $q->where('nombre',   'ilike', "%{$s}%")
+                      ->orWhere('nit',     'ilike', "%{$s}%")
+                      ->orWhere('email',   'ilike', "%{$s}%")
+                      ->orWhere('contacto','ilike', "%{$s}%")
                 )
             )
             ->when($request->filled('activo'), fn($q) =>
@@ -45,30 +45,44 @@ class ProveedorController extends Controller
         return $this->success(new ProveedorResource($proveedor), 'Proveedor creado.', 201);
     }
 
-    public function show(Proveedor $proveedor): JsonResponse
+    public function show(int $proveedor): JsonResponse
     {
-        return $this->success(new ProveedorResource($proveedor));
+        $model = Proveedor::findOrFail($proveedor);
+
+        return $this->success(new ProveedorResource($model));
     }
 
-    public function update(ProveedorRequest $request, Proveedor $proveedor): JsonResponse
+    public function update(ProveedorRequest $request, int $proveedor): JsonResponse
     {
-        $proveedor->update($request->validated());
+        $model = Proveedor::findOrFail($proveedor);
+        $model->update($request->validated());
 
-        return $this->success(new ProveedorResource($proveedor->fresh()), 'Proveedor actualizado.');
+        return $this->success(new ProveedorResource($model->fresh()), 'Proveedor actualizado.');
     }
 
-    public function destroy(Proveedor $proveedor): JsonResponse
+    public function toggleActivo(int $proveedor): JsonResponse
     {
-        if ($proveedor->productos()->exists()) {
+        $model = Proveedor::findOrFail($proveedor);
+        $model->update(['activo' => !$model->activo]);
+        $estado = $model->activo ? 'activado' : 'desactivado';
+
+        return $this->success(new ProveedorResource($model), "Proveedor {$estado}.");
+    }
+
+    public function destroy(int $proveedor): JsonResponse
+    {
+        $model = Proveedor::findOrFail($proveedor);
+
+        if ($model->productos()->exists()) {
             return $this->error('No se puede eliminar: tiene productos asociados.', 422);
         }
 
-        if ($proveedor->compras()->exists()) {
+        if ($model->compras()->exists()) {
             return $this->error('No se puede eliminar: tiene compras registradas.', 422);
         }
 
-        $proveedor->delete();
+        $model->delete();
 
-        return $this->success(message: 'Proveedor eliminado.');
+        return $this->success(null, 'Proveedor eliminado.');
     }
 }

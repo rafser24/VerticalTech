@@ -17,6 +17,7 @@ class UsuarioCreateRequest extends FormRequest
     {
         return [
             'nombre'                => 'required|string|min:2|max:100',
+            'apellido'              => 'required|string|min:2|max:100',
             'usuario'               => [
                 'required',
                 'string',

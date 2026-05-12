@@ -3,18 +3,20 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'react-toastify';
 import { z } from 'zod';
-import { Plus, Pencil, Trash2, ShieldCheck } from 'lucide-react';
+import { Plus, Pencil, Trash2, ShieldCheck, Eye, EyeOff } from 'lucide-react';
 import MainLayout from '../components/layout/MainLayout';
 import DataTable from '../components/ui/DataTable';
 import Modal from '../components/ui/Modal';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import { FormField, FormInput, FormSelect } from '../components/ui/FormFields';
 import { userService } from '../services/api';
+import useAuthStore from '../store/authStore';
 import { formatDate } from '../utils/helpers';
 
 // ─── Schemas ──────────────────────────────────────────────────────────────────
 const createUserSchema = z.object({
   nombre:   z.string().min(2, 'Mínimo 2 caracteres').max(100),
+  apellido: z.string().min(2, 'Mínimo 2 caracteres').max(100),
   usuario:  z.string().min(3, 'Mínimo 3 caracteres').max(50)
     .regex(/^[a-zA-Z0-9_-]+$/, 'Solo letras, números, guiones y guiones bajos'),
   correo:   z.string().email('Correo inválido').optional().or(z.literal('')),
@@ -30,6 +32,7 @@ const createUserSchema = z.object({
 
 const editUserSchema = z.object({
   nombre:   z.string().min(2, 'Mínimo 2 caracteres').max(100),
+  apellido: z.string().min(2, 'Mínimo 2 caracteres').max(100),
   usuario:  z.string().min(3, 'Mínimo 3 caracteres').max(50)
     .regex(/^[a-zA-Z0-9_-]+$/, 'Solo letras, números, guiones y guiones bajos'),
   correo:   z.string().email('Correo inválido').optional().or(z.literal('')),
@@ -38,8 +41,6 @@ const editUserSchema = z.object({
   rol: z.enum(['admin', 'vendedor', 'tecnico', 'bodeguero'], {
     required_error: 'Seleccione un rol',
   }),
-  // CORRECCIÓN 1: se usaba z.boolean() pero el checkbox de RHF
-  // devuelve string. Con z.coerce.boolean() se convierte correctamente.
   activo: z.coerce.boolean().default(true),
 }).refine(d => !d.password || d.password === d.password_confirmation, {
   message: 'Las contraseñas no coinciden',
@@ -65,20 +66,28 @@ const rolLabels = {
 
 // ─── Formulario ───────────────────────────────────────────────────────────────
 function UserForm({ register, errors, editing }) {
+  const [showPassword, setShowPassword]         = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
-        <FormField label="Nombre completo" required error={errors.nombre?.message}>
-          <FormInput register={register('nombre')} placeholder="Ej. Juan Pérez" error={errors.nombre} />
+        <FormField label="Nombre" required error={errors.nombre?.message}>
+          <FormInput register={register('nombre')} placeholder="Ej. Juan" error={errors.nombre} />
         </FormField>
-        <FormField label="Usuario (login)" required error={errors.usuario?.message}>
-          <FormInput register={register('usuario')} placeholder="juan_v" error={errors.usuario} />
+        <FormField label="Apellido" required error={errors.apellido?.message}>
+          <FormInput register={register('apellido')} placeholder="Ej. Pérez" error={errors.apellido} />
         </FormField>
       </div>
 
-      <FormField label="Correo electrónico (opcional)" error={errors.correo?.message}>
-        <FormInput register={register('correo')} type="email" placeholder="contacto@tienda.com" error={errors.correo} />
-      </FormField>
+      <div className="grid grid-cols-2 gap-4">
+        <FormField label="Usuario (login)" required error={errors.usuario?.message}>
+          <FormInput register={register('usuario')} placeholder="juan_v" error={errors.usuario} />
+        </FormField>
+        <FormField label="Correo electrónico (opcional)" error={errors.correo?.message}>
+          <FormInput register={register('correo')} type="email" placeholder="contacto@tienda.com" error={errors.correo} />
+        </FormField>
+      </div>
 
       <div className="grid grid-cols-2 gap-4">
         <FormField
@@ -86,10 +95,47 @@ function UserForm({ register, errors, editing }) {
           required={!editing}
           error={errors.password?.message}
         >
-          <FormInput register={register('password')} type="password" placeholder="Mínimo 8 caracteres" error={errors.password} />
+          <div className="relative">
+            <FormInput
+              register={register('password')}
+              type={showPassword ? 'text' : 'password'}
+              placeholder="Mínimo 8 caracteres"
+              error={errors.password}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(v => !v)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+              tabIndex={-1}
+            >
+              {showPassword
+                ? <EyeOff size={15} />
+                : <Eye size={15} />
+              }
+            </button>
+          </div>
         </FormField>
+
         <FormField label="Confirmar contraseña" required={!editing} error={errors.password_confirmation?.message}>
-          <FormInput register={register('password_confirmation')} type="password" placeholder="Repita la contraseña" error={errors.password_confirmation} />
+          <div className="relative">
+            <FormInput
+              register={register('password_confirmation')}
+              type={showConfirmPassword ? 'text' : 'password'}
+              placeholder="Repita la contraseña"
+              error={errors.password_confirmation}
+            />
+            <button
+              type="button"
+              onClick={() => setShowConfirmPassword(v => !v)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+              tabIndex={-1}
+            >
+              {showConfirmPassword
+                ? <EyeOff size={15} />
+                : <Eye size={15} />
+              }
+            </button>
+          </div>
         </FormField>
       </div>
 
@@ -140,6 +186,8 @@ export default function UsersPage() {
     resolver: zodResolver(schema),
   });
 
+  const currentUser = useAuthStore((s) => s.user);
+
   // ── Carga ──────────────────────────────────────────────────────────
   const fetchUsers = async () => {
     try {
@@ -177,7 +225,7 @@ export default function UsersPage() {
   // ── Abrir modal ────────────────────────────────────────────────────
   const openCreate = () => {
     setEditing(null);
-    reset({ nombre: '', usuario: '', correo: '', password: '', password_confirmation: '', rol: '' });
+    reset({ nombre: '', apellido: '', usuario: '', correo: '', password: '', password_confirmation: '', rol: '' });
     setModalOpen(true);
   };
 
@@ -185,11 +233,10 @@ export default function UsersPage() {
     setEditing(user);
     reset({
       nombre:                user.nombre,
+      apellido:              user.apellido ?? '',
       usuario:               user.usuario,
       correo:                user.correo || '',
       rol:                   user.rol,
-      // CORRECCIÓN 4: activo debe ser booleano real, no string,
-      // para que el checkbox aparezca marcado/desmarcado correctamente.
       activo:                Boolean(user.activo),
       password:              '',
       password_confirmation: '',
@@ -325,24 +372,36 @@ export default function UsersPage() {
             data={users}
             columns={columns}
             searchFields={['nombre', 'usuario', 'correo', 'rol']}
-            actions={(row) => (
-              <>
-                <button
-                  onClick={() => openEdit(row)}
-                  className="p-1.5 hover:bg-pastel-primary/20 rounded-lg transition-colors text-blue-600"
-                  title="Editar usuario"
-                >
-                  <Pencil size={14} />
-                </button>
-                <button
-                  onClick={() => setDeleteTarget(row)}
-                  className="p-1.5 hover:bg-pastel-accent/30 rounded-lg transition-colors text-red-500"
-                  title="Eliminar usuario"
-                >
-                  <Trash2 size={14} />
-                </button>
-              </>
-            )}
+            actions={(row) => {
+              const esMiUsuario = (row.id ?? row.id_usuario) === (currentUser?.id ?? currentUser?.id_usuario);
+              return (
+                <>
+                  <button
+                    onClick={() => openEdit(row)}
+                    className="p-1.5 hover:bg-pastel-primary/20 rounded-lg transition-colors text-blue-600"
+                    title="Editar usuario"
+                  >
+                    <Pencil size={14} />
+                  </button>
+                  {esMiUsuario ? (
+                    <span
+                      title="No puedes eliminar tu propio usuario"
+                      className="p-1.5 text-gray-300 cursor-not-allowed"
+                    >
+                      <Trash2 size={14} />
+                    </span>
+                  ) : (
+                    <button
+                      onClick={() => setDeleteTarget(row)}
+                      className="p-1.5 hover:bg-pastel-accent/30 rounded-lg transition-colors text-red-500"
+                      title="Eliminar usuario"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  )}
+                </>
+              );
+            }}
           />
         </div>
       </div>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import toast from 'react-hot-toast';
+import { toast } from 'react-toastify';
 import api from "../services/api";
 import MainLayout from '../components/layout/MainLayout';
 import CrudPage from '../components/ui/CrudPage';
@@ -109,23 +109,39 @@ export default function SuppliersPage() {
   const handleSave = async (data) => {
     try {
       if (data.id) {
-      
         await api.put(`/proveedores/${data.id}`, data);
         toast.success('Proveedor actualizado exitosamente');
       } else {
-    
         await api.post('/proveedores', data);
         toast.success('Proveedor creado exitosamente');
       }
-      
-    
-      await loadData(); 
-      return true; 
+      await loadData();
+      return true;
 
     } catch (error) {
       console.error("Error guardando:", error);
-      toast.error(error.response?.data?.message || 'Error al guardar el proveedor');
-      return false; 
+
+      const errores = error.response?.data?.errors;
+      const mensaje = error.response?.data?.message;
+
+      // NIT duplicado → toast de advertencia con estilo diferenciado
+      if (errores?.nit) {
+        toast.warn(errores.nit[0], {
+          autoClose: 5000,
+          icon: '⚠️',
+        });
+        return false;
+      }
+
+      // Otros errores de validación campo por campo
+      if (errores) {
+        const primerError = Object.values(errores)[0]?.[0];
+        toast.error(primerError || mensaje || 'Error de validación');
+        return false;
+      }
+
+      toast.error(mensaje || 'Error al guardar el proveedor');
+      return false;
     }
   };
 

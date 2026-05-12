@@ -75,7 +75,6 @@ class VentaController extends Controller
         }
 
         $venta = DB::transaction(function () use ($data) {
-            // Calcular totales
             $subtotal  = 0;
             $descuento = (float) ($data['descuento'] ?? 0);
             $impuesto  = (float) ($data['impuesto'] ?? 0);
@@ -90,13 +89,12 @@ class VentaController extends Controller
             $montoDescuento = $descuento > 0
                 ? round($subtotal * ($descuento / 100), 2)
                 : 0;
-            $base       = $subtotal - $montoDescuento;
+            $base          = $subtotal - $montoDescuento;
             $montoImpuesto = $impuesto > 0
                 ? round($base * ($impuesto / 100), 2)
                 : 0;
             $total = $base + $montoImpuesto;
 
-            // Crear cabecera
             $venta = Venta::create([
                 'numero_venta'   => $this->generarNumeroVenta(),
                 'cliente_id'     => $data['cliente_id'] ?? null,
@@ -111,7 +109,6 @@ class VentaController extends Controller
                 'fecha_venta'    => $data['fecha_venta'] ?? now(),
             ]);
 
-            // Crear detalles y decrementar stock
             foreach ($data['items'] as $item) {
                 $venta->detalles()->create([
                     'producto_id'     => $item['producto_id'],
@@ -132,43 +129,45 @@ class VentaController extends Controller
         return $this->success(new VentaResource($venta), 'Venta registrada exitosamente.', 201);
     }
 
-    public function show(Venta $venta): JsonResponse
+    public function show(int $i): JsonResponse
     {
-        $venta->load(['cliente', 'metodoPago', 'usuario', 'detalles.producto']);
+        $venta = Venta::with(['cliente', 'metodoPago', 'usuario', 'detalles.producto'])
+            ->findOrFail($i);
 
         return $this->success(new VentaResource($venta));
     }
 
-    /**
-     * PATCH /api/ventas/{venta}/cancelar
-     * Solo se puede cancelar si está en estado "completada" y devuelve stock.
-     */
-    public function cancelar(Venta $venta): JsonResponse
+    public function anular(Venta $venta): JsonResponse
     {
-        if ($venta->estado === 'cancelada') {
-            return $this->error('La venta ya está cancelada.', 422);
+        if ($venta->estado === 'anulada') {
+            return $this->error('La venta ya está anulada.', 422);
         }
 
         DB::transaction(function () use ($venta) {
-            // Devolver stock
             foreach ($venta->detalles as $detalle) {
                 Producto::find($detalle->producto_id)
                     ?->incrementarStock($detalle->cantidad);
             }
-
-            $venta->update(['estado' => 'cancelada']);
+            $venta->update(['estado' => 'anulada']);
         });
 
-        return $this->success(message: 'Venta cancelada y stock restaurado.');
+        return $this->success(null, 'Venta anulada y stock restaurado.');
     }
 
-    // ──────────────────────────────────────────────────────────
+    // ──────────────────────────────────────────────────────────────────────
     private function generarNumeroVenta(): string
     {
         $anio = now()->format('Y');
-        $ultimo = Venta::whereYear('created_at', $anio)
-            ->lockForUpdate()
-            ->count();
+
+        /*
+         * CORRECCIÓN: PostgreSQL no permite FOR UPDATE con COUNT (funciones
+         * de agregación). Se eliminó ->lockForUpdate() que causaba:
+         * "SQLSTATE[0A000]: FOR UPDATE no está permitido con funciones de agregación"
+         *
+         * El count() sin lock es suficiente para generar el correlativo.
+         * Si se requiere concurrencia estricta, usar una secuencia de BD.
+         */
+        $ultimo = Venta::whereYear('created_at', $anio)->count();
 
         return 'VTA-' . $anio . '-' . str_pad($ultimo + 1, 6, '0', STR_PAD_LEFT);
     }

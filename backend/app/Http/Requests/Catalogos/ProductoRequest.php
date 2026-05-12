@@ -12,38 +12,45 @@ class ProductoRequest extends FormRequest
 
     public function authorize(): bool { return true; }
 
-protected function prepareForValidation(): void
-{
-    $this->sanitizeInputs(['codigo', 'nombre', 'descripcion', 'unidad']);
-}
+    protected function prepareForValidation(): void
+    {
+        $this->sanitizeInputs(['codigo', 'nombre', 'descripcion', 'unidad']);
+    }
 
-public function rules(): array
-{
+    public function rules(): array
+    {
+        /*
+         * CORRECCIÓN: la ruta está definida como /{i} en api.php,
+         * pero el controller usa Producto $producto (binding por nombre 'producto').
+         * Cuando el parámetro de ruta y el nombre del argumento no coinciden,
+         * Laravel no hace el binding y $this->route('producto') devuelve null.
+         *
+         * Se lee el ID probando ambas claves posibles del route:
+         *   - 'producto' → si algún día se corrige la ruta a /{producto}
+         *   - 'i'        → nombre actual del parámetro en api.php
+         */
+        $productoParam = $this->route('producto') ?? $this->route('i');
+        $id = is_object($productoParam) ? $productoParam->id : $productoParam;
 
-    $producto = $this->route('producto');
-
-    $id = is_object($producto) ? $producto->id : $producto;
-
-    return [
-        'codigo'        => [
-            'required',
-            'string',
-            'max:60',
-
-            Rule::unique('productos', 'codigo')->ignore($id)
-        ],
-        'nombre'        => ['required', 'string', 'max:150'],
-        'descripcion'   => ['nullable', 'string', 'max:2000'],
-        'precio_compra' => ['nullable', 'numeric', 'min:0', 'max:9999999.99'],
-        'precio_venta'  => ['required', 'numeric', 'min:0.01', 'max:9999999.99'],
-        'stock'         => ['nullable', 'integer', 'min:0'],
-        'stock_minimo'  => ['nullable', 'integer', 'min:0'],
-        'unidad'        => ['nullable', 'string', 'max:30'],
-        'activo'        => ['sometimes', 'boolean'],
-        'categoria_id'  => ['required', 'integer', 'exists:categorias,id'],
-        'proveedor_id'  => ['nullable', 'integer', 'exists:proveedores,id'],
-    ];
-}
+        return [
+            'codigo'        => [
+                'required',
+                'string',
+                'max:60',
+                Rule::unique('productos', 'codigo')->ignore($id),
+            ],
+            'nombre'        => ['required', 'string', 'max:150'],
+            'descripcion'   => ['nullable', 'string', 'max:2000'],
+            'precio_compra' => ['nullable', 'numeric', 'min:0', 'max:9999999.99'],
+            'precio_venta'  => ['required', 'numeric', 'min:0.01', 'max:9999999.99'],
+            'stock'         => ['nullable', 'integer', 'min:0'],
+            'stock_minimo'  => ['nullable', 'integer', 'min:0'],
+            'unidad'        => ['nullable', 'string', 'max:30'],
+            'activo'        => ['sometimes', 'boolean'],
+            'categoria_id'  => ['required', 'integer', 'exists:categorias,id'],
+            'proveedor_id'  => ['nullable', 'integer', 'exists:proveedores,id'],
+        ];
+    }
 
     public function messages(): array
     {

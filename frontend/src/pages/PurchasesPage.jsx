@@ -166,12 +166,12 @@ export default function PurchasesPage() {
   const onSubmit = async (data) => {
     try {
       const payload = {
-        proveedor_id:      data.supplier_id,
-        metodo_pago_id:    data.payment_method_id,
-        notas:             data.notes,
-        detalles: data.items.map(i => ({
-          producto_id:  i.product_id,
-          cantidad:     Number(i.quantity),
+        proveedor_id:   data.supplier_id,
+        metodo_pago_id: data.payment_method_id,
+        notas:          data.notes,
+        items: data.items.map(i => ({
+          producto_id:     i.product_id,
+          cantidad:        Number(i.quantity),
           precio_unitario: Number(i.unit_price),
         })),
       };

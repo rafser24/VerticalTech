@@ -74,9 +74,12 @@ class UserController extends Controller
 
             $usuario = Usuario::create([
                 'nombre'     => $validated['nombre'],
+                'apellido'   => $validated['apellido'],
                 'usuario'    => $validated['usuario'],
-                'email'      => $validated['correo'] ?? null, // <-- CAMBIO: La llave debe ser 'email'
-                'contrasena' => Hash::make($validated['password']),
+                'email'      => $validated['correo'] ?? null,
+                // El mutador setContrasenaAttribute del modelo ya hace bcrypt()
+                // No usar Hash::make() aquí o la contraseña se hashea dos veces
+                'contrasena' => $validated['password'],
                 'rol'        => $validated['rol'],
                 'activo'     => true,
             ]);
@@ -112,6 +115,7 @@ class UserController extends Controller
 
             $payload = [
                 'nombre'  => $validated['nombre'],
+            'apellido'   => $validated['apellido'],
                 'usuario' => $validated['usuario'],
                 'email'   => $validated['correo'] ?? $usuario->email, // <-- CAMBIO: La llave debe ser 'email'
                 'rol'     => $validated['rol'],
@@ -119,7 +123,9 @@ class UserController extends Controller
             ];
 
             if (!empty($validated['password'])) {
-                $payload['contrasena'] = Hash::make($validated['password']); // Esto lo tenías perfecto
+                // El mutador setContrasenaAttribute ya hace bcrypt()
+                // No usar Hash::make() aquí o la contraseña se hashea dos veces
+                $payload['contrasena'] = $validated['password'];
             }
 
             $usuario->update($payload);

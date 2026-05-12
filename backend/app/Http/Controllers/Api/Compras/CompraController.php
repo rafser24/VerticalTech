@@ -96,7 +96,6 @@ class CompraController extends Controller
                     'descuento'       => $item['descuento'],
                 ]);
 
-                // Incrementar stock e igualar precio_compra al último precio pagado
                 $producto = Producto::find($item['producto_id']);
                 $producto->incrementarStock($item['cantidad']);
                 $producto->update(['precio_compra' => $item['precio_unitario']]);
@@ -110,21 +109,20 @@ class CompraController extends Controller
         return $this->success(new CompraResource($compra), 'Compra registrada exitosamente.', 201);
     }
 
-    public function show(Compra $compra): JsonResponse
+    public function show(int $i): JsonResponse
     {
-        $compra->load(['proveedor', 'metodoPago', 'usuario', 'detalles.producto']);
+        $compra = Compra::with(['proveedor', 'metodoPago', 'usuario', 'detalles.producto'])
+            ->findOrFail($i);
 
         return $this->success(new CompraResource($compra));
     }
 
-    /**
-     * PATCH /api/compras/{compra}/cancelar
-     * Revierte el stock incrementado en la compra.
-     */
-    public function cancelar(Compra $compra): JsonResponse
+    public function anular(int $i): JsonResponse
     {
-        if ($compra->estado === 'cancelada') {
-            return $this->error('La compra ya está cancelada.', 422);
+        $compra = Compra::findOrFail($i);
+
+        if ($compra->estado === 'anulada') {
+            return $this->error('La compra ya está anulada.', 422);
         }
 
         DB::transaction(function () use ($compra) {
@@ -132,20 +130,22 @@ class CompraController extends Controller
                 Producto::find($detalle->producto_id)
                     ?->decrementarStock($detalle->cantidad);
             }
-
-            $compra->update(['estado' => 'cancelada']);
+            $compra->update(['estado' => 'anulada']);
         });
 
-        return $this->success(message: 'Compra cancelada y stock revertido.');
+        return $this->success(null, 'Compra anulada y stock revertido.');
     }
 
-    // ──────────────────────────────────────────────────────────
+    // ─────────────────────────────────────────────────────────────────────
     private function generarNumeroCompra(): string
     {
-        $anio   = now()->format('Y');
-        $ultimo = Compra::whereYear('created_at', $anio)
-            ->lockForUpdate()
-            ->count();
+        $anio = now()->format('Y');
+
+        /*
+         * CORRECCIÓN: PostgreSQL no permite FOR UPDATE con COUNT.
+         * Se eliminó ->lockForUpdate() que causaba SQLSTATE[0A000].
+         */
+        $ultimo = Compra::whereYear('created_at', $anio)->count();
 
         return 'CMP-' . $anio . '-' . str_pad($ultimo + 1, 6, '0', STR_PAD_LEFT);
     }

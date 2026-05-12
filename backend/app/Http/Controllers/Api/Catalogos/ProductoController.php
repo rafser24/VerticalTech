@@ -54,23 +54,42 @@ class ProductoController extends Controller
         return $this->success(new ProductoResource($producto), 'Producto creado.', 201);
     }
 
-    public function show(Producto $producto): JsonResponse
+    public function show(int $i): JsonResponse
     {
-        $producto->load(['categoria', 'proveedor']);
+        $producto = Producto::with(['categoria', 'proveedor'])->findOrFail($i);
 
         return $this->success(new ProductoResource($producto));
     }
 
-    public function update(ProductoRequest $request, Producto $producto): JsonResponse
+    public function update(ProductoRequest $request, int $i): JsonResponse
     {
+        /*
+         * CORRECCIÓN: la ruta usa /{i} pero el método original recibía
+         * Producto $producto (route model binding por nombre 'producto').
+         * Como los nombres no coinciden, Laravel no hacía el binding
+         * y el Request no podía obtener el ID para el Rule::unique()->ignore().
+         * Ahora se busca manualmente con findOrFail($i).
+         */
+        $producto = Producto::findOrFail($i);
         $producto->update($request->validated());
         $producto->load(['categoria', 'proveedor']);
 
         return $this->success(new ProductoResource($producto), 'Producto actualizado.');
     }
 
-    public function destroy(Producto $producto): JsonResponse
+    public function toggleActivo(int $i): JsonResponse
     {
+        $producto = Producto::findOrFail($i);
+        $producto->update(['activo' => !$producto->activo]);
+        $estado = $producto->activo ? 'activado' : 'desactivado';
+
+        return $this->success(new ProductoResource($producto), "Producto {$estado}.");
+    }
+
+    public function destroy(int $i): JsonResponse
+    {
+        $producto = Producto::findOrFail($i);
+
         if ($producto->detallesVenta()->exists() || $producto->detallesCompra()->exists()) {
             return $this->error(
                 'No se puede eliminar: el producto tiene movimientos registrados.',
@@ -80,13 +99,9 @@ class ProductoController extends Controller
 
         $producto->delete();
 
-        return $this->success(message: 'Producto eliminado.');
+        return $this->success(null, 'Producto eliminado.');
     }
 
-    /**
-     * GET /api/productos/stock-bajo
-     * Lista productos cuyo stock <= stock_minimo.
-     */
     public function stockBajo(): JsonResponse
     {
         $productos = Producto::with(['categoria', 'proveedor'])

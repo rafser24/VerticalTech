@@ -9,7 +9,22 @@ export function PrivateRoute({ children }) {
 export function AdminRoute({ children }) {
   const { isAuthenticated, isAdmin } = useAuthStore();
   if (!isAuthenticated) return <Navigate to="/login" replace />;
-  if (!isAdmin()) return <Navigate to="/dashboard" replace />;
+  if (!isAdmin())       return <Navigate to="/dashboard" replace />;
+  return children;
+}
+
+export function SuperAdminRoute({ children }) {
+  const { isAuthenticated, isSuperAdmin } = useAuthStore();
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (!isSuperAdmin())  return <Navigate to="/dashboard" replace />;
+  return children;
+}
+
+export function VendedorRoute({ children }) {
+  const { isAuthenticated, hasRole } = useAuthStore();
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  // Vendedor, Admin y SuperAdmin pueden acceder
+  if (!hasRole(['vendedor', 'admin', 'super-admin'])) return <Navigate to="/dashboard" replace />;
   return children;
 }
 
