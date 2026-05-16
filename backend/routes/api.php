@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\Catalogos\CategoriaController;
 use App\Http\Controllers\Api\Catalogos\ClienteController;
 use App\Http\Controllers\Api\Catalogos\MetodoPagoController;
 use App\Http\Controllers\Api\Catalogos\ProductoController;
+use App\Http\Controllers\Api\Catalogos\PromocionController;
 use App\Http\Controllers\Api\Catalogos\ProveedorController;
 use App\Http\Controllers\Api\Compras\CompraController;
 use App\Http\Controllers\Api\Dashboard\DashboardController;
@@ -233,4 +234,14 @@ Route::prefix('users')->middleware(['auth:api', 'role:super-admin|admin'])->grou
     Route::prefix('auditoria')->middleware('role:super-admin|admin')->group(function () {
         Route::get('/',     [AuditoriaController::class, 'index']);
         Route::get('/{i}', [AuditoriaController::class, 'show']);
+    });
+
+    // ── Promociones (solo super-admin | admin) ─────────────────────────────
+    Route::prefix('promociones')->middleware('role:super-admin|admin')->group(function () {
+        Route::get('/',                     [PromocionController::class, 'index']);
+        Route::post('/',                    [PromocionController::class, 'store']);
+        Route::get('/{promocion}',          [PromocionController::class, 'show']);
+        Route::put('/{promocion}',          [PromocionController::class, 'update']);
+        Route::delete('/{promocion}',       [PromocionController::class, 'destroy']);
+        Route::patch('/{promocion}/toggle', [PromocionController::class, 'toggleActivo']);
     });

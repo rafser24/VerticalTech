@@ -25,10 +25,19 @@ const usePosStore = create((set, get) => ({
    * Agrega un producto al carrito o incrementa su cantidad si ya existe.
    * @param {object} producto — objeto del API con id, nombre, precio_venta, stock
    */
+  /**
+   * Agrega un producto al carrito o incrementa su cantidad si ya existe.
+   *
+   * El objeto `producto` puede incluir:
+   *   - precio_unitario   → precio final tras aplicar promoción (opcional)
+   *   - precio_original   → precio_venta sin descuento (opcional, para mostrarlo tachado)
+   *   - promocion         → objeto de la promoción activa (opcional)
+   *
+   * Si no vienen precio_unitario/precio_original, se usa precio_venta como precio_unitario.
+   */
   agregarProducto: (producto) => set((state) => {
     const existe = state.carritoActual.find(p => p.id === producto.id);
     if (existe) {
-      // Si ya está, solo incrementar cantidad (respetando stock disponible)
       return {
         carritoActual: state.carritoActual.map(p =>
           p.id === producto.id && p.cantidad < p.stock
@@ -37,11 +46,18 @@ const usePosStore = create((set, get) => ({
         ),
       };
     }
-    // Producto nuevo: añadir con cantidad 1
+    // precio_unitario puede venir pre-calculado con el descuento de promoción
+    const precioUnitario = producto.precio_unitario ?? producto.precio_venta;
     return {
       carritoActual: [
         ...state.carritoActual,
-        { ...producto, cantidad: 1, precio_unitario: producto.precio_venta },
+        {
+          ...producto,
+          cantidad:        1,
+          precio_unitario: precioUnitario,
+          precio_original: producto.precio_original ?? producto.precio_venta,
+          promocion:       producto.promocion ?? null,
+        },
       ],
     };
   }),

@@ -3,13 +3,17 @@
 namespace App\Models\Ventas;
 
 use App\Traits\Auditable;
+use App\Traits\HasApiCache;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Venta extends Model
 {
-    use HasFactory, SoftDeletes, Auditable;
+    use HasFactory, SoftDeletes, Auditable, HasApiCache;
+
+    /** Una venta nueva/anulada impacta el dashboard (stats, gráficas). */
+    protected array $cacheModules = ['ventas', 'dashboard'];
 
     protected $table = 'ventas';
 

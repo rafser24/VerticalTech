@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Trash2, ShoppingCart, PauseCircle, CreditCard, ChevronUp, ChevronDown } from 'lucide-react';
+import { Trash2, ShoppingCart, PauseCircle, CreditCard, ChevronUp, ChevronDown, Tag } from 'lucide-react';
 import usePosStore from '../../store/usePosStore';
 import { formatCurrency } from '../../utils/helpers';
 
@@ -27,6 +27,7 @@ export default function CarritoActivo({ clientes, metodosPago, onCobrar }) {
   const [pauseModal, setPauseModal] = useState(false);
   const [refTransferencia, setRefTransferencia] = useState('');
   const [clienteNombreManual, setClienteNombreManual] = useState('');
+  const [errores, setErrores] = useState({ clienteNombre: '', referencia: '' });
 
   // ── Cálculos ──────────────────────────────────────────────────────────
   const subtotal     = carritoActual.reduce((s, p) => s + p.cantidad * p.precio_unitario, 0);
@@ -41,14 +42,24 @@ export default function CarritoActivo({ clientes, metodosPago, onCobrar }) {
   };
 
   const confirmarPausa = () => {
+    // Validar campos obligatorios
     const clienteObj = clientes.find(c => (c.id ?? c.id_cliente) === Number(clienteActual));
+    const nombreFinal = clienteObj?.nombre ?? clienteNombreManual.trim();
+    const nuevosErrores = {
+      clienteNombre: !nombreFinal ? 'El nombre del cliente es obligatorio' : '',
+      referencia:    !refTransferencia.trim() ? 'El N° de referencia es obligatorio' : '',
+    };
+    setErrores(nuevosErrores);
+    if (nuevosErrores.clienteNombre || nuevosErrores.referencia) return;
+
     pausarVenta({
-      clienteNombre: (clienteObj?.nombre ?? clienteNombreManual) || 'Cliente General',
-      referencia:    refTransferencia,
+      clienteNombre: nombreFinal,
+      referencia:    refTransferencia.trim(),
     });
     setPauseModal(false);
     setRefTransferencia('');
     setClienteNombreManual('');
+    setErrores({ clienteNombre: '', referencia: '' });
     abrirDrawer(); // Abre el drawer para ver la venta pausada
   };
 
@@ -121,46 +132,66 @@ export default function CarritoActivo({ clientes, metodosPago, onCobrar }) {
 
       {/* ── Lista de productos ── */}
       <div className="flex-1 overflow-y-auto divide-y divide-gray-50">
-        {carritoActual.map(producto => (
-          <div key={producto.id} className="flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50/60">
-            {/* Info producto */}
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-800 truncate">{producto.nombre}</p>
-              <p className="text-xs text-gray-400">{formatCurrency(producto.precio_unitario)} c/u</p>
-            </div>
+        {carritoActual.map(producto => {
+          const tienePromo = producto.promocion != null;
+          const precioOriginal = producto.precio_original ?? producto.precio_venta;
+          const descuentoAplicado = tienePromo && precioOriginal !== producto.precio_unitario;
 
-            {/* Control cantidad */}
-            <div className="flex items-center gap-1">
+          return (
+            <div key={producto.id} className="flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50/60">
+              {/* Info producto */}
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-800 truncate">{producto.nombre}</p>
+                {descuentoAplicado ? (
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="text-xs text-gray-400 line-through">
+                      {formatCurrency(precioOriginal)}
+                    </span>
+                    <span className="text-xs font-semibold text-red-600">
+                      {formatCurrency(producto.precio_unitario)}
+                    </span>
+                    <span className="inline-flex items-center gap-0.5 px-1 py-0.5 rounded text-[9px] font-bold bg-red-100 text-red-600 leading-none">
+                      <Tag size={8} />{producto.promocion.nombre}
+                    </span>
+                  </div>
+                ) : (
+                  <p className="text-xs text-gray-400">{formatCurrency(producto.precio_unitario)} c/u</p>
+                )}
+              </div>
+
+              {/* Control cantidad */}
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => cambiarCantidad(producto.id, producto.cantidad - 1)}
+                  className="w-6 h-6 flex items-center justify-center rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors"
+                >
+                  <ChevronDown size={12} />
+                </button>
+                <span className="w-8 text-center text-sm font-semibold">{producto.cantidad}</span>
+                <button
+                  onClick={() => cambiarCantidad(producto.id, producto.cantidad + 1)}
+                  disabled={producto.cantidad >= producto.stock}
+                  className="w-6 h-6 flex items-center justify-center rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors disabled:opacity-40"
+                >
+                  <ChevronUp size={12} />
+                </button>
+              </div>
+
+              {/* Subtotal línea */}
+              <span className={`text-sm font-semibold w-20 text-right ${tienePromo ? 'text-red-600' : 'text-gray-700'}`}>
+                {formatCurrency(producto.cantidad * producto.precio_unitario)}
+              </span>
+
+              {/* Quitar */}
               <button
-                onClick={() => cambiarCantidad(producto.id, producto.cantidad - 1)}
-                className="w-6 h-6 flex items-center justify-center rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors"
+                onClick={() => quitarProducto(producto.id)}
+                className="p-1 hover:bg-red-100 rounded-lg text-red-400 transition-colors"
               >
-                <ChevronDown size={12} />
-              </button>
-              <span className="w-8 text-center text-sm font-semibold">{producto.cantidad}</span>
-              <button
-                onClick={() => cambiarCantidad(producto.id, producto.cantidad + 1)}
-                disabled={producto.cantidad >= producto.stock}
-                className="w-6 h-6 flex items-center justify-center rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors disabled:opacity-40"
-              >
-                <ChevronUp size={12} />
+                <Trash2 size={13} />
               </button>
             </div>
-
-            {/* Subtotal línea */}
-            <span className="text-sm font-semibold text-gray-700 w-20 text-right">
-              {formatCurrency(producto.cantidad * producto.precio_unitario)}
-            </span>
-
-            {/* Quitar */}
-            <button
-              onClick={() => quitarProducto(producto.id)}
-              className="p-1 hover:bg-red-100 rounded-lg text-red-400 transition-colors"
-            >
-              <Trash2 size={13} />
-            </button>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* ── Totales ── */}
@@ -209,7 +240,7 @@ export default function CarritoActivo({ clientes, metodosPago, onCobrar }) {
       {/* ── Mini-modal para confirmar pausa ── */}
       {pauseModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-gray-900/40 backdrop-blur-sm" onClick={() => setPauseModal(false)} />
+          <div className="absolute inset-0 bg-gray-900/40 backdrop-blur-sm" onClick={() => { setPauseModal(false); setErrores({ clienteNombre: '', referencia: '' }); }} />
           <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 space-y-4">
             <h3 className="font-semibold text-gray-800 flex items-center gap-2">
               <PauseCircle size={18} className="text-amber-500" />
@@ -220,20 +251,40 @@ export default function CarritoActivo({ clientes, metodosPago, onCobrar }) {
             </p>
 
             <div className="space-y-2">
-              <input
-                type="text"
-                value={clienteNombreManual}
-                onChange={e => setClienteNombreManual(e.target.value)}
-                placeholder="Nombre del cliente (opcional)"
-                className="input-field text-sm py-2 w-full"
-              />
-              <input
-                type="text"
-                value={refTransferencia}
-                onChange={e => setRefTransferencia(e.target.value)}
-                placeholder="N° de referencia / comprobante (opcional)"
-                className="input-field text-sm py-2 w-full"
-              />
+              {/* Si hay cliente seleccionado en el carrito, mostrarlo como info; si no, pedir nombre */}
+              {clientes.find(c => (c.id ?? c.id_cliente) === Number(clienteActual)) ? (
+                <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-700">
+                  <span className="font-medium">
+                    {clientes.find(c => (c.id ?? c.id_cliente) === Number(clienteActual))?.nombre}
+                  </span>
+                  <span className="text-xs text-gray-400">(cliente seleccionado)</span>
+                </div>
+              ) : (
+                <div>
+                  <input
+                    type="text"
+                    value={clienteNombreManual}
+                    onChange={e => { setClienteNombreManual(e.target.value); setErrores(p => ({ ...p, clienteNombre: '' })); }}
+                    placeholder="Nombre del cliente *"
+                    className={`input-field text-sm py-2 w-full ${errores.clienteNombre ? 'border-red-400 focus:ring-red-300' : ''}`}
+                  />
+                  {errores.clienteNombre && (
+                    <p className="text-xs text-red-500 mt-1 ml-1">{errores.clienteNombre}</p>
+                  )}
+                </div>
+              )}
+              <div>
+                <input
+                  type="text"
+                  value={refTransferencia}
+                  onChange={e => { setRefTransferencia(e.target.value); setErrores(p => ({ ...p, referencia: '' })); }}
+                  placeholder="N° de referencia / comprobante *"
+                  className={`input-field text-sm py-2 w-full ${errores.referencia ? 'border-red-400 focus:ring-red-300' : ''}`}
+                />
+                {errores.referencia && (
+                  <p className="text-xs text-red-500 mt-1 ml-1">{errores.referencia}</p>
+                )}
+              </div>
             </div>
 
             <div className="bg-amber-50 border border-amber-100 rounded-xl p-3 text-sm">
@@ -242,7 +293,7 @@ export default function CarritoActivo({ clientes, metodosPago, onCobrar }) {
             </div>
 
             <div className="flex gap-2 pt-1">
-              <button onClick={() => setPauseModal(false)} className="flex-1 btn-ghost border border-gray-200 py-2 text-sm">
+              <button onClick={() => { setPauseModal(false); setErrores({ clienteNombre: '', referencia: '' }); }} className="flex-1 btn-ghost border border-gray-200 py-2 text-sm">
                 Cancelar
               </button>
               <button onClick={confirmarPausa} className="flex-1 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-sm font-medium transition-colors">

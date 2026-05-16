@@ -1,7 +1,7 @@
 import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard, Package, Tag, Truck, Users, ShoppingCart,
-  TrendingUp, UserCircle, ChevronLeft, ChevronRight, Boxes, BarChart2,
+  TrendingUp, UserCircle, ChevronLeft, ChevronRight, Boxes, BarChart2, Shield, Ticket,
 } from 'lucide-react';
 import useAppStore  from '../../store/appStore';
 import useAuthStore from '../../store/authStore';
@@ -30,6 +30,12 @@ const navItems = [
     to: '/categorias',
     label: 'Categorías',
     icon: Tag,
+    roles: ['super-admin', 'admin'],
+  },
+  {
+    to: '/promociones',
+    label: 'Promociones',
+    icon: Ticket,
     roles: ['super-admin', 'admin'],
   },
   {
@@ -66,6 +72,12 @@ const navItems = [
     to: '/reportes',
     label: 'Reportes',
     icon: BarChart2,
+    roles: ['super-admin', 'admin'],
+  },
+  {
+    to: '/auditoria',
+    label: 'Auditoría',
+    icon: Shield,
     roles: ['super-admin', 'admin'],
   },
 ];

@@ -369,7 +369,7 @@ export default function UsersPage() {
 
         <div className="card">
           <DataTable
-            data={users}
+            data={[...users].sort((a, b) => (b.activo ? 1 : 0) - (a.activo ? 1 : 0))}
             columns={columns}
             searchFields={['nombre', 'usuario', 'correo', 'rol']}
             actions={(row) => {

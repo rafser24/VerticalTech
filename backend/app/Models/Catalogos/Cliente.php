@@ -3,13 +3,17 @@
 namespace App\Models\Catalogos;
 
 use App\Traits\Auditable;
+use App\Traits\HasApiCache;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Cliente extends Model
 {
-    use HasFactory, SoftDeletes, Auditable;
+    use HasFactory, SoftDeletes, Auditable, HasApiCache;
+
+    /** Invalida también el dashboard (top-clientes) */
+    protected array $cacheModules = ['clientes', 'dashboard'];
 
 protected $table = 'clientes';
 

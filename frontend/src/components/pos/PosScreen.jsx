@@ -7,7 +7,7 @@ import CatalogoProductos from './CatalogoProductos';
 import DrawerVentasEspera from './DrawerVentasEspera';
 import TicketVenta from './TicketVenta';
 import usePosStore from '../../store/usePosStore';
-import { clientService, productService, paymentMethodService, saleService } from '../../services/api';
+import api, { clientService, productService, paymentMethodService, saleService } from '../../services/api';
 import { formatCurrency } from '../../utils/helpers';
 
 /**
@@ -20,6 +20,7 @@ export default function PosScreen({ onVolver }) {
   const [productos,      setProductos]      = useState([]);
   const [clientes,       setClientes]       = useState([]);
   const [metodosPago,    setMetodosPago]    = useState([]);
+  const [promociones,    setPromociones]    = useState([]);
   const [loadingData,    setLoadingData]    = useState(true);
   const [cobrando,       setCobrando]       = useState(false);
   const [ticketVenta,    setTicketVenta]    = useState(null); // venta completada para el ticket
@@ -41,20 +42,33 @@ export default function PosScreen({ onVolver }) {
     const cargarDatos = async () => {
       try {
         setLoadingData(true);
-        const [prodRes, clientRes, pagoRes] = await Promise.all([
+        // allSettled: si promociones falla (tabla no migrada), el POS igual carga
+      const [prodRes, clientRes, pagoRes, promRes] = await Promise.allSettled([
           productService.getAll(),
           clientService.getAll(),
           paymentMethodService.getAll(),
+          api.get('/promociones', { params: { activo: true } }),
         ]);
 
-        const unwrap = (res) => {
-          const d = res.data?.data ?? res.data;
+        const unwrap = (settled) => {
+          if (settled.status === 'rejected') return [];
+          const d = settled.value?.data?.data ?? settled.value?.data;
           return Array.isArray(d) ? d : d?.data ?? d?.items ?? [];
+        };
+
+        // Las promociones tienen doble envoltura { data: { data: [...] } }
+        const unwrapPromociones = (settled) => {
+          if (settled.status === 'rejected') return [];
+          const d = settled.value?.data;
+          if (d?.data?.data && Array.isArray(d.data.data)) return d.data.data;
+          if (d?.data && Array.isArray(d.data)) return d.data;
+          return [];
         };
 
         setProductos(unwrap(prodRes));
         setClientes(unwrap(clientRes));
         setMetodosPago(unwrap(pagoRes));
+        setPromociones(unwrapPromociones(promRes));
       } catch (err) {
         console.error(err);
         toast.error('Error al cargar catálogos');
@@ -96,7 +110,7 @@ export default function PosScreen({ onVolver }) {
 
       completarVenta(); // Limpia el carrito en Zustand
       setTicketVenta(ventaCreada); // Muestra el ticket
-      toast.success(`✅ Venta completada — ${formatCurrency(total)}`);
+      toast.success(` Venta completada — ${formatCurrency(total)}`);
     } catch (error) {
       const msg = error.response?.data?.message || 'Error al procesar la venta';
       toast.error(msg);
@@ -204,7 +218,7 @@ export default function PosScreen({ onVolver }) {
               )}
             </h2>
           </div>
-          <CatalogoProductos productos={productos} loading={loadingData} />
+          <CatalogoProductos productos={productos} promociones={promociones} loading={loadingData} />
         </div>
       </div>
 

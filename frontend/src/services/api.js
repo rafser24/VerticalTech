@@ -87,6 +87,12 @@ export const dashboardService = {
   getSalesChart:   (params) => api.get('/dashboard/ventas-por-periodo', { params }),
 };
 
+// ── Auditoría ─────────────────────────────────────────────────────────────────
+export const auditoriaService = {
+  getAll:  (params) => api.get('/auditoria', { params }),
+  getById: (id)     => api.get(`/auditoria/${id}`),
+};
+
 // ── Reportes ─────────────────────────────────────────────────────────────────
 export const reportService = {
   getSummary:         (params) => api.get('/dashboard/resumen',                { params }),

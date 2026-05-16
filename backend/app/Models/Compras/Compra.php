@@ -3,13 +3,17 @@
 namespace App\Models\Compras;
 
 use App\Traits\Auditable;
+use App\Traits\HasApiCache;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Compra extends Model
 {
-    use HasFactory, SoftDeletes, Auditable;
+    use HasFactory, SoftDeletes, Auditable, HasApiCache;
+
+    /** Una compra nueva/anulada afecta el dashboard (reporte-compras). */
+    protected array $cacheModules = ['compras', 'dashboard'];
 
     protected $table = 'compras';
 

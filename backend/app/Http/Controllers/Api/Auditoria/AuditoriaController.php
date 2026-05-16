@@ -52,4 +52,27 @@ class AuditoriaController extends Controller
             $this->paginationMeta($resultado)
         );
     }
+
+    /**
+     * GET /api/auditoria/{i}
+     */
+    public function show(int $i): JsonResponse
+    {
+        $log = AuditoriaLog::with('usuario')->findOrFail($i);
+
+        return $this->success([
+            'id'                 => $log->id,
+            'modelo'             => $log->modelo,
+            'modelo_id'          => $log->modelo_id,
+            'accion'             => $log->accion,
+            'valores_anteriores' => $log->valores_anteriores,
+            'valores_nuevos'     => $log->valores_nuevos,
+            'usuario'            => $log->usuario
+                ? ['id' => $log->usuario->id, 'usuario' => $log->usuario->usuario]
+                : null,
+            'ip'                 => $log->ip,
+            'user_agent'         => $log->user_agent,
+            'fecha'              => $log->created_at?->toDateTimeString(),
+        ]);
+    }
 }

@@ -18,7 +18,9 @@ import UsersPage      from './pages/UsersPage';
 import PurchasesPage  from './pages/PurchasesPage';
 import SalesPage      from './pages/SalesPage';
 import ReportsPage    from './pages/ReportsPage';
-import NotFound       from './components/NotFound';
+import AuditoriaPage   from './pages/AuditoriaPage';
+import PromocionesPage from './pages/PromocionesPage';
+import NotFound        from './components/NotFound';
 
 export default function App() {
   return (
@@ -42,7 +44,13 @@ export default function App() {
         <Route path="/reportes"    element={<AdminRoute><ReportsPage /></AdminRoute>} />
 
         {/* Solo Admin + SuperAdmin (usuarios) */}
-        <Route path="/usuarios" element={<AdminRoute><UsersPage /></AdminRoute>} />
+        <Route path="/usuarios"   element={<AdminRoute><UsersPage /></AdminRoute>} />
+
+        {/* Solo Admin + SuperAdmin (auditoría) */}
+        <Route path="/auditoria"  element={<AdminRoute><AuditoriaPage /></AdminRoute>} />
+
+        {/* Solo Admin + SuperAdmin (promociones) */}
+        <Route path="/promociones" element={<AdminRoute><PromocionesPage /></AdminRoute>} />
 
         <Route path="/"  element={<Navigate to="/dashboard" replace />} />
         <Route path="*"  element={<NotFound />} />
