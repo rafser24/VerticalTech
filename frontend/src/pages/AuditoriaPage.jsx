@@ -37,22 +37,179 @@ function AccionBadge({ accion }) {
   );
 }
 
-// ── Visualizador de JSON con colores ─────────────────────────────────────────
-function JsonViewer({ data, label, color }) {
-  if (!data || (typeof data === 'object' && Object.keys(data).length === 0)) {
+// ── Traducción de nombres de campos ──────────────────────────────────────────
+const FIELD_LABELS = {
+  nombre:                    'Nombre',
+  descripcion:               'Descripción',
+  precio_unitario:           'Precio unitario',
+  precio_venta:              'Precio de venta',
+  precio_compra:             'Precio de compra',
+  stock:                     'Stock',
+  stock_minimo:              'Stock mínimo',
+  activo:                    'Activo',
+  codigo:                    'Código',
+  unidad:                    'Unidad',
+  categoria_id:              'Categoría (ID)',
+  proveedor_id:              'Proveedor (ID)',
+  cliente_id:                'Cliente (ID)',
+  metodo_pago_id:            'Método de pago (ID)',
+  usuario_id:                'Usuario (ID)',
+  producto_id:               'Producto (ID)',
+  descuento:                 'Descuento (%)',
+  total:                     'Total',
+  subtotal:                  'Subtotal',
+  estado:                    'Estado',
+  notas:                     'Notas',
+  numero_venta:              'N° Venta',
+  numero_compra:             'N° Compra',
+  telefono:                  'Teléfono',
+  email:                     'Email',
+  direccion:                 'Dirección',
+  apellido:                  'Apellido',
+  usuario:                   'Usuario',
+  deleted_at:                'Eliminado en',
+  referencia_transferencia:  'Ref. transferencia',
+  cliente_nombre_manual:     'Cliente (manual)',
+  tipo_descuento:            'Tipo de descuento',
+  valor_descuento:           'Valor descuento',
+  fecha_inicio:              'Fecha inicio',
+  fecha_fin:                 'Fecha fin',
+  cantidad:                  'Cantidad',
+  rfc:                       'RFC',
+  nit:                       'NIT',
+};
+
+const HIDDEN_FIELDS = new Set(['id', 'created_at', 'updated_at', 'password', 'remember_token']);
+
+/** Formatea un valor individual para mostrarlo legible */
+function formatVal(val) {
+  if (val === null || val === undefined) {
+    return <span className="text-gray-300 italic">—</span>;
+  }
+  if (typeof val === 'boolean') {
+    return val
+      ? <span className="text-green-600 font-semibold">Sí</span>
+      : <span className="text-red-500 font-semibold">No</span>;
+  }
+  if (typeof val === 'string' && /^\d{4}-\d{2}-\d{2}T/.test(val)) {
+    return new Date(val).toLocaleString('es-SV', { dateStyle: 'short', timeStyle: 'short' });
+  }
+  if (typeof val === 'number') {
+    return val.toLocaleString('es-SV');
+  }
+  return <span className="break-all">{String(val)}</span>;
+}
+
+function labelField(key) {
+  return FIELD_LABELS[key] ?? key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+}
+
+// ── Visualizador de cambios legible ───────────────────────────────────────────
+function CambiosViewer({ accion, anteriores, nuevos }) {
+  // login / logout — sin datos estructurados
+  if (accion === 'login' || accion === 'logout') {
+    return (
+      <p className="text-sm text-gray-500 italic text-center py-4">
+        {accion === 'login' ? 'El usuario inició sesión.' : 'El usuario cerró sesión.'}
+      </p>
+    );
+  }
+
+  // CREATED — mostrar todos los campos nuevos
+  if (accion === 'created') {
+    const entries = Object.entries(nuevos ?? {})
+      .filter(([k]) => !HIDDEN_FIELDS.has(k));
+
+    if (entries.length === 0) return <p className="text-xs text-gray-400 italic">Sin datos</p>;
+
     return (
       <div>
-        <p className={`text-xs font-semibold mb-1.5 ${color}`}>{label}</p>
-        <p className="text-xs text-gray-400 italic">Sin datos</p>
+        <p className="text-xs font-semibold text-green-600 mb-2">Registro creado</p>
+        <table className="w-full text-xs">
+          <thead>
+            <tr className="bg-green-50 text-green-700">
+              <th className="text-left px-3 py-1.5 rounded-tl-lg font-semibold w-1/3">Campo</th>
+              <th className="text-left px-3 py-1.5 rounded-tr-lg font-semibold">Valor</th>
+            </tr>
+          </thead>
+          <tbody>
+            {entries.map(([k, v]) => (
+              <tr key={k} className="border-t border-gray-100 hover:bg-gray-50">
+                <td className="px-3 py-1.5 text-gray-500 font-medium">{labelField(k)}</td>
+                <td className="px-3 py-1.5 text-gray-800">{formatVal(v)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     );
   }
+
+  // DELETED — mostrar campos del registro eliminado
+  if (accion === 'deleted') {
+    const entries = Object.entries(anteriores ?? {})
+      .filter(([k]) => !HIDDEN_FIELDS.has(k));
+
+    if (entries.length === 0) return <p className="text-xs text-gray-400 italic">Sin datos</p>;
+
+    return (
+      <div>
+        <p className="text-xs font-semibold text-red-600 mb-2">Registro eliminado</p>
+        <table className="w-full text-xs">
+          <thead>
+            <tr className="bg-red-50 text-red-700">
+              <th className="text-left px-3 py-1.5 rounded-tl-lg font-semibold w-1/3">Campo</th>
+              <th className="text-left px-3 py-1.5 rounded-tr-lg font-semibold">Último valor</th>
+            </tr>
+          </thead>
+          <tbody>
+            {entries.map(([k, v]) => (
+              <tr key={k} className="border-t border-gray-100 hover:bg-gray-50">
+                <td className="px-3 py-1.5 text-gray-500 font-medium">{labelField(k)}</td>
+                <td className="px-3 py-1.5 text-gray-800">{formatVal(v)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  }
+
+  // UPDATED — mostrar solo campos que realmente cambiaron
+  const ant = anteriores ?? {};
+  const nvo = nuevos ?? {};
+
+  const changedKeys = Object.keys(nvo).filter(
+    k => !HIDDEN_FIELDS.has(k) && JSON.stringify(ant[k]) !== JSON.stringify(nvo[k])
+  );
+
+  if (changedKeys.length === 0) {
+    return <p className="text-xs text-gray-400 italic text-center py-4">No se detectaron cambios en los campos.</p>;
+  }
+
   return (
     <div>
-      <p className={`text-xs font-semibold mb-1.5 ${color}`}>{label}</p>
-      <pre className="text-xs bg-gray-50 border border-gray-100 rounded-lg p-3 overflow-auto max-h-64 whitespace-pre-wrap break-words">
-        {JSON.stringify(data, null, 2)}
-      </pre>
+      <p className="text-xs font-semibold text-blue-600 mb-2">
+        {changedKeys.length} campo{changedKeys.length !== 1 ? 's' : ''} modificado{changedKeys.length !== 1 ? 's' : ''}
+      </p>
+      <table className="w-full text-xs">
+        <thead>
+          <tr className="bg-blue-50 text-blue-700">
+            <th className="text-left px-3 py-1.5 rounded-tl-lg font-semibold w-1/4">Campo</th>
+            <th className="text-left px-3 py-1.5 font-semibold w-[37.5%]">Antes</th>
+            <th className="text-left px-3 py-1.5 rounded-tr-lg font-semibold w-[37.5%]">Después</th>
+          </tr>
+        </thead>
+        <tbody>
+          {changedKeys.map(k => (
+            <tr key={k} className="border-t border-gray-100 hover:bg-gray-50">
+              <td className="px-3 py-2 text-gray-500 font-medium">{labelField(k)}</td>
+              <td className="px-3 py-2 text-red-600 bg-red-50/40">{formatVal(ant[k])}</td>
+              <td className="px-3 py-2 text-green-700 bg-green-50/40 font-semibold">{formatVal(nvo[k])}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
@@ -390,17 +547,12 @@ export default function AuditoriaPage() {
               </div>
             </div>
 
-            {/* Valores */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-gray-100">
-              <JsonViewer
-                data={selected.valores_anteriores}
-                label="Valores anteriores"
-                color="text-red-600"
-              />
-              <JsonViewer
-                data={selected.valores_nuevos}
-                label="Valores nuevos"
-                color="text-green-600"
+            {/* Cambios legibles */}
+            <div className="pt-2 border-t border-gray-100">
+              <CambiosViewer
+                accion={selected.accion}
+                anteriores={selected.valores_anteriores}
+                nuevos={selected.valores_nuevos}
               />
             </div>
           </div>

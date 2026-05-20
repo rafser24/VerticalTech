@@ -19,12 +19,14 @@ class VentaRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'cliente_id'       => ['nullable', 'integer', 'exists:clientes,id'],
-            'metodo_pago_id'   => ['required', 'integer', 'exists:metodo_pago,id'],
-            'descuento'        => ['nullable', 'numeric', 'min:0', 'max:100'],
-            'impuesto'         => ['nullable', 'numeric', 'min:0', 'max:100'],
-            'notas'            => ['nullable', 'string', 'max:1000'],
-            'fecha_venta'      => ['nullable', 'date'],
+            'cliente_id'               => ['nullable', 'integer', 'exists:clientes,id'],
+            'cliente_nombre_manual'    => ['nullable', 'string', 'max:120'],
+            'metodo_pago_id'           => ['required', 'integer', 'exists:metodo_pago,id'],
+            'descuento'                => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'impuesto'                 => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'notas'                    => ['nullable', 'string', 'max:1000'],
+            'referencia_transferencia' => ['nullable', 'string', 'max:120'],
+            'fecha_venta'              => ['nullable', 'date'],
 
             // Detalle
             'items'                       => ['required', 'array', 'min:1'],

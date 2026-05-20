@@ -20,6 +20,7 @@ import SalesPage      from './pages/SalesPage';
 import ReportsPage    from './pages/ReportsPage';
 import AuditoriaPage   from './pages/AuditoriaPage';
 import PromocionesPage from './pages/PromocionesPage';
+import PosPage         from './pages/PosPage';
 import NotFound        from './components/NotFound';
 
 export default function App() {
@@ -36,6 +37,7 @@ export default function App() {
         <Route path="/productos"  element={<VendedorRoute><ProductsPage /></VendedorRoute>} />
         <Route path="/clientes"   element={<VendedorRoute><ClientsPage /></VendedorRoute>} />
         <Route path="/ventas"     element={<VendedorRoute><SalesPage /></VendedorRoute>} />
+        <Route path="/pos"        element={<VendedorRoute><PosPage /></VendedorRoute>} />
 
         {/* Solo Admin + SuperAdmin */}
         <Route path="/categorias"  element={<AdminRoute><CategoriesPage /></AdminRoute>} />

@@ -88,11 +88,15 @@ class Producto extends Model
 
     public function decrementarStock(int $cantidad): void
     {
+        // decrement() ejecuta UPDATE directo y NO dispara eventos Eloquent,
+        // por eso invalidamos la caché manualmente después.
         $this->decrement('stock', $cantidad);
+        $this->invalidateCache(['productos', 'dashboard']);
     }
 
     public function incrementarStock(int $cantidad): void
     {
         $this->increment('stock', $cantidad);
+        $this->invalidateCache(['productos', 'dashboard']);
     }
 }

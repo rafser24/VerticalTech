@@ -20,6 +20,7 @@ class Venta extends Model
     protected $fillable = [
         'numero_venta',
         'cliente_id',
+        'cliente_nombre_manual',
         'metodo_pago_id',
         'usuario_id',
         'subtotal',
@@ -28,6 +29,7 @@ class Venta extends Model
         'total',
         'estado',
         'notas',
+        'referencia_transferencia',
         'fecha_venta',
     ];
 
@@ -70,6 +72,11 @@ class Venta extends Model
     public function scopeCompletada($query)
     {
         return $query->where('estado', 'completada');
+    }
+
+    public function scopePendiente($query)
+    {
+        return $query->where('estado', 'pendiente');
     }
 
     public function scopeDelPeriodo($query, string $desde, string $hasta)

@@ -77,7 +77,14 @@ export const supplierService     = crudService('/proveedores');
 export const clientService       = crudService('/clientes');
 export const userService         = crudService('/users');        // ← tabla usuarios, login por 'usuario'
 export const purchaseService     = crudService('/compras');
-export const saleService         = crudService('/ventas');
+export const saleService = {
+  ...crudService('/ventas'),
+  // Ventas pendientes de transferencia
+  getPendientes:            ()       => api.get('/ventas/pendientes'),
+  createPendiente:          (data)   => api.post('/ventas/pendiente', data),
+  confirmarTransferencia:   (id)     => api.patch(`/ventas/${id}/confirmar-transferencia`),
+  anular:                   (id)     => api.patch(`/ventas/${id}/anular`),
+};
 export const paymentMethodService= crudService('/metodos-pago');
 
 // ── Dashboard ─────────────────────────────────────────────────────────────────

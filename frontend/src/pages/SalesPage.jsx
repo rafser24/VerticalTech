@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
-import { Plus, Eye, User, CreditCard, Package, FileText, Hash, ShoppingBag } from 'lucide-react';
+import { Eye, User, CreditCard, Package, FileText, Hash } from 'lucide-react';
 import MainLayout from '../components/layout/MainLayout';
 import DataTable from '../components/ui/DataTable';
 import Modal from '../components/ui/Modal';
-import PosScreen from '../components/pos/PosScreen';
 import { formatCurrency, formatDate, statusColors } from '../utils/helpers';
 import { saleService } from '../services/api';
 
@@ -136,8 +135,6 @@ function SaleDetailModal({ isOpen, onClose, sale, loading }) {
 
 /* ─── Página principal ───────────────────────────────────────────────────── */
 export default function SalesPage() {
-  const [vistaPos, setVistaPos] = useState(false); // false = historial, true = POS
-
   const [sales, setSales]     = useState([]);
   const [detail, setDetail]   = useState({ open: false, sale: null, loading: false });
   const [loading, setLoading] = useState(true);
@@ -160,12 +157,6 @@ export default function SalesPage() {
   };
 
   useEffect(() => { fetchSales(); }, []);
-
-  // Al volver del POS refrescar la tabla de ventas
-  const handleVolverDePos = () => {
-    setVistaPos(false);
-    fetchSales();
-  };
 
   const handleViewDetail = async (row) => {
     const id = row.id ?? row.id_venta;
@@ -219,11 +210,6 @@ export default function SalesPage() {
     { key: 'estado', label: 'Estado', render: v => <span className={`badge ${statusColors[v] ?? ''}`}>{v ?? '—'}</span> },
   ];
 
-  // ── Si el usuario activó la vista POS, renderizar PosScreen ──────────
-  if (vistaPos) {
-    return <PosScreen onVolver={handleVolverDePos} />;
-  }
-
   // ── Vista historial de ventas ─────────────────────────────────────────
   if (loading) {
     return (
@@ -274,15 +260,6 @@ export default function SalesPage() {
           <p className="text-sm text-gray-500">
             {loading ? 'Cargando...' : `${sales.length} ventas registradas`}
           </p>
-          <div className="flex gap-2">
-            {/* Botón POS — acceso rápido al punto de venta */}
-            <button
-              onClick={() => setVistaPos(true)}
-              className="btn-primary flex items-center gap-2"
-            >
-              <ShoppingBag size={16} /> Punto de Venta
-            </button>
-          </div>
         </div>
 
         <div className="card">

@@ -1,3 +1,19 @@
+/**
+ * Decodifica entidades HTML almacenadas como texto plano en la BD.
+ * Ej: &quot; → "   &amp; → &   &#39; → '   &lt; → <   &gt; → >
+ */
+export const decodeHtml = (str) => {
+  if (!str) return str;
+  return str
+    .replace(/&quot;/g, '"')
+    .replace(/&amp;/g, '&')
+    .replace(/&#39;/g, "'")
+    .replace(/&apos;/g, "'")
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&nbsp;/g, ' ');
+};
+
 export const formatCurrency = (value, currency = 'USD') =>
   new Intl.NumberFormat('es-SV', { style: 'currency', currency }).format(value);
 

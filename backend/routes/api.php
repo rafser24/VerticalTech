@@ -111,7 +111,7 @@ Route::prefix('users')->middleware(['auth:api', 'role:super-admin|admin'])->grou
     });
 
     // ── Clientes ────────────────────────────────────────────────────────────
-    Route::prefix('clientes')->group(function () {
+    Route::prefix('clientes')->middleware('auth:api')->group(function () {
         Route::get('/',              [ClienteController::class, 'index'])
             ->middleware('role:super-admin|admin|vendedor');
 
@@ -129,7 +129,7 @@ Route::prefix('users')->middleware(['auth:api', 'role:super-admin|admin'])->grou
     });
 
     // ── Proveedores ─────────────────────────────────────────────────────────
-    Route::prefix('proveedores')->group(function () {
+    Route::prefix('proveedores')->middleware('auth:api')->group(function () {
         Route::get('/',              [ProveedorController::class, 'index'])
             ->middleware('role:super-admin|admin|bodeguero');
 
@@ -147,7 +147,7 @@ Route::prefix('users')->middleware(['auth:api', 'role:super-admin|admin'])->grou
     });
 
     // ── Categorías ──────────────────────────────────────────────────────────
-    Route::prefix('categorias')->group(function () {
+    Route::prefix('categorias')->middleware('auth:api')->group(function () {
         Route::get('/',              [CategoriaController::class, 'index'])
             ->middleware('role:super-admin|admin|vendedor|bodeguero');
 
@@ -165,7 +165,7 @@ Route::prefix('users')->middleware(['auth:api', 'role:super-admin|admin'])->grou
     });
 
     // ── Métodos de pago ─────────────────────────────────────────────────────
-    Route::prefix('metodos-pago')->group(function () {
+    Route::prefix('metodos-pago')->middleware('auth:api')->group(function () {
         Route::get('/',              [MetodoPagoController::class, 'index'])
             ->middleware('role:super-admin|admin|vendedor');
 
@@ -180,7 +180,7 @@ Route::prefix('users')->middleware(['auth:api', 'role:super-admin|admin'])->grou
     });
 
     // ── Productos ───────────────────────────────────────────────────────────
-    Route::prefix('productos')->group(function () {
+    Route::prefix('productos')->middleware('auth:api')->group(function () {
         // stock-bajo va ANTES de /{i} para evitar conflicto de rutas
         Route::get('/stock-bajo',    [ProductoController::class, 'stockBajo'])
             ->middleware('role:super-admin|admin|bodeguero');
@@ -202,21 +202,31 @@ Route::prefix('users')->middleware(['auth:api', 'role:super-admin|admin'])->grou
     });
 
     // ── Ventas ──────────────────────────────────────────────────────────────
-    Route::prefix('ventas')->group(function () {
+    Route::prefix('ventas')->middleware('auth:api')->group(function () {
         Route::get('/',              [VentaController::class, 'index'])
             ->middleware('role:super-admin|admin|vendedor');
 
         Route::post('/',             [VentaController::class, 'store'])
             ->middleware('role:super-admin|admin|vendedor');
 
+        // Rutas estáticas ANTES que las dinámicas /{i}
+        Route::get('/pendientes',    [VentaController::class, 'pendientes'])
+            ->middleware('role:super-admin|admin|vendedor');
+
+        Route::post('/pendiente',    [VentaController::class, 'storePendiente'])
+            ->middleware('role:super-admin|admin|vendedor');
+
         Route::get('/{i}',          [VentaController::class, 'show'])
             ->middleware('role:super-admin|admin|vendedor');
 
-        Route::patch('/{i}/anular', [VentaController::class, 'anular'])
-            ->middleware('role:super-admin|admin');
+        Route::patch('/{venta}/confirmar-transferencia', [VentaController::class, 'confirmarTransferencia'])
+            ->middleware('role:super-admin|admin|vendedor');
+
+        Route::patch('/{venta}/anular', [VentaController::class, 'anular'])
+            ->middleware('role:super-admin|admin|vendedor');
     });
     // ── Compras ─────────────────────────────────────────────────────────────
-    Route::prefix('compras')->group(function () {
+    Route::prefix('compras')->middleware('auth:api')->group(function () {
         Route::get('/',              [CompraController::class, 'index'])
             ->middleware('role:super-admin|admin|bodeguero');
 
