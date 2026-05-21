@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'react-toastify';
 import { z } from 'zod';
-import { Plus, Pencil, Trash2, ShieldCheck, Eye, EyeOff } from 'lucide-react';
+import { Plus, Pencil, Trash2, ShieldCheck, Eye, EyeOff, ToggleLeft, ToggleRight } from 'lucide-react';
 import MainLayout from '../components/layout/MainLayout';
 import DataTable from '../components/ui/DataTable';
 import Modal from '../components/ui/Modal';
@@ -66,7 +66,7 @@ const rolLabels = {
 
 // ─── Formulario ───────────────────────────────────────────────────────────────
 function UserForm({ register, errors, editing }) {
-  const [showPassword, setShowPassword]         = useState(false);
+  const [showPassword, setShowPassword]               = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   return (
@@ -108,10 +108,7 @@ function UserForm({ register, errors, editing }) {
               className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
               tabIndex={-1}
             >
-              {showPassword
-                ? <EyeOff size={15} />
-                : <Eye size={15} />
-              }
+              {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
             </button>
           </div>
         </FormField>
@@ -130,10 +127,7 @@ function UserForm({ register, errors, editing }) {
               className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
               tabIndex={-1}
             >
-              {showConfirmPassword
-                ? <EyeOff size={15} />
-                : <Eye size={15} />
-              }
+              {showConfirmPassword ? <EyeOff size={15} /> : <Eye size={15} />}
             </button>
           </div>
         </FormField>
@@ -152,10 +146,6 @@ function UserForm({ register, errors, editing }) {
       {editing && (
         <FormField label="Estado" error={errors.activo?.message}>
           <div className="flex items-center gap-2">
-            {/*
-              CORRECCIÓN 2: se agrega defaultValue para que RHF registre
-              correctamente el valor booleano inicial al pre-llenar el form.
-            */}
             <input
               type="checkbox"
               {...register('activo')}
@@ -192,11 +182,12 @@ export default function UsersPage() {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const res = await userService.getAll();
-      // El controller devuelve paginado: { data: [...], total, ... }
+      const res     = await userService.getAll();
       const payload = res.data?.data ?? res.data;
       const list    = Array.isArray(payload) ? payload : payload?.data ?? [];
-      setUsers(list);
+      // Activos arriba, inactivos abajo
+      const sorted  = [...list].sort((a, b) => (b.activo ? 1 : 0) - (a.activo ? 1 : 0));
+      setUsers(sorted);
     } catch {
       toast.error('Error al cargar los usuarios');
     } finally {
@@ -208,13 +199,11 @@ export default function UsersPage() {
 
   // ── Toggle activo/inactivo ─────────────────────────────────────────
   const handleToggle = async (row) => {
-    // CORRECCIÓN 3: se extrae el id de forma robusta y se verifica
-    // antes de llamar al endpoint para evitar llamadas con undefined.
     const id = row.id ?? row.id_usuario;
     if (!id) { toast.error('ID de usuario no encontrado'); return; }
     try {
       await userService.toggle(id);
-      toast.success('Estado actualizado');
+      toast.success(`Usuario ${row.activo ? 'desactivado' : 'activado'} correctamente`);
       await fetchUsers();
     } catch (error) {
       const msg = error.response?.data?.message || 'Error al cambiar el estado';
@@ -249,8 +238,6 @@ export default function UsersPage() {
   // ── Guardar ────────────────────────────────────────────────────────
   const onSubmit = async (data) => {
     const id = editing?.id ?? editing?.id_usuario;
-
-    // Limpiar contraseñas vacías en edición
     const payload = { ...data };
     if (editing && !payload.password) {
       delete payload.password;
@@ -259,9 +246,6 @@ export default function UsersPage() {
 
     try {
       if (editing) {
-        // CORRECCIÓN 5: se verificaba editing.id_usuario || editing.id
-        // pero si ambos son falsy (ej: 0) la llamada era a /users/undefined.
-        // Ahora se valida explícitamente.
         if (!id) throw new Error('ID de usuario inválido');
         await userService.update(id, payload);
         toast.success('Usuario actualizado correctamente');
@@ -294,9 +278,7 @@ export default function UsersPage() {
     }
   };
 
-  // ── Columnas (dentro del componente para acceder a handleToggle) ───
-  // CORRECCIÓN 6: se eliminó la definición duplicada de columns que
-  // estaba fuera del componente y nunca se usaba.
+  // ── Columnas ───────────────────────────────────────────────────────
   const columns = [
     {
       key: 'nombre',
@@ -319,27 +301,26 @@ export default function UsersPage() {
       render: v => <span className="text-sm text-gray-600">{v || '—'}</span>,
     },
     {
-      key: 'rol',
-      label: 'Rol',
-      render: v => (
-        <span className={`badge ${rolBadgeColors[v] || 'bg-gray-100 text-gray-600'}`}>
-          {rolLabels[v] || v || '—'}
-        </span>
-      ),
-    },
+  key: 'roles',
+  label: 'Rol',
+  render: (v, row) => {
+    const rol = (v?.[0]) ?? row.rol ?? null;
+    return (
+      <span className={`badge ${rolBadgeColors[rol] || 'bg-gray-100 text-gray-600'}`}>
+        {rolLabels[rol] || rol || '—'}
+      </span>
+    );
+  },
+},
     {
       key: 'activo',
       label: 'Estado',
-      render: (v, row) => (
-        <button
-          onClick={() => handleToggle(row)}
-          className={`badge cursor-pointer hover:opacity-75 transition-opacity ${
-            v ? 'bg-pastel-secondary text-green-800' : 'bg-red-100 text-red-700'
-          }`}
-          title={v ? 'Clic para desactivar' : 'Clic para activar'}
-        >
+      render: v => (
+        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+          v ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'
+        }`}>
           {v ? 'Activo' : 'Inactivo'}
-        </button>
+        </span>
       ),
     },
     {
@@ -383,6 +364,19 @@ export default function UsersPage() {
                   >
                     <Pencil size={14} />
                   </button>
+                  {!esMiUsuario && (
+                    <button
+                      onClick={() => handleToggle(row)}
+                      className={`p-1.5 rounded-lg transition-colors ${
+                        row.activo
+                          ? 'hover:bg-orange-100 text-orange-500'
+                          : 'hover:bg-green-100 text-green-600'
+                      }`}
+                      title={row.activo ? 'Desactivar' : 'Activar'}
+                    >
+                      {row.activo ? <ToggleRight size={16} /> : <ToggleLeft size={16} />}
+                    </button>
+                  )}
                   {esMiUsuario ? (
                     <span
                       title="No puedes eliminar tu propio usuario"

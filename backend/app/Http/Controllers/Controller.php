@@ -30,7 +30,7 @@ abstract class Controller
         return response()->json($response, $status);
     }
 
-    
+
     protected function error(
         string $message = 'Error.',
         int $status = 400,
@@ -44,7 +44,45 @@ abstract class Controller
 
         return response()->json($response, $status);
     }
+/**
+ * Retroceder una etapa:
+ * recibida → confirmada (revierte stock)
+ * confirmada → pendiente
+ */
+public function retroceder(int $i): JsonResponse
+{
+    $compra = Compra::with('detalles')->findOrFail($i);
 
+    if ($compra->estado === 'pendiente') {
+        return $this->error('La compra ya está en la primera etapa.', 422);
+    }
+
+    if ($compra->estado === 'anulada') {
+        return $this->error('No se puede retroceder una compra anulada.', 422);
+    }
+
+    DB::transaction(function () use ($compra) {
+        if ($compra->estado === 'recibida') {
+            // Revertir stock
+            foreach ($compra->detalles as $detalle) {
+                $producto = Producto::find($detalle->producto_id);
+                if ($producto) {
+                    $producto->decrementarStock($detalle->cantidad);
+                }
+            }
+            $compra->update([
+                'estado'          => 'confirmada',
+                'fecha_recepcion' => null,
+            ]);
+        } elseif ($compra->estado === 'confirmada') {
+            $compra->update(['estado' => 'pendiente']);
+        }
+    });
+
+    $compra->load(['proveedor', 'metodoPago', 'usuario', 'detalles.producto']);
+
+    return $this->success(new CompraResource($compra), 'Compra retrocedida correctamente.');
+}
     /**
      * Meta de paginación desde un LengthAwarePaginator.
      */

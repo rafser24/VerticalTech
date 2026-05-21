@@ -2,15 +2,32 @@ import { useState, useEffect } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'react-toastify';
-import { Plus, Trash2, Eye } from 'lucide-react';
+import { Plus, Trash2, CheckCircle, PackageCheck, XCircle, ChevronLeft } from 'lucide-react';
 import MainLayout from '../components/layout/MainLayout';
 import DataTable from '../components/ui/DataTable';
 import Modal from '../components/ui/Modal';
+import ConfirmDialog from '../components/ui/ConfirmDialog';
 import { FormField, FormSelect, FormTextarea } from '../components/ui/FormFields';
 import { purchaseSchema } from '../schemas';
 import { formatCurrency, formatDate, statusColors } from '../utils/helpers';
 import { purchaseService, supplierService, productService, paymentMethodService } from '../services/api';
 
+// ── Etiquetas y flujo de etapas ──────────────────────────────────────────────
+const ESTADO_LABEL = {
+  pendiente:  'Pendiente',
+  confirmada: 'Confirmada',
+  recibida:   'Recibida',
+  anulada:    'Anulada',
+};
+
+const ACCIONES = {
+  pendiente:  ['confirmar', 'anular'],
+  confirmada: ['recibir', 'retroceder', 'anular'],
+  recibida:   ['retroceder'],
+  anulada:    [],
+};
+
+// ── Formulario de nueva compra ───────────────────────────────────────────────
 function PurchaseForm({ register, control, errors, watch, suppliers, products, paymentMethods }) {
   const { fields, append, remove } = useFieldArray({ control, name: 'items' });
   const items = watch('items') || [];
@@ -118,20 +135,49 @@ function PurchaseForm({ register, control, errors, watch, suppliers, products, p
   );
 }
 
+// ── Indicador visual de progreso ─────────────────────────────────────────────
+function PasoEtapa({ estado }) {
+  const etapas = ['pendiente', 'confirmada', 'recibida'];
+  if (estado === 'anulada') {
+    return (
+      <span className="inline-flex items-center gap-1 text-xs text-red-600 font-medium">
+        <XCircle size={14} /> Anulada
+      </span>
+    );
+  }
+  const actual = etapas.indexOf(estado);
+  return (
+    <div className="flex items-center gap-1">
+      {etapas.map((e, idx) => (
+        <div key={e} className="flex items-center gap-1">
+          <div className={`w-2 h-2 rounded-full ${idx <= actual ? 'bg-blue-500' : 'bg-gray-200'}`} />
+          {idx < etapas.length - 1 && (
+            <div className={`w-4 h-0.5 ${idx < actual ? 'bg-blue-500' : 'bg-gray-200'}`} />
+          )}
+        </div>
+      ))}
+      <span className={`ml-1 text-xs font-medium badge ${statusColors[estado] ?? ''}`}>
+        {ESTADO_LABEL[estado] ?? estado}
+      </span>
+    </div>
+  );
+}
+
+// ── Página principal ─────────────────────────────────────────────────────────
 export default function PurchasesPage() {
-  const [purchases, setPurchases]       = useState([]);
-  const [suppliers, setSuppliers]       = useState([]);
-  const [products, setProducts]         = useState([]);
+  const [purchases, setPurchases]           = useState([]);
+  const [suppliers, setSuppliers]           = useState([]);
+  const [products, setProducts]             = useState([]);
   const [paymentMethods, setPaymentMethods] = useState([]);
-  const [modalOpen, setModalOpen]       = useState(false);
-  const [loading, setLoading]           = useState(true);
+  const [modalOpen, setModalOpen]           = useState(false);
+  const [loading, setLoading]               = useState(true);
+  const [actionTarget, setActionTarget]     = useState(null);
 
   const { register, handleSubmit, reset, control, watch, formState: { errors } } = useForm({
     resolver: zodResolver(purchaseSchema),
     defaultValues: { items: [] },
   });
 
-  // ── Carga inicial ────────────────────────────────────────────────────────
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -162,7 +208,12 @@ export default function PurchasesPage() {
     fetchData();
   }, []);
 
-  // ── Registrar compra ─────────────────────────────────────────────────────
+  const recargar = async () => {
+    const res = await purchaseService.getAll();
+    const d = res.data?.data ?? res.data;
+    setPurchases(Array.isArray(d) ? d : d?.data ?? []);
+  };
+
   const onSubmit = async (data) => {
     try {
       const payload = {
@@ -175,29 +226,63 @@ export default function PurchasesPage() {
           precio_unitario: Number(i.unit_price),
         })),
       };
-
-      const res = await purchaseService.create(payload);
-      const nueva = res.data?.data ?? res.data;
-
-      setPurchases(prev => [nueva, ...prev]);
-      toast.success('Compra registrada exitosamente');
+      await purchaseService.create(payload);
+      toast.success('Compra registrada. Queda pendiente de confirmación.');
       setModalOpen(false);
       reset({ items: [] });
-
-      // Refrescar lista completa para tener datos actualizados
-      const listRes = await purchaseService.getAll();
-      const d = listRes.data?.data ?? listRes.data;
-      setPurchases(Array.isArray(d) ? d : d?.data ?? []);
+      await recargar();
     } catch (error) {
       const msg = error.response?.data?.message || 'Error al registrar la compra';
       toast.error(msg);
-      console.error(error);
+    }
+  };
+
+  const ejecutarAccion = async () => {
+    if (!actionTarget) return;
+    const { compra, accion } = actionTarget;
+    setActionTarget(null);
+    try {
+      if (accion === 'confirmar') {
+        await purchaseService.confirmar(compra.id);
+        toast.success('Compra confirmada.');
+      } else if (accion === 'recibir') {
+        await purchaseService.recibir(compra.id);
+        toast.success('Mercancía recibida. Stock actualizado.');
+      } else if (accion === 'anular') {
+        await purchaseService.anular(compra.id);
+        toast.success('Compra anulada.');
+      } else if (accion === 'retroceder') {
+        await purchaseService.retroceder(compra.id);
+        toast.success('Compra retrocedida a la etapa anterior.');
+      }
+      await recargar();
+    } catch (error) {
+      const msg = error.response?.data?.message || 'Error al actualizar la compra';
+      toast.error(msg);
     }
   };
 
   const handleClose = () => { setModalOpen(false); reset({ items: [] }); };
 
-  // ── Columnas de la tabla ─────────────────────────────────────────────────
+  const dialogTextos = {
+    confirmar: {
+      title: '¿Confirmar esta compra?',
+      message: 'Indica que el proveedor aceptó el pedido. El stock aún no se modifica.',
+    },
+    recibir: {
+      title: '¿Marcar como recibida?',
+      message: 'Confirma que la mercancía llegó físicamente. El stock se actualizará en este momento.',
+    },
+    anular: {
+      title: '¿Anular esta compra?',
+      message: 'La compra quedará cancelada y no se podrá reactivar.',
+    },
+    retroceder: {
+      title: '¿Retroceder esta compra?',
+      message: 'La compra volverá a la etapa anterior. Si está recibida, el stock se revertirá automáticamente.',
+    },
+  };
+
   const columns = [
     {
       key: 'id',
@@ -223,15 +308,6 @@ export default function PurchasesPage() {
       render: (v, row) => formatDate(v ?? row.fecha ?? row.date),
     },
     {
-      key: 'detalles_count',
-      label: 'Items',
-      render: (v, row) => (
-        <span className="badge bg-pastel-primary/30 text-blue-800">
-          {v ?? row.items_count ?? row.detalles?.length ?? '—'}
-        </span>
-      ),
-    },
-    {
       key: 'total',
       label: 'Total',
       render: v => <span className="font-semibold">{formatCurrency(v)}</span>,
@@ -244,7 +320,7 @@ export default function PurchasesPage() {
     {
       key: 'estado',
       label: 'Estado',
-      render: v => <span className={`badge ${statusColors[v] ?? ''}`}>{v ?? '—'}</span>,
+      render: (v) => <PasoEtapa estado={v} />,
     },
   ];
 
@@ -265,11 +341,49 @@ export default function PurchasesPage() {
             data={purchases}
             columns={columns}
             searchFields={['estado']}
-            actions={(row) => (
-              <button className="p-1.5 hover:bg-pastel-primary/20 rounded-lg transition-colors text-blue-600">
-                <Eye size={14} />
-              </button>
-            )}
+            actions={(row) => {
+              const acciones = ACCIONES[row.estado] ?? [];
+              return (
+                <div className="flex items-center gap-1">
+                  {acciones.includes('retroceder') && (
+                    <button
+                      onClick={() => setActionTarget({ compra: row, accion: 'retroceder' })}
+                      className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors text-gray-500"
+                      title="Retroceder etapa"
+                    >
+                      <ChevronLeft size={14} />
+                    </button>
+                  )}
+                  {acciones.includes('confirmar') && (
+                    <button
+                      onClick={() => setActionTarget({ compra: row, accion: 'confirmar' })}
+                      className="p-1.5 hover:bg-blue-100 rounded-lg transition-colors text-blue-600"
+                      title="Confirmar pedido"
+                    >
+                      <CheckCircle size={14} />
+                    </button>
+                  )}
+                  {acciones.includes('recibir') && (
+                    <button
+                      onClick={() => setActionTarget({ compra: row, accion: 'recibir' })}
+                      className="p-1.5 hover:bg-green-100 rounded-lg transition-colors text-green-600"
+                      title="Marcar como recibida"
+                    >
+                      <PackageCheck size={14} />
+                    </button>
+                  )}
+                  {acciones.includes('anular') && (
+                    <button
+                      onClick={() => setActionTarget({ compra: row, accion: 'anular' })}
+                      className="p-1.5 hover:bg-red-100 rounded-lg transition-colors text-red-500"
+                      title="Anular compra"
+                    >
+                      <XCircle size={14} />
+                    </button>
+                  )}
+                </div>
+              );
+            }}
           />
         </div>
       </div>
@@ -295,6 +409,23 @@ export default function PurchasesPage() {
           </div>
         </form>
       </Modal>
+
+      <ConfirmDialog
+        isOpen={!!actionTarget}
+        onClose={() => setActionTarget(null)}
+        onConfirm={ejecutarAccion}
+        title={actionTarget ? dialogTextos[actionTarget.accion]?.title : ''}
+        message={actionTarget ? dialogTextos[actionTarget.accion]?.message : ''}
+        confirmText={
+          actionTarget?.accion === 'confirmar'  ? 'Confirmar pedido'      :
+          actionTarget?.accion === 'recibir'    ? 'Marcar como recibida'  :
+          actionTarget?.accion === 'retroceder' ? 'Sí, retroceder'        :
+          'Anular compra'
+        }
+        confirmClass={
+          actionTarget?.accion === 'anular' ? 'btn-danger' : 'btn-primary'
+        }
+      />
     </MainLayout>
   );
 }

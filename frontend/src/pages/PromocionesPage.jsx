@@ -211,12 +211,14 @@ export default function PromocionesPage() {
   useEffect(() => { fetchAll(); }, []);
 
   // ── Filtros locales ──────────────────────────────────────
-  const promocionesFiltradas = promociones.filter(p => {
-    const textoOk = !search || p.nombre?.toLowerCase().includes(search.toLowerCase());
-    const tipoOk  = !filtroTipo   || p.tipo_aplicacion === filtroTipo;
-    const activoOk = filtroActivo === '' || String(p.activo) === filtroActivo;
-    return textoOk && tipoOk && activoOk;
-  });
+  const promocionesFiltradas = promociones
+    .filter(p => {
+      const textoOk  = !search      || p.nombre?.toLowerCase().includes(search.toLowerCase());
+      const tipoOk   = !filtroTipo  || p.tipo_aplicacion === filtroTipo;
+      const activoOk = filtroActivo === '' || String(p.activo) === filtroActivo;
+      return textoOk && tipoOk && activoOk;
+    })
+    .sort((a, b) => (b.activo ? 1 : 0) - (a.activo ? 1 : 0));
 
   // ── Abrir modal ──────────────────────────────────────────
   const openCreate = () => {

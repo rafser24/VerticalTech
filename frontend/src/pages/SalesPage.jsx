@@ -196,15 +196,7 @@ export default function SalesPage() {
       ),
     },
     { key: 'fecha_venta', label: 'Fecha', render: (v, row) => formatDate(v ?? row.fecha) },
-    {
-      key: 'detalles_count',
-      label: 'Items',
-      render: (v, row) => (
-        <span className="badge bg-pastel-secondary/40 text-green-800">
-          {v ?? row.detalles?.length ?? '—'}
-        </span>
-      ),
-    },
+    
     { key: 'total', label: 'Total', render: v => <span className="font-semibold text-green-700">{formatCurrency(v)}</span> },
     { key: 'metodo_pago', label: 'Pago', render: (v, row) => row.metodo_pago?.nombre ?? v ?? '—' },
     { key: 'estado', label: 'Estado', render: v => <span className={`badge ${statusColors[v] ?? ''}`}>{v ?? '—'}</span> },

@@ -61,7 +61,7 @@ export default function DataTable({
                 <tr key={row.id || i} className="hover:bg-gray-50/50 transition-colors">
                   {columns.map((col) => (
                     <td key={col.key} className="table-cell">
-                      {col.render ? col.render(row[col.key], row) : row[col.key] ?? '—'}
+                     {col.render ? col.render(row[col.key], row, (page - 1) * perPage + i) : row[col.key] ?? '—'}
                     </td>
                   ))}
                   {actions && (

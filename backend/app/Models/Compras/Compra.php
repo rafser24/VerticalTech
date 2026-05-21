@@ -28,15 +28,17 @@ class Compra extends Model
         'total',
         'estado',
         'notas',
-        'fecha_compra',
+      'fecha_compra',
+        'fecha_recepcion',
     ];
 
     protected $casts = [
-        'subtotal'     => 'decimal:2',
-        'impuesto'     => 'decimal:2',
-        'descuento'    => 'decimal:2',
-        'total'        => 'decimal:2',
-        'fecha_compra' => 'datetime',
+        'subtotal'        => 'decimal:2',
+        'impuesto'        => 'decimal:2',
+        'descuento'       => 'decimal:2',
+        'total'           => 'decimal:2',
+        'fecha_compra'    => 'datetime',
+        'fecha_recepcion' => 'datetime',
     ];
 
     // ──────────────────────────────────────────
@@ -67,9 +69,9 @@ class Compra extends Model
     // Scopes
     // ──────────────────────────────────────────
 
-    public function scopeCompletada($query)
+   public function scopeRecibida($query)
     {
-        return $query->where('estado', 'completada');
+        return $query->where('estado', 'recibida');
     }
 
     public function scopeDelPeriodo($query, string $desde, string $hasta)

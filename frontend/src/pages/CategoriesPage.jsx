@@ -4,7 +4,7 @@ import MainLayout from '../components/layout/MainLayout';
 import CrudPage from '../components/ui/CrudPage';
 import { FormField, FormInput, FormTextarea } from '../components/ui/FormFields';
 import { categorySchema } from '../schemas';
-import api from '../services/api'; 
+import api from '../services/api';
 
 function CategoryForm({ register, errors }) {
   return (
@@ -20,70 +20,73 @@ function CategoryForm({ register, errors }) {
 }
 
 const columns = [
-  { key: 'id', label: 'ID', render: v => <span className="font-mono text-xs text-gray-400">#{v}</span> },
+  { key: 'id', label: '#', render: (v, row, i) => <span className="text-xs text-gray-400">{i + 1}</span> },
   { key: 'nombre', label: 'Nombre', render: v => <span className="font-medium">{v}</span> },
   { key: 'descripcion', label: 'Descripción' },
-  { key: 'productos_count', label: 'Productos', render: v => (
-    <span className="badge bg-pastel-primary/30 text-blue-800">{v || 0}</span>
-  )},
+  {
+    key: 'activo',
+    label: 'Estado',
+    render: v => (
+      <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+        v ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'
+      }`}>
+        {v ? 'Activo' : 'Inactivo'}
+      </span>
+    ),
+  },
 ];
 
 export default function CategoriesPage() {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // 1. Cargar categorías desde el Backend
-const fetchCategories = async () => {
+  const fetchCategories = async () => {
     try {
       setLoading(true);
       const response = await api.get('/categorias');
-      
-      console.log("🔍 PAQUETE RECIBIDO:", response.data);
 
-      // Vamos a pelar la cebolla/muñeca rusa capa por capa:
       let dataFinal = [];
-      
-      // Caso 1: Nivel 3 (Axios -> Success -> Resource)
       if (response.data?.data?.data && Array.isArray(response.data.data.data)) {
-          dataFinal = response.data.data.data;
-      } 
-      // Caso 2: Nivel 2 (Axios -> Success/Resource)
-      else if (response.data?.data && Array.isArray(response.data.data)) {
-          dataFinal = response.data.data;
-      } 
-      // Caso 3: Nivel 1 (Directo de Axios)
-      else if (Array.isArray(response.data)) {
-          dataFinal = response.data;
+        dataFinal = response.data.data.data;
+      } else if (response.data?.data && Array.isArray(response.data.data)) {
+        dataFinal = response.data.data;
+      } else if (Array.isArray(response.data)) {
+        dataFinal = response.data;
       }
 
-      console.log("✅ DATOS EXTRAÍDOS:", dataFinal);
-      setCategories(dataFinal);
-      
+      // Activos arriba, inactivos abajo
+      const sorted = [...dataFinal].sort((a, b) => (b.activo ? 1 : 0) - (a.activo ? 1 : 0));
+      setCategories(sorted);
     } catch (error) {
-      console.error("❌ ERROR AL TRAER DATOS:", error);
+      console.error('Error al cargar categorías:', error);
       toast.error('Error al cargar categorías');
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchCategories();
-  }, []);
+  useEffect(() => { fetchCategories(); }, []);
 
-  // 2. Función para Crear o Actualizar
+  const handleToggle = async (row) => {
+    try {
+      await api.patch(`/categorias/${row.id}/toggle`);
+      toast.success(`Categoría ${row.activo ? 'desactivada' : 'activada'} correctamente`);
+      await fetchCategories();
+    } catch (error) {
+      toast.error('Error al cambiar el estado de la categoría');
+    }
+  };
+
   const handleSave = async (formData) => {
     try {
       if (formData.id) {
-        // Actualizar
         await api.put(`/categorias/${formData.id}`, formData);
         toast.success('Categoría actualizada correctamente');
       } else {
-        // Crear
         await api.post('/categorias', formData);
         toast.success('Categoría creada correctamente');
       }
-      fetchCategories(); // Refrescar tabla
+      fetchCategories();
       return true;
     } catch (error) {
       const msg = error.response?.data?.message || 'Error al guardar';
@@ -92,7 +95,6 @@ const fetchCategories = async () => {
     }
   };
 
-  // 3. Función para Eliminar
   const handleDelete = async (item) => {
     try {
       await api.delete(`/categorias/${item.id}`);
@@ -110,14 +112,15 @@ const fetchCategories = async () => {
       <CrudPage
         title="Categorías"
         entityName="Categoría"
-        initialData={categories} // Datos del estado (API)
+        initialData={categories}
         columns={columns}
         searchFields={['nombre', 'descripcion']}
         schema={categorySchema}
         FormContent={CategoryForm}
-        onSave={handleSave}      // Conexión para Crear/Editar
-        onDelete={handleDelete}  // Conexión para Eliminar
-        isLoading={loading}      // Feedback visual de carga
+        onSave={handleSave}
+        onDelete={handleDelete}
+        onToggle={handleToggle}
+        isLoading={loading}
       />
     </MainLayout>
   );

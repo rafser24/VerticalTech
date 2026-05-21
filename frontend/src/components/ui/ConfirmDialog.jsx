@@ -1,7 +1,16 @@
 import { AlertTriangle } from 'lucide-react';
 import Modal from './Modal';
 
-export default function ConfirmDialog({ isOpen, onClose, onConfirm, title, message, loading }) {
+export default function ConfirmDialog({
+  isOpen,
+  onClose,
+  onConfirm,
+  title,
+  message,
+  loading,
+  confirmText = 'Eliminar',
+  confirmClass = 'btn-danger',
+}) {
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="" size="sm">
       <div className="text-center space-y-4">
@@ -23,9 +32,9 @@ export default function ConfirmDialog({ isOpen, onClose, onConfirm, title, messa
           <button
             onClick={onConfirm}
             disabled={loading}
-            className="btn-danger disabled:opacity-60"
+            className={`${confirmClass} disabled:opacity-60`}
           >
-            {loading ? 'Eliminando...' : 'Eliminar'}
+            {loading ? 'Procesando...' : confirmText}
           </button>
         </div>
       </div>

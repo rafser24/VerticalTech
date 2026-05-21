@@ -23,13 +23,11 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
       console.error('401 DETECTADO EN LA RUTA:', error.config.url);
-      // Descomentar cuando el backend esté listo:
       // useAuthStore.getState().logout();
       // window.location.href = '/login';
     }
@@ -62,36 +60,43 @@ export const authService = {
 
 // ── Factory CRUD genérico ────────────────────────────────────────────────────
 const crudService = (endpoint) => ({
-  getAll:  (params) => api.get(endpoint, { params }),
-  getById: (id)     => api.get(`${endpoint}/${id}`),
-  create:  (data)   => api.post(endpoint, data),
-  update:  (id, data) => api.put(`${endpoint}/${id}`, data),
-  remove:  (id)     => api.delete(`${endpoint}/${id}`),
-  toggle:  (id)     => api.patch(`${endpoint}/${id}/toggle`),   // activo/inactivo
+  getAll:     (params)     => api.get(endpoint, { params }),
+  getById:    (id)         => api.get(`${endpoint}/${id}`),
+  create:     (data)       => api.post(endpoint, data),
+  update:     (id, data)   => api.put(`${endpoint}/${id}`, data),
+  remove:     (id)         => api.delete(`${endpoint}/${id}`),
+  toggle:     (id)         => api.patch(`${endpoint}/${id}/toggle`),
 });
 
 // ── Servicios de entidades ────────────────────────────────────────────────────
-export const productService      = crudService('/productos');
-export const categoryService     = crudService('/categorias');
-export const supplierService     = crudService('/proveedores');
-export const clientService       = crudService('/clientes');
-export const userService         = crudService('/users');        // ← tabla usuarios, login por 'usuario'
-export const purchaseService     = crudService('/compras');
+export const productService       = crudService('/productos');
+export const categoryService      = crudService('/categorias');
+export const supplierService      = crudService('/proveedores');
+export const clientService        = crudService('/clientes');
+export const userService          = crudService('/users');
+export const paymentMethodService = crudService('/metodos-pago');
+
+export const purchaseService = {
+  ...crudService('/compras'),
+  confirmar:  (id) => api.patch(`/compras/${id}/confirmar`),
+  recibir:    (id) => api.patch(`/compras/${id}/recibir`),
+  anular:     (id) => api.patch(`/compras/${id}/anular`),
+  retroceder: (id) => api.patch(`/compras/${id}/retroceder`),
+};
+
 export const saleService = {
   ...crudService('/ventas'),
-  // Ventas pendientes de transferencia
-  getPendientes:            ()       => api.get('/ventas/pendientes'),
-  createPendiente:          (data)   => api.post('/ventas/pendiente', data),
-  confirmarTransferencia:   (id)     => api.patch(`/ventas/${id}/confirmar-transferencia`),
-  anular:                   (id)     => api.patch(`/ventas/${id}/anular`),
+  getPendientes:          ()     => api.get('/ventas/pendientes'),
+  createPendiente:        (data) => api.post('/ventas/pendiente', data),
+  confirmarTransferencia: (id)   => api.patch(`/ventas/${id}/confirmar-transferencia`),
+  anular:                 (id)   => api.patch(`/ventas/${id}/anular`),
 };
-export const paymentMethodService= crudService('/metodos-pago');
 
 // ── Dashboard ─────────────────────────────────────────────────────────────────
 export const dashboardService = {
-  getStats:        () => api.get('/dashboard/resumen'),
-  getRecentSales:  () => api.get('/dashboard/ventas-por-periodo'),
-  getSalesChart:   (params) => api.get('/dashboard/ventas-por-periodo', { params }),
+  getStats:      ()       => api.get('/dashboard/resumen'),
+  getRecentSales:()       => api.get('/dashboard/ventas-por-periodo'),
+  getSalesChart: (params) => api.get('/dashboard/ventas-por-periodo', { params }),
 };
 
 // ── Auditoría ─────────────────────────────────────────────────────────────────
