@@ -10,35 +10,74 @@ use App\Models\Usuario;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
     use ApiResponse;
 
-    // ─── GET /api/dashboard/resumen ────────────────────────────────────────
+    // ─── HELPER: calcular fecha_inicio y fecha_fin según tipo de período ──
+    private function calcularRango(Request $request): array
+    {
+        $tipo = $request->get('tipo', 'mes'); // dia | semana | mes | anio
+
+        switch ($tipo) {
+
+            case 'dia':
+                $fecha = $request->get('fecha', now()->toDateString());
+                $inicio = Carbon::parse($fecha)->startOfDay();
+                $fin    = Carbon::parse($fecha)->endOfDay();
+                break;
+
+            case 'semana':
+                $fecha  = $request->get('fecha', now()->toDateString());
+                $inicio = Carbon::parse($fecha)->startOfWeek(Carbon::MONDAY);
+                $fin    = Carbon::parse($fecha)->endOfWeek(Carbon::SUNDAY);
+                break;
+
+            case 'anio':
+                $anio   = (int) $request->get('anio', now()->year);
+                $inicio = Carbon::create($anio, 1, 1)->startOfDay();
+                $fin    = Carbon::create($anio, 12, 31)->endOfDay();
+                break;
+
+            case 'mes':
+            default:
+                $mes    = (int) $request->get('mes',  now()->month);
+                $anio   = (int) $request->get('anio', now()->year);
+                $inicio = Carbon::create($anio, $mes, 1)->startOfDay();
+                $fin    = Carbon::create($anio, $mes, 1)->endOfMonth()->endOfDay();
+                break;
+        }
+
+        return [
+            'inicio' => $inicio,
+            'fin'    => $fin,
+            'tipo'   => $tipo,
+        ];
+    }
+
+    // ─── GET /api/dashboard/resumen ───────────────────────────────────────
     public function resumen(Request $request)
     {
         try {
-            $mes  = (int) $request->get('mes',  now()->month);
-            $anio = (int) $request->get('anio', now()->year);
-            $hoy  = now()->toDateString();
+            $rango = $this->calcularRango($request);
+            $inicio = $rango['inicio'];
+            $fin    = $rango['fin'];
+            $hoy    = now()->toDateString();
 
             $ventasHoy = Venta::whereDate('fecha_venta', $hoy)
                 ->where('estado', 'completada');
 
-            $ventasMes = Venta::whereMonth('fecha_venta', $mes)
-                ->whereYear('fecha_venta', $anio)
+            $ventasPeriodo = Venta::whereBetween('fecha_venta', [$inicio, $fin])
                 ->where('estado', 'completada');
 
-            // Nota: ajusta 'fecha_venta' al nombre real de la columna fecha en la tabla compras
-            $comprasMes = Compra::whereMonth('fecha_compra', $mes)
-                ->whereYear('fecha_compra', $anio)
+            $comprasPeriodo = Compra::whereBetween('fecha_compra', [$inicio, $fin])
                 ->where('estado', 'completada');
 
-            $ingresosMes = (float) $ventasMes->sum('total');
-            $egresosMes  = (float) $comprasMes->sum('total');
+            $ingresosPeriodo = (float) $ventasPeriodo->sum('total');
+            $egresosPeriodo  = (float) $comprasPeriodo->sum('total');
 
-            // CORRECCIÓN: orden correcto → success($data, $message, $status, $meta)
             return $this->success([
                 'ventas' => [
                     'hoy' => [
@@ -46,32 +85,30 @@ class DashboardController extends Controller
                         'total'    => (float) $ventasHoy->sum('total'),
                     ],
                     'mes' => [
-                        'cantidad' => $ventasMes->count(),
-                        'total'    => $ingresosMes,
+                        'cantidad' => $ventasPeriodo->count(),
+                        'total'    => $ingresosPeriodo,
                     ],
                 ],
                 'compras' => [
                     'mes' => [
-                        'cantidad' => $comprasMes->count(),
-                        'total'    => $egresosMes,
+                        'cantidad' => $comprasPeriodo->count(),
+                        'total'    => $egresosPeriodo,
                     ],
                 ],
-                'margen_mes'           => round($ingresosMes - $egresosMes, 2),
+                'margen_mes'           => round($ingresosPeriodo - $egresosPeriodo, 2),
                 'total_clientes'       => Cliente::where('activo', true)->count(),
                 'total_productos'      => Producto::where('activo', true)->count(),
                 'total_usuarios'       => Usuario::where('activo', true)->count(),
                 'productos_stock_bajo' => Producto::where('activo', true)
                     ->whereRaw('stock <= stock_minimo')
                     ->count(),
-                // Aliases planos para DashboardPage.jsx
-                'total_sales'     => $ingresosMes,
+                'total_sales'     => $ingresosPeriodo,
                 'total_products'  => Producto::where('activo', true)->count(),
                 'total_clients'   => Cliente::where('activo', true)->count(),
                 'low_stock_count' => Producto::where('activo', true)
                     ->whereRaw('stock <= stock_minimo')
                     ->count(),
-                // Ventas recientes para la tabla del dashboard
-                'recent_sales'    => Venta::with('cliente')
+                'recent_sales' => Venta::with('cliente')
                     ->where('estado', 'completada')
                     ->orderBy('fecha_venta', 'desc')
                     ->limit(10)
@@ -91,7 +128,7 @@ class DashboardController extends Controller
         }
     }
 
-    // ─── GET /api/dashboard/ventas-por-periodo ─────────────────────────────
+    // ─── GET /api/dashboard/ventas-por-periodo ────────────────────────────
     public function ventasPorPeriodo()
     {
         try {
@@ -107,7 +144,6 @@ class DashboardController extends Controller
                 ORDER BY periodo ASC
             ");
 
-            // CORRECCIÓN: orden correcto → success($data, $message, $status, $meta)
             return $this->success($datos, 'Ventas por período (últimos 12 meses)');
 
         } catch (\Throwable $th) {
@@ -115,70 +151,74 @@ class DashboardController extends Controller
         }
     }
 
-    // ─── GET /api/dashboard/productos-mas-vendidos ─────────────────────────
+    // ─── GET /api/dashboard/productos-mas-vendidos ───────────────────────
     public function productosMasVendidos(Request $request)
     {
         try {
-            $mes  = (int) $request->get('mes',  now()->month);
-            $anio = (int) $request->get('anio', now()->year);
+            $rango  = $this->calcularRango($request);
+            $inicio = $rango['inicio'];
+            $fin    = $rango['fin'];
 
-            $productos = DB::select("
-                SELECT
-                    p.id_producto,
-                    p.nombre_producto,
-                    p.marca,
-                    SUM(dv.cantidad) AS unidades_vendidas,
-                    SUM(dv.subtotal) AS total_generado
-                FROM detalle_venta dv
-                JOIN ventas    v ON v.id          = dv.id_venta
-                               AND v.estado       = 'completada'
-                               AND EXTRACT(MONTH FROM v.fecha_venta) = :mes
-                               AND EXTRACT(YEAR  FROM v.fecha_venta) = :anio
-                JOIN productos p ON p.id_producto = dv.id_producto
-                GROUP BY p.id_producto, p.nombre_producto, p.marca
-                ORDER BY unidades_vendidas DESC
-                LIMIT 10
-            ", ['mes' => $mes, 'anio' => $anio]);
+            $productos = DB::table('detalle_venta')
+                ->join('productos', 'detalle_venta.producto_id', '=', 'productos.id')
+                ->join('ventas', 'detalle_venta.venta_id', '=', 'ventas.id')
+                ->select(
+                    'productos.id',
+                    'productos.nombre as nombre_producto',
+                    DB::raw('SUM(detalle_venta.cantidad) as unidades_vendidas'),
+                    DB::raw('SUM(detalle_venta.subtotal) as total_generado')
+                )
+                ->whereBetween('ventas.fecha_venta', [$inicio, $fin])
+                ->where('ventas.estado', 'completada')
+                ->groupBy('productos.id', 'productos.nombre')
+                ->orderByDesc('unidades_vendidas')
+                ->limit(15)
+                ->get();
 
-            return $this->success($productos, 'Top 10 productos más vendidos');
+            return response()->json($productos);
 
         } catch (\Throwable $th) {
             return $this->error('Error al obtener productos más vendidos: ' . $th->getMessage());
         }
     }
 
-    // ─── GET /api/dashboard/top-clientes ──────────────────────────────────
+    // ─── GET /api/dashboard/top-clientes ─────────────────────────────────
     public function topClientes(Request $request)
     {
         try {
-            $mes  = (int) $request->get('mes',  now()->month);
-            $anio = (int) $request->get('anio', now()->year);
+            $rango  = $this->calcularRango($request);
+            $inicio = $rango['inicio'];
+            $fin    = $rango['fin'];
 
-            $clientes = DB::select("
-                SELECT
-                    c.id_cliente,
-                    c.nombre,
-                    c.telefono,
-                    COUNT(v.id)  AS total_compras,
-                    SUM(v.total) AS total_gastado
-                FROM clientes c
-                JOIN ventas v ON v.cliente_id = c.id_cliente
-                             AND v.estado     = 'completada'
-                             AND EXTRACT(MONTH FROM v.fecha_venta) = :mes
-                             AND EXTRACT(YEAR  FROM v.fecha_venta) = :anio
-                GROUP BY c.id_cliente, c.nombre, c.telefono
-                ORDER BY total_gastado DESC
-                LIMIT 10
-            ", ['mes' => $mes, 'anio' => $anio]);
+            $clientes = DB::table('ventas')
+                ->join('clientes', 'ventas.cliente_id', '=', 'clientes.id')
+                ->select(
+                    'clientes.id',
+                    DB::raw("CONCAT(clientes.nombre, ' ', clientes.apellido) as nombre_cliente"),
+                    'clientes.telefono',
+                    DB::raw('COUNT(ventas.id) as total_compras'),
+                    DB::raw('SUM(ventas.total) as total_gastado')
+                )
+                ->whereBetween('ventas.fecha_venta', [$inicio, $fin])
+                ->where('ventas.estado', 'completada')
+                ->groupBy(
+                    'clientes.id',
+                    'clientes.nombre',
+                    'clientes.apellido',
+                    'clientes.telefono'
+                )
+                ->orderByDesc('total_gastado')
+                ->limit(10)
+                ->get();
 
-            return $this->success($clientes, 'Top 10 clientes del período');
+            return response()->json($clientes);
 
         } catch (\Throwable $th) {
             return $this->error('Error al obtener top clientes: ' . $th->getMessage());
         }
     }
 
-    // ─── GET /api/dashboard/stock-bajo ────────────────────────────────────
+    // ─── GET /api/dashboard/stock-bajo ───────────────────────────────────
     public function stockBajo()
     {
         try {
@@ -188,13 +228,12 @@ class DashboardController extends Controller
                 ->orderBy('stock', 'asc')
                 ->get()
                 ->map(fn($p) => [
-                    'id_producto'     => $p->id_producto,
-                    'nombre_producto' => $p->nombre_producto,
-                    'marca'           => $p->marca,
-                    'stock_actual'    => $p->stock,
+                    'id'              => $p->id,
+                    'nombre'          => $p->nombre,
+                    'stock'           => $p->stock,
                     'stock_minimo'    => $p->stock_minimo,
                     'diferencia'      => $p->stock_minimo - $p->stock,
-                    'categoria'       => $p->categoria?->nombre_categoria,
+                    'categoria'       => $p->categoria?->nombre,
                     'proveedor'       => $p->proveedor?->nombre,
                 ]);
 
@@ -205,59 +244,61 @@ class DashboardController extends Controller
         }
     }
 
-    // ─── GET /api/dashboard/reporte-ventas ────────────────────────────────
+    // ─── GET /api/dashboard/reporte-ventas ───────────────────────────────
     public function reporteVentas(Request $request)
     {
         try {
-            $mes  = (int) $request->get('mes',  now()->month);
-            $anio = (int) $request->get('anio', now()->year);
+            $rango  = $this->calcularRango($request);
+            $inicio = $rango['inicio'];
+            $fin    = $rango['fin'];
 
-            $ventas      = Venta::with(['cliente', 'usuario', 'metodoPago', 'detalles.producto'])
-                ->whereMonth('fecha_venta', $mes)
-                ->whereYear('fecha_venta', $anio)
+            $ventas = Venta::with(['cliente', 'usuario', 'metodoPago', 'detalles.producto'])
+                ->whereBetween('fecha_venta', [$inicio, $fin])
                 ->orderBy('fecha_venta', 'desc')
                 ->get();
 
             $completadas = $ventas->where('estado', 'completada');
 
             return $this->success([
-                'mes'      => $mes,
-                'anio'     => $anio,
+                'tipo'     => $rango['tipo'],
+                'inicio'   => $inicio->toDateString(),
+                'fin'      => $fin->toDateString(),
                 'cantidad' => $ventas->count(),
                 'total'    => (float) $completadas->sum('total'),
                 'promedio' => $completadas->count() > 0
                     ? round($completadas->sum('total') / $completadas->count(), 2)
                     : 0,
                 'ventas'   => $ventas,
-            ], "Reporte de ventas — {$mes}/{$anio}");
+            ], 'Reporte de ventas');
 
         } catch (\Throwable $th) {
             return $this->error('Error al generar reporte de ventas: ' . $th->getMessage());
         }
     }
 
-    // ─── GET /api/dashboard/reporte-compras ───────────────────────────────
+    // ─── GET /api/dashboard/reporte-compras ──────────────────────────────
     public function reporteCompras(Request $request)
     {
         try {
-            $mes  = (int) $request->get('mes',  now()->month);
-            $anio = (int) $request->get('anio', now()->year);
+            $rango  = $this->calcularRango($request);
+            $inicio = $rango['inicio'];
+            $fin    = $rango['fin'];
 
-            $compras     = Compra::with(['proveedor', 'usuario', 'detalles.producto'])
-                ->whereMonth('fecha_compra', $mes)
-                ->whereYear('fecha_compra', $anio)
+            $compras = Compra::with(['proveedor', 'usuario', 'detalles.producto'])
+                ->whereBetween('fecha_compra', [$inicio, $fin])
                 ->orderBy('fecha_compra', 'desc')
                 ->get();
 
             $completadas = $compras->where('estado', 'completada');
 
             return $this->success([
-                'mes'      => $mes,
-                'anio'     => $anio,
+                'tipo'     => $rango['tipo'],
+                'inicio'   => $inicio->toDateString(),
+                'fin'      => $fin->toDateString(),
                 'cantidad' => $compras->count(),
                 'total'    => (float) $completadas->sum('total'),
                 'compras'  => $compras,
-            ], "Reporte de compras — {$mes}/{$anio}");
+            ], 'Reporte de compras');
 
         } catch (\Throwable $th) {
             return $this->error('Error al generar reporte de compras: ' . $th->getMessage());

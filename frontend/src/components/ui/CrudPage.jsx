@@ -55,13 +55,13 @@ export default function CrudPage({
 
   const onSubmit = async (data) => {
     if (onSave) {
-    
+
       const success = await onSave({ ...data, id: editing?.id });
       if (success) {
         closeModal();
       }
     } else {
-     
+
       if (editing) {
         setItems(prev => prev.map(i => i.id === editing.id ? { ...i, ...data } : i));
         toast.success(`${entityName} actualizado exitosamente`);
@@ -73,7 +73,7 @@ export default function CrudPage({
     }
   };
 
- 
+
   const handleDeleteConfirm = async () => {
     if (onDelete) {
       const success = await onDelete(deleteTarget);
@@ -95,7 +95,7 @@ export default function CrudPage({
           {isLoading ? 'Cargando...' : `${items.length} registros`}
         </p>
         {canCreate && (
-          <button onClick={openCreate} className="btn-primary flex items-center gap-2">
+          <button onClick={openCreate} className="flex items-center gap-2 btn-primary">
             <Plus size={16} /> Nuevo {entityName}
           </button>
         )}
@@ -107,14 +107,14 @@ export default function CrudPage({
           columns={columns}
           searchFields={searchFields}
           actions={(row) => (
-            <>
+            <div className="flex items-center gap-1">
               <button onClick={() => openEdit(row)} className="p-1.5 hover:bg-pastel-primary/20 rounded-lg transition-colors text-blue-600">
                 <Pencil size={14} />
               </button>
               <button onClick={() => setDeleteTarget(row)} className="p-1.5 hover:bg-pastel-accent/30 rounded-lg transition-colors text-red-500">
                 <Trash2 size={14} />
               </button>
-            </>
+            </div>
           )}
         />
       </div>
@@ -123,7 +123,7 @@ export default function CrudPage({
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <FormContent register={register} errors={errors} watch={watch} setValue={setValue} editing={editing} />
           <div className="flex justify-end gap-3 pt-2 border-t border-gray-100">
-            <button type="button" onClick={closeModal} className="btn-ghost border border-gray-200">Cancelar</button>
+            <button type="button" onClick={closeModal} className="border border-gray-200 btn-ghost">Cancelar</button>
             <button type="submit" className="btn-primary" disabled={isLoading}>
               {editing ? 'Guardar cambios' : `Crear ${entityName}`}
             </button>

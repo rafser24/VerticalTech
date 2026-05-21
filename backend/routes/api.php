@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\Catalogos\MetodoPagoController;
 use App\Http\Controllers\Api\Catalogos\ProductoController;
 use App\Http\Controllers\Api\Catalogos\ProveedorController;
 use App\Http\Controllers\Api\Compras\CompraController;
+use App\Http\Controllers\Api\Configuracion\ConfiguracionController;
 use App\Http\Controllers\Api\Dashboard\DashboardController;
 use App\Http\Controllers\Api\Ventas\VentaController;
 use App\Http\Controllers\Auth\AuthenticationController;
@@ -48,33 +49,36 @@ Route::prefix('auth')->group(function () {
 // ═══════════════════════════════════════════════════════════════════════════════
 // ── Dashboard — accesible para todos los roles autenticados ─────────────
 // Estos endpoints alimentan tanto DashboardPage como ReportsPage
-Route::prefix('dashboard')->group(function () {
-    // Stats para DashboardPage.jsx → GET /api/dashboard/stats
-    Route::get('/stats',                  [DashboardController::class, 'stats']);
+Route::prefix('dashboard')
+    ->middleware('auth:api') // el middleware para que usem toquen iguaal que todos
+    ->group(function () {
 
-    // Resumen con filtro mes/año para ReportsPage → GET /api/dashboard/resumen
-    Route::get('/resumen',                [DashboardController::class, 'resumen']);
+    // Stats para DashboardPage.jsx
+    Route::get('/stats', [DashboardController::class, 'stats']);
 
-    // Gráfico 12 meses → GET /api/dashboard/ventas-por-periodo
-    Route::get('/ventas-por-periodo',     [DashboardController::class, 'ventasPorPeriodo']);
+    // Resumen reportes
+    Route::get('/resumen', [DashboardController::class, 'resumen']);
 
-    // Top productos → GET /api/dashboard/productos-mas-vendios?mes=5&anio=2026
-    Route::get('/productos-mas-vendios', [DashboardController::class, 'productosMasVendios']);
+    // Ventas por periodo
+    Route::get('/ventas-por-periodo', [DashboardController::class, 'ventasPorPeriodo']);
 
-    // Top clientes → GET /api/dashboard/top-clientes?mes=5&anio=2026
-    Route::get('/top-clientes',           [DashboardController::class, 'topClientes']);
+    // Productos más vendidos
+    Route::get('/productos-mas-vendidos', [DashboardController::class, 'productosMasVendidos']);
 
-    // Alerta stock → GET /api/dashboard/stock-bajo
-    Route::get('/stock-bajo',             [DashboardController::class, 'stockBajo']);
+    // Top clientes
+    Route::get('/top-clientes', [DashboardController::class, 'topClientes']);
 
-    // Reportes detallados (solo admin) → GET /api/dashboard/reporte-ventas?mes=5&anio=2026
-    Route::get('/reporte-ventas',  [DashboardController::class, 'reporteVentas'])
+    // Stock bajo
+    Route::get('/stock-bajo', [DashboardController::class, 'stockBajo']);
+
+    // Reporte ventas
+    Route::get('/reporte-ventas', [DashboardController::class, 'reporteVentas'])
         ->middleware('role:super-admin|admin');
 
+    // Reporte compras
     Route::get('/reporte-compras', [DashboardController::class, 'reporteCompras'])
         ->middleware('role:super-admin|admin|bodeguero');
 });
-
 
 // ── Usuarios (solo admin) ───────────────────────────────────────────────
 // Nota: las rutas estáticas DEBEN ir antes que las dinámicas {i}
@@ -234,3 +238,15 @@ Route::prefix('users')->middleware(['auth:api', 'role:super-admin|admin'])->grou
         Route::get('/',     [AuditoriaController::class, 'index']);
         Route::get('/{i}', [AuditoriaController::class, 'show']);
     });
+    Route::prefix('configuracion')->middleware('auth:api')->group(function () {
+    // Ver y editar datos de la empresa — solo admin y super-admin
+    Route::get('/empresa',  [ConfiguracionController::class, 'getEmpresa'])
+        ->middleware('role:super-admin|admin');
+
+    // POST porque necesita soportar subida de archivo (logo) con multipart/form-data
+    Route::post('/empresa', [ConfiguracionController::class, 'updateEmpresa'])
+        ->middleware('role:super-admin|admin');
+
+    // Cambiar contraseña — cualquier usuario autenticado puede cambiar la suya
+    Route::post('/cambiar-password', [ConfiguracionController::class, 'cambiarPassword']);
+});

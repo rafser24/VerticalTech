@@ -3,7 +3,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { Eye, EyeOff, Lock, User } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';  // ← useEffect añadido
 import axios from 'axios';
 import { loginSchema } from '../schemas';
 import useAuthStore from '../store/authStore';
@@ -255,11 +255,22 @@ const styles = `
 
 /* ─── Component ─────────────────────────────────────────────────────────── */
 export default function LoginPage() {
-  const navigate      = useNavigate();
-  const login         = useAuthStore((s) => s.login);
+  const navigate = useNavigate();
+  const login = useAuthStore((s) => s.login);
   const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading]           = useState(false);
-  const [remember, setRemember]         = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [remember, setRemember] = useState(false);
+
+  // ── Inyectar estilos de forma segura, sin <style> en el JSX ──────────
+  useEffect(() => {
+    const tag = document.createElement('style');
+    tag.setAttribute('data-vt-login', '');
+    tag.textContent = styles;
+    document.head.appendChild(tag);
+    return () => {
+      document.head.removeChild(tag);
+    };
+  }, []);
 
   const { register, handleSubmit, formState: { errors } } = useForm({
     resolver: zodResolver(loginSchema),
@@ -271,8 +282,8 @@ export default function LoginPage() {
       const response = await api.post('/auth/login', data);
 
       const payload = response.data?.data || response.data;
-      const token   = payload?.access_token || payload?.token;
-      const user    = payload?.user;
+      const token = payload?.access_token || payload?.token;
+      const user = payload?.user;
 
       if (!token) {
         toast.error('Error del servidor: No se generó el token de acceso.');
@@ -283,7 +294,7 @@ export default function LoginPage() {
         return;
       }
 
-      const roles       = payload?.roles       || [];
+      const roles = payload?.roles || [];
       const permissions = payload?.permissions || [];
       login(user, token, roles, permissions);
 
@@ -294,7 +305,7 @@ export default function LoginPage() {
       let errorMessage = 'Error de conexión con el servidor';
 
       if (error.response) {
-        const backendMessage   = error.response.data?.message;
+        const backendMessage = error.response.data?.message;
         const validationErrors = error.response.data?.errors;
 
         if (validationErrors?.usuario) {
@@ -316,10 +327,15 @@ export default function LoginPage() {
     }
   };
 
+  // ── Ya no hay <style>{styles}</style> aquí ───────────────────────────
   return (
-    <>
-      <style>{styles}</style>
+    <div className="vt-scene">
+      {/* Pastel blobs */}
+      <div className="vt-blob vt-blob-1" />
+      <div className="vt-blob vt-blob-2" />
+      <div className="vt-blob vt-blob-3" />
 
+<<<<<<< Updated upstream
       <div className="vt-scene">
         {/* Pastel blobs */}
         <div className="vt-blob vt-blob-1" />
@@ -407,8 +423,90 @@ export default function LoginPage() {
             <p className="vt-footer">
               © {new Date().getFullYear()} VerticalTech · Todos los derechos reservados
             </p>
+=======
+      <div className="vt-card">
+        <div className="vt-card-header">
+          <p className="vt-card-eyebrow">VerticalTech</p>
+          <h2 className="vt-card-title">Bienvenido</h2>
+          <p className="vt-card-sub">Accede a tu panel de gestión</p>
+>>>>>>> Stashed changes
         </div>
+
+        <form onSubmit={handleSubmit(onSubmit)} className="vt-form" noValidate>
+          {/* Usuario */}
+          <div className="vt-field">
+            <label className="vt-label" htmlFor="usuario">Usuario</label>
+            <div className="vt-input-wrap">
+              <span className="vt-input-icon"><User size={16} /></span>
+              <input
+                {...register('usuario')}
+                id="usuario"
+                type="text"
+                placeholder="Nombre de usuario"
+                className={`vt-input${errors.usuario ? ' error' : ''}`}
+                autoComplete="username"
+              />
+            </div>
+            {errors.usuario && (
+              <p className="vt-error-msg">{errors.usuario.message}</p>
+            )}
+          </div>
+
+          {/* Contraseña */}
+          <div className="vt-field">
+            <label className="vt-label" htmlFor="password">Contraseña</label>
+            <div className="vt-input-wrap">
+              <span className="vt-input-icon"><Lock size={16} /></span>
+              <input
+                {...register('password')}
+                id="password"
+                type={showPassword ? 'text' : 'password'}
+                placeholder="••••••••"
+                className={`vt-input${errors.password ? ' error' : ''}`}
+                style={{ paddingRight: '2.75rem' }}
+                autoComplete="current-password"
+              />
+              <button
+                type="button"
+                className="vt-eye-btn"
+                onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+              >
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
+            {errors.password && (
+              <p className="vt-error-msg">{errors.password.message}</p>
+            )}
+          </div>
+
+          {/* Recordarme */}
+          <div className="vt-remember">
+            <input
+              type="checkbox"
+              id="remember"
+              className="vt-checkbox"
+              checked={remember}
+              onChange={(e) => setRemember(e.target.checked)}
+            />
+            <label className="vt-remember-label" htmlFor="remember">Recordarme</label>
+          </div>
+
+          {/* Submit */}
+          <button type="submit" disabled={loading} className="vt-btn">
+            {loading ? (
+              <span className="flex items-center justify-center gap-2">
+                <span className="vt-spinner" />
+                <span>Iniciando sesión…</span>
+              </span>
+            ) : 'Ingresar'}
+          </button>
+        </form>
+
+        <p className="vt-footer">
+          © {new Date().getFullYear()} VerticalTech · Todos los derechos reservados
+        </p>
       </div>
-    </>
+    </div>
   );
 }

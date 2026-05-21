@@ -13,9 +13,9 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     const token = useAuthStore.getState().getToken();
-    console.log("Token a enviar a la ruta", config.url, ":", token);
     if (token) config.headers.Authorization = `Bearer ${token}`;
-    if (config.data && typeof config.data === 'object') {
+    // Si es FormData (subida de archivos) NO sanitizar — lo dejamos pasar directo
+    if (config.data && typeof config.data === 'object' && !(config.data instanceof FormData)) {
       config.data = sanitizeObject(config.data);
     }
     return config;
@@ -55,47 +55,47 @@ function sanitizeObject(obj) {
 
 // ── Auth ─────────────────────────────────────────────────────────────────────
 export const authService = {
-  login:  (creds) => api.post('/auth/login', creds),
-  logout: ()      => api.post('/auth/logout'),
-  me:     ()      => api.get('/auth/me'),
+  login: (creds) => api.post('/auth/login', creds),
+  logout: () => api.post('/auth/logout'),
+  me: () => api.get('/auth/me'),
 };
 
 // ── Factory CRUD genérico ────────────────────────────────────────────────────
 const crudService = (endpoint) => ({
-  getAll:  (params) => api.get(endpoint, { params }),
-  getById: (id)     => api.get(`${endpoint}/${id}`),
-  create:  (data)   => api.post(endpoint, data),
-  update:  (id, data) => api.put(`${endpoint}/${id}`, data),
-  remove:  (id)     => api.delete(`${endpoint}/${id}`),
-  toggle:  (id)     => api.patch(`${endpoint}/${id}/toggle`),   // activo/inactivo
+  getAll: (params) => api.get(endpoint, { params }),
+  getById: (id) => api.get(`${endpoint}/${id}`),
+  create: (data) => api.post(endpoint, data),
+  update: (id, data) => api.put(`${endpoint}/${id}`, data),
+  remove: (id) => api.delete(`${endpoint}/${id}`),
+  toggle: (id) => api.patch(`${endpoint}/${id}/toggle`),   // activo/inactivo
 });
 
 // ── Servicios de entidades ────────────────────────────────────────────────────
-export const productService      = crudService('/productos');
-export const categoryService     = crudService('/categorias');
-export const supplierService     = crudService('/proveedores');
-export const clientService       = crudService('/clientes');
-export const userService         = crudService('/users');        // ← tabla usuarios, login por 'usuario'
-export const purchaseService     = crudService('/compras');
-export const saleService         = crudService('/ventas');
-export const paymentMethodService= crudService('/metodos-pago');
+export const productService = crudService('/productos');
+export const categoryService = crudService('/categorias');
+export const supplierService = crudService('/proveedores');
+export const clientService = crudService('/clientes');
+export const userService = crudService('/users');        // ← tabla usuarios, login por 'usuario'
+export const purchaseService = crudService('/compras');
+export const saleService = crudService('/ventas');
+export const paymentMethodService = crudService('/metodos-pago');
 
 // ── Dashboard ─────────────────────────────────────────────────────────────────
 export const dashboardService = {
-  getStats:        () => api.get('/dashboard/resumen'),
-  getRecentSales:  () => api.get('/dashboard/ventas-por-periodo'),
-  getSalesChart:   (params) => api.get('/dashboard/ventas-por-periodo', { params }),
+  getStats: () => api.get('/dashboard/resumen'),
+  getRecentSales: () => api.get('/dashboard/ventas-por-periodo'),
+  getSalesChart: (params) => api.get('/dashboard/ventas-por-periodo', { params }),
 };
 
 // ── Reportes ─────────────────────────────────────────────────────────────────
 export const reportService = {
-  getSummary:         (params) => api.get('/dashboard/resumen',                { params }),
-  getSalesByPeriod:   (params) => api.get('/dashboard/ventas-por-periodo',     { params }),
-  getTopProducts:     (params) => api.get('/dashboard/productos-mas-vendidos', { params }),
-  getTopClients:      (params) => api.get('/dashboard/top-clientes',           { params }),
-  getLowStock:        ()       => api.get('/dashboard/stock-bajo'),
-  getSalesReport:     (params) => api.get('/dashboard/reporte-ventas',         { params }),
-  getPurchasesReport: (params) => api.get('/dashboard/reporte-compras',        { params }),
+  getSummary: (params) => api.get('/dashboard/resumen', { params }),
+  getSalesByPeriod: (params) => api.get('/dashboard/ventas-por-periodo', { params }),
+  getTopProducts: (params) => api.get('/dashboard/productos-mas-vendidos', { params }),
+  getTopClients: (params) => api.get('/dashboard/top-clientes', { params }),
+  getLowStock: () => api.get('/dashboard/stock-bajo'),
+  getSalesReport: (params) => api.get('/dashboard/reporte-ventas', { params }),
+  getPurchasesReport: (params) => api.get('/dashboard/reporte-compras', { params }),
 };
 
 export default api;
