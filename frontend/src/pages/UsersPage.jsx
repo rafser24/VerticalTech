@@ -55,7 +55,6 @@ const rolBadgeColors = {
   tecnico:       'bg-yellow-100 text-yellow-800',
   bodeguero:     'bg-pastel-secondary text-green-800',
 };
-
 const rolLabels = {
   'super-admin': 'Super Admin',
   admin:         'Administrador',
@@ -79,7 +78,6 @@ function UserForm({ register, errors, editing }) {
           <FormInput register={register('apellido')} placeholder="Ej. Pérez" error={errors.apellido} />
         </FormField>
       </div>
-
       <div className="grid grid-cols-2 gap-4">
         <FormField label="Usuario (login)" required error={errors.usuario?.message}>
           <FormInput register={register('usuario')} placeholder="juan_v" error={errors.usuario} />
@@ -88,7 +86,6 @@ function UserForm({ register, errors, editing }) {
           <FormInput register={register('correo')} type="email" placeholder="contacto@tienda.com" error={errors.correo} />
         </FormField>
       </div>
-
       <div className="grid grid-cols-2 gap-4">
         <FormField
           label={editing ? 'Nueva contraseña (vacío = sin cambios)' : 'Contraseña'}
@@ -112,7 +109,6 @@ function UserForm({ register, errors, editing }) {
             </button>
           </div>
         </FormField>
-
         <FormField label="Confirmar contraseña" required={!editing} error={errors.password_confirmation?.message}>
           <div className="relative">
             <FormInput
@@ -132,7 +128,6 @@ function UserForm({ register, errors, editing }) {
           </div>
         </FormField>
       </div>
-
       <FormField label="Rol del sistema" required error={errors.rol?.message}>
         <FormSelect register={register('rol')} error={errors.rol}>
           <option value="">Seleccionar rol...</option>
@@ -142,7 +137,6 @@ function UserForm({ register, errors, editing }) {
           <option value="bodeguero">Bodeguero</option>
         </FormSelect>
       </FormField>
-
       {editing && (
         <FormField label="Estado" error={errors.activo?.message}>
           <div className="flex items-center gap-2">
@@ -164,18 +158,16 @@ function UserForm({ register, errors, editing }) {
 
 // ─── Página principal ─────────────────────────────────────────────────────────
 export default function UsersPage() {
-  const [users, setUsers]               = useState([]);
-  const [loading, setLoading]           = useState(true);
-  const [modalOpen, setModalOpen]       = useState(false);
-  const [editing, setEditing]           = useState(null);
+  const [users, setUsers]             = useState([]);
+  const [loading, setLoading]         = useState(true);
+  const [modalOpen, setModalOpen]     = useState(false);
+  const [editing, setEditing]         = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
 
   const schema = editing ? editUserSchema : createUserSchema;
-
   const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm({
     resolver: zodResolver(schema),
   });
-
   const currentUser = useAuthStore((s) => s.user);
 
   // ── Carga ──────────────────────────────────────────────────────────
@@ -194,7 +186,6 @@ export default function UsersPage() {
       setLoading(false);
     }
   };
-
   useEffect(() => { fetchUsers(); }, []);
 
   // ── Toggle activo/inactivo ─────────────────────────────────────────
@@ -237,13 +228,12 @@ export default function UsersPage() {
 
   // ── Guardar ────────────────────────────────────────────────────────
   const onSubmit = async (data) => {
-    const id = editing?.id ?? editing?.id_usuario;
+    const id      = editing?.id ?? editing?.id_usuario;
     const payload = { ...data };
     if (editing && !payload.password) {
       delete payload.password;
       delete payload.password_confirmation;
     }
-
     try {
       if (editing) {
         if (!id) throw new Error('ID de usuario inválido');
@@ -285,7 +275,7 @@ export default function UsersPage() {
       label: 'Nombre',
       render: (v, row) => (
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-pastel-primary flex items-center justify-center text-blue-800 font-bold text-xs shrink-0">
+          <div className="flex items-center justify-center w-8 h-8 text-xs font-bold text-blue-800 rounded-full bg-pastel-primary shrink-0">
             {v?.charAt(0)?.toUpperCase() || '?'}
           </div>
           <div>
@@ -301,17 +291,17 @@ export default function UsersPage() {
       render: v => <span className="text-sm text-gray-600">{v || '—'}</span>,
     },
     {
-  key: 'roles',
-  label: 'Rol',
-  render: (v, row) => {
-    const rol = (v?.[0]) ?? row.rol ?? null;
-    return (
-      <span className={`badge ${rolBadgeColors[rol] || 'bg-gray-100 text-gray-600'}`}>
-        {rolLabels[rol] || rol || '—'}
-      </span>
-    );
-  },
-},
+      key: 'roles',
+      label: 'Rol',
+      render: (v, row) => {
+        const rol = v?.[0] ?? row.rol ?? null;
+        return (
+          <span className={`badge ${rolBadgeColors[rol] || 'bg-gray-100 text-gray-600'}`}>
+            {rolLabels[rol] || rol || '—'}
+          </span>
+        );
+      },
+    },
     {
       key: 'activo',
       label: 'Estado',
@@ -333,30 +323,28 @@ export default function UsersPage() {
   // ── Render ─────────────────────────────────────────────────────────
   return (
     <MainLayout title="Usuarios">
-      <div className="mb-4 bg-pastel-purple/30 border border-purple-200 rounded-xl p-3 flex items-center gap-2 text-sm text-purple-800">
+      <div className="flex items-center gap-2 p-3 mb-4 text-sm text-purple-800 border border-purple-200 bg-pastel-purple/30 rounded-xl">
         <ShieldCheck size={16} className="shrink-0" />
         Sección exclusiva para administradores. Gestiona el acceso al sistema.
       </div>
-
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <p className="text-sm text-gray-500">
             {loading ? 'Cargando...' : `${users.length} usuarios registrados`}
           </p>
-          <button onClick={openCreate} className="btn-primary flex items-center gap-2">
+          <button onClick={openCreate} className="flex items-center gap-2 btn-primary">
             <Plus size={16} /> Nuevo Usuario
           </button>
         </div>
-
         <div className="card">
           <DataTable
-            data={[...users].sort((a, b) => (b.activo ? 1 : 0) - (a.activo ? 1 : 0))}
+            data={users}
             columns={columns}
             searchFields={['nombre', 'usuario', 'correo', 'rol']}
             actions={(row) => {
               const esMiUsuario = (row.id ?? row.id_usuario) === (currentUser?.id ?? currentUser?.id_usuario);
               return (
-                <>
+                <div className="flex items-center gap-1">
                   <button
                     onClick={() => openEdit(row)}
                     className="p-1.5 hover:bg-pastel-primary/20 rounded-lg transition-colors text-blue-600"
@@ -393,7 +381,7 @@ export default function UsersPage() {
                       <Trash2 size={14} />
                     </button>
                   )}
-                </>
+                </div>
               );
             }}
           />
@@ -410,7 +398,7 @@ export default function UsersPage() {
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <UserForm register={register} errors={errors} editing={editing} />
           <div className="flex justify-end gap-3 pt-2 border-t border-gray-100">
-            <button type="button" onClick={closeModal} className="btn-ghost border border-gray-200">
+            <button type="button" onClick={closeModal} className="border border-gray-200 btn-ghost">
               Cancelar
             </button>
             <button type="submit" className="btn-primary" disabled={isSubmitting}>

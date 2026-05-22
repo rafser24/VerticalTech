@@ -13,9 +13,9 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     const token = useAuthStore.getState().getToken();
-    console.log("Token a enviar a la ruta", config.url, ":", token);
     if (token) config.headers.Authorization = `Bearer ${token}`;
-    if (config.data && typeof config.data === 'object') {
+    // Si es FormData (subida de archivos) NO sanitizar — lo dejamos pasar directo
+    if (config.data && typeof config.data === 'object' && !(config.data instanceof FormData)) {
       config.data = sanitizeObject(config.data);
     }
     return config;
@@ -58,14 +58,14 @@ export const authService = {
   me:     ()      => api.get('/auth/me'),
 };
 
-// ── Factory CRUD genérico ────────────────────────────────────────────────────
+// ── Factory CRUD genérico ─────────────────────────────────────────────────────
 const crudService = (endpoint) => ({
-  getAll:     (params)     => api.get(endpoint, { params }),
-  getById:    (id)         => api.get(`${endpoint}/${id}`),
-  create:     (data)       => api.post(endpoint, data),
-  update:     (id, data)   => api.put(`${endpoint}/${id}`, data),
-  remove:     (id)         => api.delete(`${endpoint}/${id}`),
-  toggle:     (id)         => api.patch(`${endpoint}/${id}/toggle`),
+  getAll:  (params)    => api.get(endpoint, { params }),
+  getById: (id)        => api.get(`${endpoint}/${id}`),
+  create:  (data)      => api.post(endpoint, data),
+  update:  (id, data)  => api.put(`${endpoint}/${id}`, data),
+  remove:  (id)        => api.delete(`${endpoint}/${id}`),
+  toggle:  (id)        => api.patch(`${endpoint}/${id}/toggle`),
 });
 
 // ── Servicios de entidades ────────────────────────────────────────────────────

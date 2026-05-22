@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\Catalogos\ProductoController;
 use App\Http\Controllers\Api\Catalogos\PromocionController;
 use App\Http\Controllers\Api\Catalogos\ProveedorController;
 use App\Http\Controllers\Api\Compras\CompraController;
+use App\Http\Controllers\Api\Configuracion\ConfiguracionController;
 use App\Http\Controllers\Api\Dashboard\DashboardController;
 use App\Http\Controllers\Api\Ventas\VentaController;
 use App\Http\Controllers\Auth\AuthenticationController;
@@ -28,7 +29,6 @@ use Spatie\Permission\Middleware\RoleMiddleware;
 Route::prefix('auth')->group(function () {
     Route::post('/login',         [AuthenticationController::class, 'login']);
     Route::post('/valiate-token', [AuthenticationController::class, 'valiatedToken']);
-
     Route::middleware(['auth:api', 'role:super-admin|admin'])->group(function () {
         Route::post('/logout',  [AuthenticationController::class, 'logout']);
         Route::post('/refresh', [AuthenticationController::class, 'refresh']);
@@ -43,34 +43,32 @@ Route::middleware('auth:api')->group(function () {
 
     // ── Dashboard ────────────────────────────────────────────────────────────
     Route::prefix('dashboard')->group(function () {
-        Route::get('/stats',                 [DashboardController::class, 'stats']);
-        Route::get('/resumen',               [DashboardController::class, 'resumen']);
-        Route::get('/ventas-por-periodo',    [DashboardController::class, 'ventasPorPeriodo']);
-        Route::get('/productos-mas-vendios', [DashboardController::class, 'productosMasVendios']);
-        Route::get('/top-clientes',          [DashboardController::class, 'topClientes']);
-        Route::get('/stock-bajo',            [DashboardController::class, 'stockBajo']);
-
-        Route::get('/reporte-ventas',  [DashboardController::class, 'reporteVentas'])
+        Route::get('/stats',                  [DashboardController::class, 'stats']);
+        Route::get('/resumen',                [DashboardController::class, 'resumen']);
+        Route::get('/ventas-por-periodo',     [DashboardController::class, 'ventasPorPeriodo']);
+        Route::get('/productos-mas-vendidos', [DashboardController::class, 'productosMasVendidos']);
+        Route::get('/top-clientes',           [DashboardController::class, 'topClientes']);
+        Route::get('/stock-bajo',             [DashboardController::class, 'stockBajo']);
+        Route::get('/reporte-ventas',         [DashboardController::class, 'reporteVentas'])
             ->middleware('role:super-admin|admin');
-        Route::get('/reporte-compras', [DashboardController::class, 'reporteCompras'])
+        Route::get('/reporte-compras',        [DashboardController::class, 'reporteCompras'])
             ->middleware('role:super-admin|admin|bodeguero');
     });
 
     // ── Usuarios ─────────────────────────────────────────────────────────────
     Route::prefix('users')->middleware('role:super-admin|admin')->group(function () {
-        Route::get('/',                          [UserController::class, 'index']);
-        Route::post('/',                         [UserController::class, 'createUser']);
-        Route::put('/{i}',                       [UserController::class, 'update']);
-        Route::delete('/{i}',                    [UserController::class, 'destroy']);
-        Route::patch('/{i}/toggle',              [UserController::class, 'toggleActivo']);
-
-        Route::post('/agregar-permisos/{useri}', [UserController::class, 'AgregarPermisoUsuario'])
+        Route::get('/',                                  [UserController::class, 'index']);
+        Route::post('/',                                 [UserController::class, 'createUser']);
+        Route::put('/{i}',                               [UserController::class, 'update']);
+        Route::delete('/{i}',                            [UserController::class, 'destroy']);
+        Route::patch('/{i}/toggle',                      [UserController::class, 'toggleActivo']);
+        Route::post('/agregar-permisos/{useri}',         [UserController::class, 'AgregarPermisoUsuario'])
             ->middleware('role:super-admin');
-        Route::post('/revocar-permisos/{useri}', [UserController::class, 'RevocarPermisoUsuario'])
+        Route::post('/revocar-permisos/{useri}',         [UserController::class, 'RevocarPermisoUsuario'])
             ->middleware('role:super-admin');
-        Route::post('/asignar-rol/{useri}',      [UserController::class, 'AsignarRolUsuario'])
+        Route::post('/asignar-rol/{useri}',              [UserController::class, 'AsignarRolUsuario'])
             ->middleware('role:super-admin');
-        Route::post('/revocar-rol/{useri}',      [UserController::class, 'RevocarRolUsuario'])
+        Route::post('/revocar-rol/{useri}',              [UserController::class, 'RevocarRolUsuario'])
             ->middleware('role:super-admin');
     });
 
@@ -140,17 +138,17 @@ Route::middleware('auth:api')->group(function () {
 
     // ── Productos ─────────────────────────────────────────────────────────────
     Route::prefix('productos')->group(function () {
-        Route::get('/stock-bajo',    [ProductoController::class, 'stockBajo'])
+        Route::get('/stock-bajo',   [ProductoController::class, 'stockBajo'])
             ->middleware('role:super-admin|admin|bodeguero');
-        Route::get('/',              [ProductoController::class, 'index'])
+        Route::get('/',             [ProductoController::class, 'index'])
             ->middleware('role:super-admin|admin|vendedor|bodeguero|tecnico');
-        Route::post('/',             [ProductoController::class, 'store'])
+        Route::post('/',            [ProductoController::class, 'store'])
             ->middleware('role:super-admin|admin|bodeguero');
-        Route::get('/{i}',           [ProductoController::class, 'show'])
+        Route::get('/{i}',          [ProductoController::class, 'show'])
             ->middleware('role:super-admin|admin|vendedor|bodeguero|tecnico');
-        Route::put('/{i}',           [ProductoController::class, 'update'])
+        Route::put('/{i}',          [ProductoController::class, 'update'])
             ->middleware('role:super-admin|admin|bodeguero');
-        Route::patch('/{i}/toggle',  [ProductoController::class, 'toggleActivo'])
+        Route::patch('/{i}/toggle', [ProductoController::class, 'toggleActivo'])
             ->middleware('role:super-admin|admin');
     });
 
@@ -174,19 +172,19 @@ Route::middleware('auth:api')->group(function () {
 
     // ── Compras ───────────────────────────────────────────────────────────────
     Route::prefix('compras')->group(function () {
-        Route::get('/',                  [CompraController::class, 'index'])
+        Route::get('/',                 [CompraController::class, 'index'])
             ->middleware('role:super-admin|admin|bodeguero');
-        Route::post('/',                 [CompraController::class, 'store'])
+        Route::post('/',                [CompraController::class, 'store'])
             ->middleware('role:super-admin|admin|bodeguero');
-        Route::get('/{i}',               [CompraController::class, 'show'])
+        Route::get('/{i}',              [CompraController::class, 'show'])
             ->middleware('role:super-admin|admin|bodeguero');
-        Route::patch('/{i}/confirmar',   [CompraController::class, 'confirmar'])
+        Route::patch('/{i}/confirmar',  [CompraController::class, 'confirmar'])
             ->middleware('role:super-admin|admin|bodeguero');
-        Route::patch('/{i}/recibir',     [CompraController::class, 'recibir'])
+        Route::patch('/{i}/recibir',    [CompraController::class, 'recibir'])
             ->middleware('role:super-admin|admin|bodeguero');
-        Route::patch('/{i}/anular',      [CompraController::class, 'anular'])
+        Route::patch('/{i}/anular',     [CompraController::class, 'anular'])
             ->middleware('role:super-admin|admin');
-        Route::patch('/{i}/retroceder',  [CompraController::class, 'retroceder'])
+        Route::patch('/{i}/retroceder', [CompraController::class, 'retroceder'])
             ->middleware('role:super-admin|admin|bodeguero');
     });
 
@@ -194,6 +192,15 @@ Route::middleware('auth:api')->group(function () {
     Route::prefix('auditoria')->middleware('role:super-admin|admin')->group(function () {
         Route::get('/',    [AuditoriaController::class, 'index']);
         Route::get('/{i}', [AuditoriaController::class, 'show']);
+    });
+
+    // ── Configuración ─────────────────────────────────────────────────────────
+    Route::prefix('configuracion')->group(function () {
+        Route::get('/empresa',           [ConfiguracionController::class, 'getEmpresa'])
+            ->middleware('role:super-admin|admin');
+        Route::post('/empresa',          [ConfiguracionController::class, 'updateEmpresa'])
+            ->middleware('role:super-admin|admin');
+        Route::post('/cambiar-password', [ConfiguracionController::class, 'cambiarPassword']);
     });
 
     // ── Promociones ───────────────────────────────────────────────────────────

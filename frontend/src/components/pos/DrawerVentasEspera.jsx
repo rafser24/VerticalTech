@@ -8,17 +8,21 @@ import { formatCurrency } from '../../utils/helpers';
  * DrawerVentasEspera
  * Consulta las ventas con estado=pendiente desde la BD.
  * Recibe isOpen y onClose como props — sin estado global.
+ *
+ * FIX: El overlay del drawer siempre está en el DOM y se oculta con
+ * pointer-events/opacity para evitar el crash de React StrictMode:
+ * "removeChild: node is not a child of this node"
  */
 export default function DrawerVentasEspera({ isOpen, onClose, onVentaConfirmada }) {
   const isDrawerOpen = isOpen;
   const cerrarDrawer = onClose;
 
-  const [ventas, setVentas]                 = useState([]);
-  const [loading, setLoading]               = useState(false);
-  const [procesando, setProcesando]         = useState(null); // id de venta en proceso
+  const [ventas, setVentas]                   = useState([]);
+  const [loading, setLoading]                 = useState(false);
+  const [procesando, setProcesando]           = useState(null); // id de venta en proceso
   const [confirmarAnular, setConfirmarAnular] = useState(null);
 
-  // ── Cargar ventas pendientes desde la BD ────────────────────────────────
+  // ── Cargar ventas pendientes desde la BD ──────────────────────────────────
   const cargarPendientes = useCallback(async () => {
     setLoading(true);
     try {
@@ -39,7 +43,7 @@ export default function DrawerVentasEspera({ isOpen, onClose, onVentaConfirmada 
     if (isDrawerOpen) cargarPendientes();
   }, [isDrawerOpen, cargarPendientes]);
 
-  // ── Confirmar transferencia ──────────────────────────────────────────────
+  // ── Confirmar transferencia ────────────────────────────────────────────────
   const handleConfirmar = async (venta) => {
     setProcesando(venta.id);
     try {
@@ -48,7 +52,6 @@ export default function DrawerVentasEspera({ isOpen, onClose, onVentaConfirmada 
       toast.success(`✔ Transferencia confirmada — ${venta.numero_venta ?? ''}`);
       cerrarDrawer();
       await cargarPendientes();
-      // Pasar la venta confirmada a PosScreen para mostrar el ticket
       if (onVentaConfirmada) onVentaConfirmada(ventaConfirmada);
     } catch (err) {
       toast.error(err.response?.data?.message ?? 'Error al confirmar la transferencia');
@@ -57,7 +60,7 @@ export default function DrawerVentasEspera({ isOpen, onClose, onVentaConfirmada 
     }
   };
 
-  // ── Anular venta pendiente ───────────────────────────────────────────────
+  // ── Anular venta pendiente ─────────────────────────────────────────────────
   const handleAnular = async () => {
     if (!confirmarAnular) return;
     setProcesando(confirmarAnular.id);
@@ -73,7 +76,7 @@ export default function DrawerVentasEspera({ isOpen, onClose, onVentaConfirmada 
     }
   };
 
-  // ── Helpers de display ───────────────────────────────────────────────────
+  // ── Helpers de display ────────────────────────────────────────────────────
   const tiempoEspera = (fecha) => {
     const mins = Math.floor((Date.now() - new Date(fecha)) / 60000);
     if (mins < 1)  return 'hace un momento';
@@ -86,16 +89,23 @@ export default function DrawerVentasEspera({ isOpen, onClose, onVentaConfirmada 
       ? `${venta.cliente.nombre} ${venta.cliente.apellido ?? ''}`.trim()
       : venta.cliente_nombre_manual || 'Cliente General';
 
+  const showModal = confirmarAnular !== null;
+
   return (
     <>
-      {/* Overlay */}
-      {isDrawerOpen && (
-        <div className="fixed inset-0 z-40 bg-gray-900/30 backdrop-blur-sm" onClick={cerrarDrawer} />
-      )}
+      {/* ── Overlay drawer — siempre en DOM, visible/invisible por clase ──────
+          FIX StrictMode: evita crash "removeChild: node is not a child"       */}
+      <div
+        className={`fixed inset-0 z-40 bg-gray-900/30 backdrop-blur-sm transition-opacity duration-300
+          ${isDrawerOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+        onClick={cerrarDrawer}
+      />
 
-      {/* Panel lateral */}
-      <div className={`fixed top-0 right-0 h-full z-50 w-96 bg-white shadow-2xl flex flex-col
-        transition-transform duration-300 ease-in-out ${isDrawerOpen ? 'translate-x-0' : 'translate-x-full'}`}
+      {/* ── Panel lateral ────────────────────────────────────────────────────── */}
+      <div
+        className={`fixed top-0 right-0 h-full z-50 w-96 bg-white shadow-2xl flex flex-col
+          transition-transform duration-300 ease-in-out
+          ${isDrawerOpen ? 'translate-x-0' : 'translate-x-full'}`}
       >
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-4 border-b border-gray-100">
@@ -117,7 +127,10 @@ export default function DrawerVentasEspera({ isOpen, onClose, onVentaConfirmada 
             >
               <RefreshCw size={15} className={loading ? 'animate-spin' : ''} />
             </button>
-            <button onClick={cerrarDrawer} className="p-2 hover:bg-gray-100 rounded-xl transition-colors text-gray-500">
+            <button
+              onClick={cerrarDrawer}
+              className="p-2 hover:bg-gray-100 rounded-xl transition-colors text-gray-500"
+            >
               <X size={16} />
             </button>
           </div>
@@ -150,7 +163,6 @@ export default function DrawerVentasEspera({ isOpen, onClose, onVentaConfirmada 
               const enProceso = procesando === venta.id;
               const items     = venta.detalles ?? venta.items ?? [];
               const cliente   = nombreCliente(venta);
-
               return (
                 <div key={venta.id} className="bg-gray-50 border border-gray-100 rounded-xl p-3 space-y-2.5">
                   {/* Cabecera tarjeta */}
@@ -181,7 +193,9 @@ export default function DrawerVentasEspera({ isOpen, onClose, onVentaConfirmada 
                       </div>
                     ))}
                     {items.length > 3 && (
-                      <p className="text-xs text-gray-400">+{items.length - 3} producto{items.length - 3 !== 1 ? 's' : ''} más</p>
+                      <p className="text-xs text-gray-400">
+                        +{items.length - 3} producto{items.length - 3 !== 1 ? 's' : ''} más
+                      </p>
                     )}
                   </div>
 
@@ -220,53 +234,68 @@ export default function DrawerVentasEspera({ isOpen, onClose, onVentaConfirmada 
         </div>
       </div>
 
-      {/* Modal de confirmación de anulación */}
-      {confirmarAnular && (
-        <div className="fixed inset-0 z-70 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm" onClick={() => setConfirmarAnular(null)} />
-          <div className="relative bg-white rounded-2xl shadow-2xl w-80 p-6 space-y-4">
-            <div className="flex flex-col items-center text-center gap-2">
-              <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
-                <AlertTriangle size={22} className="text-red-500" />
-              </div>
-              <h3 className="font-bold text-gray-800">¿Anular esta venta?</h3>
-              <p className="text-sm text-gray-500">
-                Se anulará la venta de <strong className="text-gray-700">{nombreCliente(confirmarAnular)}</strong> y el stock será restaurado.
-              </p>
-              {confirmarAnular.referencia_transferencia && (
-                <p className="text-xs font-mono text-gray-400">Ref: {confirmarAnular.referencia_transferencia}</p>
-              )}
+      {/* ── Modal confirmación anulación — siempre en DOM, visible/invisible ──
+          Mismo patrón que el overlay: evita crash de StrictMode             */}
+      <div
+        className={`fixed inset-0 z-70 flex items-center justify-center p-4 transition-opacity duration-200
+          ${showModal ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+      >
+        <div
+          className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm"
+          onClick={() => setConfirmarAnular(null)}
+        />
+        <div className="relative bg-white rounded-2xl shadow-2xl w-80 p-6 space-y-4">
+          <div className="flex flex-col items-center text-center gap-2">
+            <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
+              <AlertTriangle size={22} className="text-red-500" />
             </div>
+            <h3 className="font-bold text-gray-800">¿Anular esta venta?</h3>
+            <p className="text-sm text-gray-500">
+              Se anulará la venta de{' '}
+              <strong className="text-gray-700">
+                {confirmarAnular ? nombreCliente(confirmarAnular) : ''}
+              </strong>{' '}
+              y el stock será restaurado.
+            </p>
+            {confirmarAnular?.referencia_transferencia && (
+              <p className="text-xs font-mono text-gray-400">
+                Ref: {confirmarAnular.referencia_transferencia}
+              </p>
+            )}
+          </div>
 
+          {confirmarAnular && (
             <div className="bg-red-50 border border-red-100 rounded-xl p-3 text-sm">
               <div className="flex justify-between font-bold text-red-700">
                 <span>Total a anular</span>
                 <span>{formatCurrency(confirmarAnular.total)}</span>
               </div>
             </div>
+          )}
 
-            <div className="flex gap-2">
-              <button
-                onClick={() => setConfirmarAnular(null)}
-                className="flex-1 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-600 hover:bg-gray-50 font-medium transition-colors"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={handleAnular}
-                disabled={procesando === confirmarAnular.id}
-                className="flex-1 py-2.5 bg-red-500 hover:bg-red-600 disabled:opacity-50 text-white rounded-xl text-sm font-semibold transition-colors flex items-center justify-center gap-1.5"
-              >
-                {procesando === confirmarAnular.id
-                  ? <span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  : <Trash2 size={13} />
-                }
-                Anular venta
-              </button>
-            </div>
+          <p className="text-center text-xs text-gray-400">Esta acción no se puede deshacer.</p>
+
+          <div className="flex gap-2">
+            <button
+              onClick={() => setConfirmarAnular(null)}
+              className="flex-1 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-600 hover:bg-gray-50 font-medium transition-colors"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={handleAnular}
+              disabled={confirmarAnular && procesando === confirmarAnular.id}
+              className="flex-1 py-2.5 bg-red-500 hover:bg-red-600 disabled:opacity-50 text-white rounded-xl text-sm font-semibold transition-colors flex items-center justify-center gap-1.5"
+            >
+              {confirmarAnular && procesando === confirmarAnular.id
+                ? <span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                : <Trash2 size={13} />
+              }
+              Anular venta
+            </button>
           </div>
         </div>
-      )}
+      </div>
     </>
   );
 }

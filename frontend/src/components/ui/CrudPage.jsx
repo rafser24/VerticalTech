@@ -22,9 +22,9 @@ export default function CrudPage({
   onToggle,       // ← NUEVA PROP: función para activar/desactivar
   isLoading
 }) {
-  const [items, setItems] = useState(initialData);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [editing, setEditing] = useState(null);
+  const [items, setItems]             = useState(initialData);
+  const [modalOpen, setModalOpen]     = useState(false);
+  const [editing, setEditing]         = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
 
   const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm({
@@ -90,7 +90,7 @@ export default function CrudPage({
           {isLoading ? 'Cargando...' : `${items.length} registros`}
         </p>
         {canCreate && (
-          <button onClick={openCreate} className="btn-primary flex items-center gap-2">
+          <button onClick={openCreate} className="flex items-center gap-2 btn-primary">
             <Plus size={16} /> Nuevo {entityName}
           </button>
         )}
@@ -102,8 +102,12 @@ export default function CrudPage({
           columns={columns}
           searchFields={searchFields}
           actions={(row) => (
-            <>
-              <button onClick={() => openEdit(row)} className="p-1.5 hover:bg-pastel-primary/20 rounded-lg transition-colors text-blue-600" title="Editar">
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => openEdit(row)}
+                className="p-1.5 hover:bg-pastel-primary/20 rounded-lg transition-colors text-blue-600"
+                title="Editar"
+              >
                 <Pencil size={14} />
               </button>
               {onToggle && (
@@ -119,19 +123,36 @@ export default function CrudPage({
                   {row.activo ? <ToggleRight size={16} /> : <ToggleLeft size={16} />}
                 </button>
               )}
-              <button onClick={() => setDeleteTarget(row)} className="p-1.5 hover:bg-pastel-accent/30 rounded-lg transition-colors text-red-500" title="Eliminar">
+              <button
+                onClick={() => setDeleteTarget(row)}
+                className="p-1.5 hover:bg-pastel-accent/30 rounded-lg transition-colors text-red-500"
+                title="Eliminar"
+              >
                 <Trash2 size={14} />
               </button>
-            </>
+            </div>
           )}
         />
       </div>
 
-      <Modal isOpen={modalOpen} onClose={closeModal} title={editing ? `Editar ${entityName}` : `Nuevo ${entityName}`} size={modalSize}>
+      <Modal
+        isOpen={modalOpen}
+        onClose={closeModal}
+        title={editing ? `Editar ${entityName}` : `Nuevo ${entityName}`}
+        size={modalSize}
+      >
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <FormContent register={register} errors={errors} watch={watch} setValue={setValue} editing={editing} />
+          <FormContent
+            register={register}
+            errors={errors}
+            watch={watch}
+            setValue={setValue}
+            editing={editing}
+          />
           <div className="flex justify-end gap-3 pt-2 border-t border-gray-100">
-            <button type="button" onClick={closeModal} className="btn-ghost border border-gray-200">Cancelar</button>
+            <button type="button" onClick={closeModal} className="border border-gray-200 btn-ghost">
+              Cancelar
+            </button>
             <button type="submit" className="btn-primary" disabled={isLoading}>
               {editing ? 'Guardar cambios' : `Crear ${entityName}`}
             </button>

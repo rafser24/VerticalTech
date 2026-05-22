@@ -35,7 +35,6 @@ export default function ProductsPage() {
           categoryService.getAll(),
           supplierService.getAll()
         ]);
-
         const list = prodRes.data?.data || prodRes.data || [];
         const sorted = [...list].sort((a, b) => (b.activo ? 1 : 0) - (a.activo ? 1 : 0));
         setProducts(sorted);
@@ -84,7 +83,6 @@ export default function ProductsPage() {
         await productService.create(data);
         toast.success('Producto creado exitosamente');
       }
-
       await loadProducts();
       setModalOpen(false);
       reset();
@@ -108,33 +106,73 @@ export default function ProductsPage() {
   };
 
   const columns = [
-    { key: 'codigo', label: 'Código', render: v => <span className="font-mono text-xs text-gray-400">{v}</span> },
-    { key: 'nombre', label: 'Producto', render: (v, row) => (
-      <div>
-        <p className="font-medium text-gray-800">{v}</p>
-        <p className="text-xs text-gray-400">{row.unidad || 'Unidad'}</p>
-      </div>
-    )},
-    { key: 'precio_venta', label: 'Precio', render: v => <span className="font-semibold">{formatCurrency(v)}</span> },
-    { key: 'stock', label: 'Stock', render: (v, row) => (
-      <div className="flex items-center gap-1.5">
-        {v <= row.stock_minimo && <AlertTriangle size={12} className="text-yellow-500" />}
-        <span className={v === 0 ? 'text-red-500 font-semibold' : v <= row.stock_minimo ? 'text-yellow-600 font-semibold' : 'text-gray-700'}>
-          {v}
+    {
+      key: 'codigo',
+      label: 'Código',
+      render: v => <span className="font-mono text-xs text-gray-400">{v}</span>
+    },
+    {
+      key: 'nombre',
+      label: 'Producto',
+      render: (v, row) => (
+        <div>
+          <p className="font-medium text-gray-800">{v}</p>
+          <p className="text-xs text-gray-400">{row.unidad || 'Unidad'}</p>
+        </div>
+      )
+    },
+    {
+      key: 'categoria_id',
+      label: 'Categoría',
+      render: v => {
+        const cat = categories.find(c => c.id === v || c.id === Number(v));
+        return (
+          <span className="text-blue-800 badge bg-pastel-primary/30">
+            {cat ? (cat.nombre || cat.name) : (v || 'Sin categoría')}
+          </span>
+        );
+      }
+    },
+    {
+      key: 'precio_venta',
+      label: 'Precio',
+      render: v => <span className="font-semibold">{formatCurrency(v)}</span>
+    },
+    {
+      key: 'stock',
+      label: 'Stock',
+      render: (v, row) => (
+        <div className="flex items-center gap-1.5">
+          {v <= row.stock_minimo && <AlertTriangle size={12} className="text-yellow-500" />}
+          <span className={
+            v === 0 ? 'text-red-500 font-semibold'
+            : v <= row.stock_minimo ? 'text-yellow-600 font-semibold'
+            : 'text-gray-700'
+          }>
+            {v}
+          </span>
+        </div>
+      )
+    },
+    {
+      key: 'proveedor_id',
+      label: 'Proveedor',
+      render: v => {
+        const proveedor = suppliers.find(s => s.id === v || s.id === Number(v));
+        return <span>{proveedor ? (proveedor.nombre || proveedor.name) : '—'}</span>;
+      }
+    },
+    {
+      key: 'activo',
+      label: 'Estado',
+      render: v => (
+        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+          v ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'
+        }`}>
+          {v ? 'Activo' : 'Inactivo'}
         </span>
-      </div>
-    )},
-    { key: 'proveedor_id', label: 'Proveedor', render: (v) => {
-      const proveedor = suppliers.find(s => s.id === v || s.id === Number(v));
-      return <span>{proveedor ? (proveedor.nombre || proveedor.name) : '—'}</span>;
-    }},
-    { key: 'activo', label: 'Estado', render: v => (
-      <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
-        v ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'
-      }`}>
-        {v ? 'Activo' : 'Inactivo'}
-      </span>
-    )},
+      )
+    },
   ];
 
   return (
@@ -142,7 +180,7 @@ export default function ProductsPage() {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <p className="text-sm text-gray-500">{products.length} productos registrados</p>
-          <button onClick={openCreate} className="btn-primary flex items-center gap-2">
+          <button onClick={openCreate} className="flex items-center gap-2 btn-primary">
             <Plus size={16} /> Nuevo Producto
           </button>
         </div>
@@ -153,7 +191,7 @@ export default function ProductsPage() {
             columns={columns}
             searchFields={['nombre', 'codigo', 'categoria_id', 'proveedor_id']}
             actions={(row) => (
-              <>
+              <div className="flex items-center gap-1">
                 <button
                   onClick={() => openEdit(row)}
                   className="p-1.5 hover:bg-pastel-primary/20 rounded-lg transition-colors text-blue-600"
@@ -179,7 +217,7 @@ export default function ProductsPage() {
                 >
                   <Trash2 size={14} />
                 </button>
-              </>
+              </div>
             )}
           />
         </div>
@@ -201,11 +239,9 @@ export default function ProductsPage() {
               <FormInput register={register('codigo')} placeholder="Ej: PROD-001" error={errors.codigo} />
             </FormField>
           </div>
-
           <FormField label="Descripción" error={errors.descripcion?.message}>
             <FormTextarea register={register('descripcion')} placeholder="Descripción opcional..." error={errors.descripcion} />
           </FormField>
-
           <div className="grid grid-cols-3 gap-4">
             <FormField label="Precio de venta" required error={errors.precio_venta?.message}>
               <FormInput register={register('precio_venta')} type="number" step="0.01" placeholder="0.00" error={errors.precio_venta} />
@@ -217,7 +253,6 @@ export default function ProductsPage() {
               <FormInput register={register('stock_minimo')} type="number" placeholder="0" error={errors.stock_minimo} />
             </FormField>
           </div>
-
           <div className="grid grid-cols-2 gap-4">
             <FormField label="Categoría" required error={errors.categoria_id?.message}>
               <FormSelect register={register('categoria_id')} error={errors.categoria_id}>
@@ -232,7 +267,6 @@ export default function ProductsPage() {
               </FormSelect>
             </FormField>
           </div>
-
           <FormField label="Unidad de medida" error={errors.unidad?.message}>
             <FormSelect register={register('unidad')} error={errors.unidad}>
               <option value="unidad">Unidad</option>
@@ -242,9 +276,12 @@ export default function ProductsPage() {
               <option value="metro">Metro</option>
             </FormSelect>
           </FormField>
-
           <div className="flex justify-end gap-3 pt-2 border-t border-gray-100">
-            <button type="button" onClick={() => { setModalOpen(false); reset(); }} className="btn-ghost border border-gray-200">
+            <button
+              type="button"
+              onClick={() => { setModalOpen(false); reset(); }}
+              className="border border-gray-200 btn-ghost"
+            >
               Cancelar
             </button>
             <button type="submit" className="btn-primary">

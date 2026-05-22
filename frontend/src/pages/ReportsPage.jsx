@@ -1,318 +1,112 @@
 import { useEffect, useState, useCallback } from 'react';
 import { toast } from 'react-toastify';
 import {
-  BarChart2, TrendingUp, ShoppingCart, Package,
-  FileText, Filter, Calendar, RefreshCw, AlertTriangle,
+  TrendingUp, ShoppingCart, Package, FileText,
+  Filter, Calendar, RefreshCw, AlertTriangle,
+  CalendarDays, CalendarRange,
 } from 'lucide-react';
+import {
+  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
+  PieChart, Pie, Cell, Legend,
+} from 'recharts';
+import { jsPDF } from 'jspdf';
 import MainLayout from '../components/layout/MainLayout';
 import StatCard from '../components/ui/StatCard';
 import { formatCurrency, formatDate, statusColors } from '../utils/helpers';
 import api from '../services/api';
+import useAppStore from '../store/appStore';
 
-// ─── Servicio de reportes ─────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
+// API
+// ─────────────────────────────────────────────────────────────
 const reportService = {
-  getSummary:        (params) => api.get('/dashboard/resumen',                { params }),
-  getSalesByPeriod:  (params) => api.get('/dashboard/ventas-por-periodo',     { params }),
-  getTopProducts:    (params) => api.get('/dashboard/productos-mas-vendidos', { params }),
-  getTopClients:     (params) => api.get('/dashboard/top-clientes',           { params }),
-  getLowStock:       ()       => api.get('/dashboard/stock-bajo'),
-  getSalesReport:    (params) => api.get('/dashboard/reporte-ventas',         { params }),
-  getPurchasesReport:(params) => api.get('/dashboard/reporte-compras',        { params }),
+  getSummary:         (params) => api.get('/dashboard/resumen',                { params }),
+  getSalesByPeriod:   (params) => api.get('/dashboard/ventas-por-periodo',     { params }),
+  getTopProducts:     (params) => api.get('/dashboard/productos-mas-vendidos', { params }),
+  getTopClients:      (params) => api.get('/dashboard/top-clientes',           { params }),
+  getLowStock:        ()       => api.get('/dashboard/stock-bajo'),
+  getSalesReport:     (params) => api.get('/dashboard/reporte-ventas',         { params }),
+  getPurchasesReport: (params) => api.get('/dashboard/reporte-compras',        { params }),
 };
 
-// ─── Utilidades ───────────────────────────────────────────────────────────────
-const currentYear  = new Date().getFullYear();
-const currentMonth = new Date().getMonth() + 1;
+// ─────────────────────────────────────────────────────────────
+// CONSTANTES
+// ─────────────────────────────────────────────────────────────
+const hoy = new Date();
+const currentYear  = hoy.getFullYear();
+const currentMonth = hoy.getMonth() + 1;
+const todayStr     = hoy.toISOString().split('T')[0];
 
 const MONTHS = [
-  'Enero','Febrero','Marzo','Abril','Mayo','Junio',
-  'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre',
+  'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
+];
+const YEARS      = Array.from({ length: 5 }, (_, i) => currentYear - i);
+const PIE_COLORS = ['#2563eb', '#16a34a', '#d97706', '#dc2626', '#7c3aed', '#0891b2'];
+const TIPOS = [
+  { value: 'dia',    label: 'Día',    icon: CalendarDays  },
+  { value: 'semana', label: 'Semana', icon: CalendarRange },
+  { value: 'mes',    label: 'Mes',    icon: Calendar      },
+  { value: 'anio',   label: 'Año',    icon: TrendingUp    },
 ];
 
-// Extrae array de cualquier forma que llegue el API
+// ─────────────────────────────────────────────────────────────
+// HELPERS
+// ─────────────────────────────────────────────────────────────
+const unwrapData = (res) => res?.data?.data || res?.data || null;
+
 const unwrapArray = (res) => {
-  const d = res?.data?.data ?? res?.data;
-  if (Array.isArray(d)) return d;
-  if (Array.isArray(d?.data))   return d.data;
-  if (Array.isArray(d?.ventas)) return d.ventas;
+  const d = unwrapData(res);
+  if (Array.isArray(d))           return d;
+  if (Array.isArray(d?.ventas))   return d.ventas;
+  if (Array.isArray(d?.productos)) return d.productos;
+  if (Array.isArray(d?.clientes)) return d.clientes;
+  if (Array.isArray(d?.data))     return d.data;
   return [];
 };
 
-// ─── Generador PDF ────────────────────────────────────────────────────────────
-const generarPDF = ({ mes, anio, summary, salesReport, topProducts, topClients, lowStock }) => {
-  const mesNombre = MONTHS[mes - 1];
-  const fecha     = new Date().toLocaleDateString('es-SV');
-  const hora      = new Date().toLocaleTimeString('es-SV', { hour: '2-digit', minute: '2-digit' });
-
-  const ingresos = Number(summary?.ventas?.mes?.total    || 0);
-  const egresos  = Number(summary?.compras?.mes?.total   || 0);
-  const margen   = Number(summary?.margen_mes            || 0);
-  const ventas   = Number(summary?.ventas?.mes?.cantidad || 0);
-
-  const html = `<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8"/>
-  <title>Reporte ${mesNombre} ${anio}</title>
-  <style>
-    *{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:Arial,sans-serif;font-size:11px;color:#1E293B;background:#fff;padding:32px}
-    /* Cabecera */
-    .header{border-bottom:3px solid #1E3A8A;padding-bottom:16px;margin-bottom:20px}
-    .header-top{display:flex;justify-content:space-between;align-items:flex-start}
-    .empresa-nombre{font-size:22px;font-weight:700;color:#1E3A8A;letter-spacing:-0.03em}
-    .empresa-nombre span{color:#2563EB}
-    .empresa-datos{font-size:9px;color:#64748B;line-height:1.7;margin-top:4px}
-    .reporte-titulo{text-align:right}
-    .reporte-titulo h2{font-size:16px;font-weight:700;color:#0F172A}
-    .reporte-titulo p{font-size:9px;color:#94A3B8;margin-top:2px}
-    /* KPIs */
-    .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
-    .kpi{background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:12px}
-    .kpi-label{font-size:8px;text-transform:uppercase;letter-spacing:0.08em;color:#94A3B8;margin-bottom:4px}
-    .kpi-value{font-size:16px;font-weight:700;color:#0F172A}
-    .kpi-sub{font-size:8px;color:#64748B;margin-top:2px}
-    .kpi.verde .kpi-value{color:#16A34A}
-    .kpi.rojo  .kpi-value{color:#DC2626}
-    .kpi.azul  .kpi-value{color:#2563EB}
-    /* Secciones */
-    .seccion{margin-bottom:20px}
-    .seccion-titulo{font-size:11px;font-weight:700;color:#1E3A8A;text-transform:uppercase;letter-spacing:0.08em;border-bottom:1px solid #E2E8F0;padding-bottom:6px;margin-bottom:10px}
-    /* Tablas */
-    table{width:100%;border-collapse:collapse;font-size:10px}
-    th{background:#1E3A8A;color:#fff;text-align:left;padding:6px 8px;font-size:9px;text-transform:uppercase;letter-spacing:0.06em}
-    td{padding:5px 8px;border-bottom:1px solid #F1F5F9;color:#334155}
-    tr:nth-child(even) td{background:#F8FAFC}
-    .text-right{text-align:right}
-    .text-center{text-align:center}
-    .badge{display:inline-block;padding:2px 6px;border-radius:4px;font-size:8px;font-weight:600}
-    .badge-green{background:#DCFCE7;color:#166534}
-    .badge-red{background:#FEE2E2;color:#991B1B}
-    /* Pie */
-    .footer{margin-top:28px;padding-top:12px;border-top:1px solid #E2E8F0;display:flex;justify-content:space-between;font-size:8px;color:#94A3B8}
-    @media print{body{padding:16px}}
-  </style>
-</head>
-<body>
-  <!-- CABECERA -->
-  <div class="header">
-    <div class="header-top">
-      <div>
-        <div class="empresa-nombre">Vertical<span>Tech</span></div>
-        <div class="empresa-datos">
-          Col. Escalón, Calle La Reforma #123, San Salvador, El Salvador<br/>
-          Tel: +503 2222-3333 &nbsp;|&nbsp; NIT: 0614-010101-001-0 &nbsp;|&nbsp; info@verticaltech.sv
-        </div>
-      </div>
-      <div class="reporte-titulo">
-        <h2>Reporte Mensual</h2>
-        <p>${mesNombre} ${anio}</p>
-        <p>Generado: ${fecha} ${hora}</p>
-        <p>Documento no válido como crédito fiscal</p>
-      </div>
-    </div>
-  </div>
-
-  <!-- KPIs -->
-  <div class="kpis">
-    <div class="kpi verde">
-      <div class="kpi-label">Ingresos del mes</div>
-      <div class="kpi-value">${formatCurrency(ingresos)}</div>
-      <div class="kpi-sub">${ventas} ventas completadas</div>
-    </div>
-    <div class="kpi rojo">
-      <div class="kpi-label">Egresos del mes</div>
-      <div class="kpi-value">${formatCurrency(egresos)}</div>
-      <div class="kpi-sub">${summary?.compras?.mes?.cantidad || 0} compras</div>
-    </div>
-    <div class="kpi ${margen >= 0 ? 'azul' : 'rojo'}">
-      <div class="kpi-label">Margen neto</div>
-      <div class="kpi-value">${formatCurrency(margen)}</div>
-      <div class="kpi-sub">${margen >= 0 ? 'Resultado positivo' : 'Resultado negativo'}</div>
-    </div>
-    <div class="kpi">
-      <div class="kpi-label">Stock bajo</div>
-      <div class="kpi-value">${lowStock.length}</div>
-      <div class="kpi-sub">Productos por reabastecer</div>
-    </div>
-  </div>
-
-  <!-- DETALLE DE VENTAS -->
-  <div class="seccion">
-    <div class="seccion-titulo">Detalle de ventas — ${mesNombre} ${anio}</div>
-    <table>
-      <thead><tr>
-        <th>#</th><th>N° Venta</th><th>Fecha</th><th>Cliente</th><th>Método pago</th><th>Estado</th><th class="text-right">Total</th>
-      </tr></thead>
-      <tbody>
-        ${salesReport.length > 0
-          ? salesReport.map((v, i) => `<tr>
-              <td class="text-center">${i + 1}</td>
-              <td style="font-family:monospace">${v.numero_venta ?? '—'}</td>
-              <td>${formatDate(v.fecha_venta ?? v.fecha)}</td>
-              <td>${v.cliente?.nombre ?? 'Consumidor final'}</td>
-              <td>${v.metodo_pago?.nombre ?? '—'}</td>
-              <td><span class="badge ${v.estado === 'completada' ? 'badge-green' : 'badge-red'}">${v.estado}</span></td>
-              <td class="text-right" style="font-weight:600">${formatCurrency(v.total)}</td>
-            </tr>`).join('')
-          : `<tr><td colspan="7" style="text-align:center;color:#94A3B8;padding:16px">Sin ventas en este período</td></tr>`
-        }
-        ${salesReport.length > 0 ? `
-        <tr style="background:#EFF6FF">
-          <td colspan="6" style="text-align:right;font-weight:700;color:#1E3A8A">Total del período:</td>
-          <td class="text-right" style="font-weight:700;color:#1E3A8A">${formatCurrency(salesReport.reduce((s,v) => s + Number(v.total||0), 0))}</td>
-        </tr>` : ''}
-      </tbody>
-    </table>
-  </div>
-
-  <!-- TOP PRODUCTOS -->
-  <div class="seccion">
-    <div class="seccion-titulo">Top productos vendidos</div>
-    <table>
-      <thead><tr><th>#</th><th>Producto</th><th class="text-center">Unidades</th><th class="text-right">Ingresos</th></tr></thead>
-      <tbody>
-        ${topProducts.length > 0
-          ? topProducts.slice(0,10).map((p, i) => `<tr>
-              <td class="text-center">${i+1}</td>
-              <td><strong>${p.nombre_producto ?? p.nombre ?? '—'}</strong>${p.marca ? `<br/><span style="color:#94A3B8;font-size:8px">${p.marca}</span>` : ''}</td>
-              <td class="text-center">${p.unidades_vendidas ?? 0}</td>
-              <td class="text-right" style="font-weight:600;color:#16A34A">${formatCurrency(p.total_generado ?? 0)}</td>
-            </tr>`).join('')
-          : `<tr><td colspan="4" style="text-align:center;color:#94A3B8;padding:16px">Sin ventas en este período</td></tr>`
-        }
-      </tbody>
-    </table>
-  </div>
-
-  <!-- TOP CLIENTES -->
-  <div class="seccion">
-    <div class="seccion-titulo">Mejores clientes del mes</div>
-    <table>
-      <thead><tr><th>#</th><th>Cliente</th><th>Teléfono</th><th class="text-center">Compras</th><th class="text-right">Total gastado</th></tr></thead>
-      <tbody>
-        ${topClients.length > 0
-          ? topClients.slice(0,10).map((c, i) => `<tr>
-              <td class="text-center">${i+1}</td>
-              <td><strong>${c.nombre ?? '—'}</strong></td>
-              <td>${c.telefono ?? '—'}</td>
-              <td class="text-center">${c.total_compras ?? 0}</td>
-              <td class="text-right" style="font-weight:600;color:#16A34A">${formatCurrency(c.total_gastado ?? 0)}</td>
-            </tr>`).join('')
-          : `<tr><td colspan="5" style="text-align:center;color:#94A3B8;padding:16px">Sin clientes en este período</td></tr>`
-        }
-      </tbody>
-    </table>
-  </div>
-
-  ${lowStock.length > 0 ? `
-  <!-- STOCK BAJO -->
-  <div class="seccion">
-    <div class="seccion-titulo">⚠ Productos con stock bajo (${lowStock.length})</div>
-    <table>
-      <thead><tr><th>Producto</th><th>Categoría</th><th class="text-center">Stock actual</th><th class="text-center">Stock mínimo</th><th class="text-center">Faltante</th><th>Proveedor</th></tr></thead>
-      <tbody>
-        ${lowStock.map(p => `<tr>
-          <td><strong>${p.nombre_producto ?? '—'}</strong></td>
-          <td>${p.categoria ?? '—'}</td>
-          <td class="text-center" style="color:#DC2626;font-weight:600">${p.stock_actual ?? 0}</td>
-          <td class="text-center">${p.stock_minimo ?? 0}</td>
-          <td class="text-center"><span class="badge badge-red">−${p.diferencia ?? 0}</span></td>
-          <td>${p.proveedor ?? '—'}</td>
-        </tr>`).join('')}
-      </tbody>
-    </table>
-  </div>` : ''}
-
-  <!-- PIE -->
-  <div class="footer">
-    <span>VerticalTech — Sistema POS v1.0 &nbsp;|&nbsp; Reporte generado automáticamente</span>
-    <span>${fecha} ${hora}</span>
-  </div>
-</body>
-</html>`;
-
-  const ventana = window.open('', '_blank', 'width=900,height=700');
-  ventana.document.write(html);
-  ventana.document.close();
-  ventana.onload = () => ventana.print();
+const getLunes = (dateStr) => {
+  const d   = new Date(dateStr);
+  const day = d.getDay();
+  const diff = (day === 0 ? -6 : 1 - day);
+  d.setDate(d.getDate() + diff);
+  return d.toISOString().split('T')[0];
 };
 
-// ─── Validación de mes futuro ─────────────────────────────────────────────────
-const esMesFuturo = (mes, anio) => {
-  const hoy    = new Date();
-  const actual = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
-  const selec  = new Date(anio, mes - 1, 1);
-  return selec > actual;
+const getDomingo = (dateStr) => {
+  const lunes = new Date(getLunes(dateStr));
+  lunes.setDate(lunes.getDate() + 6);
+  return lunes.toISOString().split('T')[0];
 };
 
-// ─── Componente: Barra de filtros ─────────────────────────────────────────────
-function FilterBar({ mes, anio, onMesChange, onAnioChange, onApply, onPDF, loading }) {
-  const futuro  = esMesFuturo(mes, anio);
-  const mesNombre = MONTHS[mes - 1];
+const getPeriodLabel = (tipo, { fecha, mes, anio }) => {
+  if (tipo === 'dia')    return new Date(fecha + 'T12:00:00').toLocaleDateString('es-SV', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  if (tipo === 'semana') return `Semana del ${getLunes(fecha)} al ${getDomingo(fecha)}`;
+  if (tipo === 'mes')    return `${MONTHS[mes - 1]} ${anio}`;
+  if (tipo === 'anio')   return `Año ${anio}`;
+  return '';
+};
 
-  return (
-    <div className="card space-y-3">
-      <div className="flex flex-wrap items-end gap-4">
-        <div className="space-y-1">
-          <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider">Mes</label>
-          <select value={mes} onChange={e => onMesChange(Number(e.target.value))} className="input-field w-40">
-            {MONTHS.map((m, i) => <option key={i+1} value={i+1}>{m}</option>)}
-          </select>
-        </div>
-        <div className="space-y-1">
-          <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider">Año</label>
-          <select value={anio} onChange={e => onAnioChange(Number(e.target.value))} className="input-field w-28">
-            {[currentYear, currentYear-1, currentYear-2].map(y => <option key={y} value={y}>{y}</option>)}
-          </select>
-        </div>
-        <button
-          onClick={() => {
-            if (futuro) {
-              toast.warn(`${mesNombre} ${anio} aún no ha ocurrido. Selecciona un mes pasado o el actual.`, { autoClose: 4000 });
-              return;
-            }
-            onApply();
-          }}
-          disabled={loading}
-          className="btn-primary flex items-center gap-2"
-        >
-          {loading
-            ? <><RefreshCw size={14} className="animate-spin" /> Cargando...</>
-            : <><Filter size={14} /> Aplicar filtros</>
-          }
-        </button>
-        <button
-          onClick={onPDF}
-          disabled={loading || futuro}
-          className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <FileText size={14} /> Generar PDF
-        </button>
-      </div>
+const buildParams = (tipo, { fecha, mes, anio }) => {
+  if (tipo === 'dia')    return { tipo, fecha };
+  if (tipo === 'semana') return { tipo, fecha };
+  if (tipo === 'mes')    return { tipo, mes, anio };
+  if (tipo === 'anio')   return { tipo, anio };
+  return { tipo, mes, anio };
+};
 
-      {/* Aviso mes futuro */}
-      {futuro && (
-        <div className="flex items-center gap-2 px-4 py-2.5 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-700">
-          <AlertTriangle size={15} className="shrink-0 text-amber-500" />
-          <span>
-            <strong>{mesNombre} {anio}</strong> es un mes futuro — no existen datos para este período todavía.
-          </span>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ─── Componente: Tabla genérica ───────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
+// COMPONENTE TABLA
+// ─────────────────────────────────────────────────────────────
 function ReportTable({ title, icon: Icon, columns, data, emptyMsg = 'Sin datos para este período' }) {
+  const rows = Array.isArray(data) ? data : [];
   return (
     <div className="card">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-base font-bold text-gray-800 flex items-center gap-2">
           <Icon size={18} className="text-blue-500" />{title}
         </h3>
-        <span className="text-xs text-gray-400">{data.length} registros</span>
+        <span className="text-xs text-gray-400">{rows.length} registros</span>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
@@ -322,8 +116,8 @@ function ReportTable({ title, icon: Icon, columns, data, emptyMsg = 'Sin datos p
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50">
-            {data.length > 0
-              ? data.map((row, idx) => (
+            {rows.length > 0
+              ? rows.map((row, idx) => (
                   <tr key={row.id || idx} className="hover:bg-gray-50 transition-colors">
                     {columns.map(col => (
                       <td key={col.key} className="py-3 px-2">
@@ -341,6 +135,7 @@ function ReportTable({ title, icon: Icon, columns, data, emptyMsg = 'Sin datos p
   );
 }
 
+// ─── Componente: Barra de progreso simple ─────────────────────────────────────
 function ProgressBar({ value, max, color = 'bg-blue-400' }) {
   const pct = max > 0 ? Math.min((value / max) * 100, 100) : 0;
   return (
@@ -350,249 +145,455 @@ function ProgressBar({ value, max, color = 'bg-blue-400' }) {
   );
 }
 
-// ─── Página principal ─────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
+// PÁGINA PRINCIPAL
+// ─────────────────────────────────────────────────────────────
 export default function ReportsPage() {
-  const [mes, setMes]   = useState(currentMonth);
-  const [anio, setAnio] = useState(currentYear);
-  const [loading, setLoading] = useState(true);
+  const empresa = useAppStore((s) => s.empresa);
 
-  // Estados de datos
-  const [summary, setSummary]         = useState(null);
-  const [salesReport, setSalesReport] = useState([]);
-  const [topProducts, setTopProducts] = useState([]);
-  const [topClients, setTopClients]   = useState([]);
-  const [lowStock, setLowStock]       = useState([]);
-  const [salesByPeriod, setSalesByPeriod] = useState([]);
+  const [tipo, setTipo]             = useState('mes');
+  const [fecha, setFecha]           = useState(todayStr);
+  const [mes, setMes]               = useState(currentMonth);
+  const [anio, setAnio]             = useState(currentYear);
+  const [loading, setLoading]       = useState(false);
+  const [pdfLoading, setPdfLoading] = useState(false);
+  const [summary, setSummary]       = useState({});
+  const [salesReport, setSalesReport]   = useState([]);
+  const [topProducts, setTopProducts]   = useState([]);
+  const [topClients, setTopClients]     = useState([]);
+  const [lowStock, setLowStock]         = useState([]);
 
-  // ── Carga de datos ─────────────────────────────────────────────────
+  // ── Fetch ──────────────────────────────────────────────────
   const fetchAll = useCallback(async () => {
-    setLoading(true);
     try {
-      const params = { mes, anio };
-
-      const [sumRes, salesRes, prodRes, clientRes, stockRes, periodRes] = await Promise.allSettled([
+      setLoading(true);
+      const params = buildParams(tipo, { fecha, mes, anio });
+      const [r0, r1, r2, r3, r4] = await Promise.allSettled([
         reportService.getSummary(params),
         reportService.getSalesReport(params),
         reportService.getTopProducts(params),
         reportService.getTopClients(params),
         reportService.getLowStock(),
-        reportService.getSalesByPeriod(),
       ]);
-
-      if (sumRes.status    === 'fulfilled') setSummary(sumRes.value.data?.data        || sumRes.value.data        || null);
-      if (salesRes.status  === 'fulfilled') setSalesReport(salesRes.value.data?.data?.ventas  || salesRes.value.data?.ventas  || []);
-      if (prodRes.status   === 'fulfilled') setTopProducts(prodRes.value.data?.data            || prodRes.value.data            || []);
-      if (clientRes.status === 'fulfilled') setTopClients(clientRes.value.data?.data           || clientRes.value.data           || []);
-      if (stockRes.status  === 'fulfilled') setLowStock(stockRes.value.data?.data              || stockRes.value.data              || []);
-      if (periodRes.status === 'fulfilled') setSalesByPeriod(periodRes.value.data?.data        || periodRes.value.data        || []);
-
-    } catch {
-      toast.error('Error al cargar los reportes');
+      if (r0.status === 'fulfilled') setSummary(unwrapData(r0.value) || {});
+      if (r1.status === 'fulfilled') {
+        const d = unwrapData(r1.value);
+        const v = Array.isArray(d?.ventas) ? d.ventas : Array.isArray(d) ? d : [];
+        setSalesReport(v.sort((a, b) =>
+          new Date(b.fecha_venta || b.created_at) - new Date(a.fecha_venta || a.created_at)
+        ));
+      } else setSalesReport([]);
+      if (r2.status === 'fulfilled') setTopProducts(unwrapArray(r2.value)); else setTopProducts([]);
+      if (r3.status === 'fulfilled') setTopClients(unwrapArray(r3.value));  else setTopClients([]);
+      if (r4.status === 'fulfilled') setLowStock(unwrapArray(r4.value));    else setLowStock([]);
+    } catch (err) {
+      console.error(err);
+      toast.error('Error cargando reportes');
     } finally {
       setLoading(false);
     }
-  }, [mes, anio]);
+  }, [tipo, fecha, mes, anio]);
 
-  useEffect(() => {
-    fetchAll();
-  }, []);
+  useEffect(() => { fetchAll(); }, [fetchAll]);
 
-  // ── Columnas de reportes ───────────────────────────────────────────
-  const salesColumns = [
-    { key: 'id_venta', label: '#', render: v => <span className="text-xs text-gray-400 font-mono">{v}</span> },
-    { key: 'fecha',    label: 'Fecha',   render: v => formatDate(v) },
-    { key: 'cliente',  label: 'Cliente', render: (_, r) => r.cliente?.nombre || 'Consumidor final' },
-    { key: 'estado',   label: 'Estado',  render: v => (
-      <span className={`badge ${statusColors[v] || 'bg-gray-100 text-gray-600'}`}>{v}</span>
-    )},
-    { key: 'total',    label: 'Total',   render: v => <span className="font-semibold">{formatCurrency(v)}</span> },
+  // ── Generar PDF ────────────────────────────────────────────
+  const generarPDF = async () => {
+    try {
+      setPdfLoading(true);
+      toast.info('Generando reporte PDF...');
+      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const pW = doc.internal.pageSize.getWidth();
+      const pH = doc.internal.pageSize.getHeight();
+      const mg = 15;
+      const periodoLabel = getPeriodLabel(tipo, { fecha, mes, anio });
+      const fechaGen = new Date().toLocaleDateString('es-SV', { day: '2-digit', month: 'long', year: 'numeric' });
+      const azul    = [37, 99, 235];
+      const azulOsc = [30, 64, 175];
+      const gris    = [107, 114, 128];
+      const grisClaro = [243, 244, 246];
+      const negro   = [17, 24, 39];
+
+      // Encabezado
+      doc.setFillColor(...azulOsc);
+      doc.rect(0, 0, pW, 38, 'F');
+      if (empresa.logo_url) {
+        try {
+          const img = new Image();
+          img.crossOrigin = 'anonymous';
+          await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = empresa.logo_url; });
+          const cv = document.createElement('canvas');
+          cv.width = img.naturalWidth; cv.height = img.naturalHeight;
+          cv.getContext('2d').drawImage(img, 0, 0);
+          doc.addImage(cv.toDataURL('image/png'), 'PNG', mg, 7, 22, 22);
+        } catch { /* sin logo */ }
+      }
+      const lx = empresa.logo_url ? mg + 28 : mg;
+      doc.setTextColor(255, 255, 255);
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(18);
+      doc.text(empresa.nombre || 'VerticalTech', lx, 18);
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
+      doc.setTextColor(200, 210, 255);
+      if (empresa.nit)      doc.text('NIT: ' + empresa.nit,    lx, 24);
+      if (empresa.correo)   doc.text(empresa.correo,            lx, 29);
+      if (empresa.telefono) doc.text('Tel: ' + empresa.telefono, lx, 34);
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(13);
+      doc.setTextColor(255, 255, 255);
+      doc.text('REPORTE DE VENTAS', pW - mg, 16, { align: 'right' });
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
+      doc.setTextColor(200, 210, 255);
+      doc.text(periodoLabel, pW - mg, 22, { align: 'right' });
+      doc.text('Generado: ' + fechaGen, pW - mg, 27, { align: 'right' });
+      doc.setFillColor(...azul);
+      doc.rect(0, 38, pW, 3, 'F');
+      let y = 50;
+
+      // Resumen ejecutivo
+      doc.setTextColor(...negro);
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(11);
+      doc.text('RESUMEN EJECUTIVO', mg, y);
+      doc.setDrawColor(...azul); doc.setLineWidth(0.5);
+      doc.line(mg, y + 2, mg + 55, y + 2);
+      y += 8;
+      const ingresos  = Number(summary?.ventas?.mes?.total    || 0);
+      const cantVentas = Number(summary?.ventas?.mes?.cantidad || 0);
+      const ticket    = cantVentas > 0 ? ingresos / cantVentas : 0;
+      const cards = [
+        { label: 'Ingresos del período', valor: formatCurrency(ingresos),   color: azul            },
+        { label: 'Total de ventas',       valor: cantVentas + ' ventas',     color: [22, 163, 74]   },
+        { label: 'Ticket promedio',       valor: formatCurrency(ticket),     color: [124, 58, 237]  },
+        { label: 'Stock bajo',            valor: lowStock.length + ' items', color: [217, 119, 6]   },
+      ];
+      const cW = (pW - mg * 2 - 9) / 4;
+      cards.forEach((c, i) => {
+        const x = mg + i * (cW + 3);
+        doc.setFillColor(...grisClaro); doc.roundedRect(x, y, cW, 20, 2, 2, 'F');
+        doc.setFillColor(...c.color);   doc.rect(x, y, 3, 20, 'F');
+        doc.setTextColor(...c.color); doc.setFont('helvetica', 'bold'); doc.setFontSize(9);
+        doc.text(c.valor, x + 6, y + 8);
+        doc.setTextColor(...gris); doc.setFont('helvetica', 'normal'); doc.setFontSize(7);
+        doc.text(c.label.toUpperCase(), x + 6, y + 14);
+      });
+      y += 28;
+      if (empresa.direccion) {
+        doc.setFontSize(8); doc.setTextColor(...gris); doc.setFont('helvetica', 'italic');
+        doc.text('Dirección: ' + empresa.direccion, mg, y);
+        y += 6;
+      }
+
+      // Helper tabla manual
+      const drawTable = (startY, headers, rows, colWidths, hColor, altColor) => {
+        const rH = 7; const padX = 2;
+        const tW = colWidths.reduce((a, b) => a + b, 0);
+        let cy = startY;
+        const drawHeader = (atY) => {
+          doc.setFillColor(...hColor); doc.rect(mg, atY, tW, rH, 'F');
+          doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5); doc.setTextColor(255, 255, 255);
+          let cx = mg;
+          headers.forEach((h, i) => { doc.text(String(h), cx + padX, atY + 5); cx += colWidths[i]; });
+        };
+        drawHeader(cy); cy += rH;
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5);
+        rows.forEach((row, ri) => {
+          if (cy + rH > pH - 15) {
+            doc.addPage(); drawHeader(mg); cy = mg + rH;
+            doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5);
+          }
+          if (ri % 2 === 1 && altColor) { doc.setFillColor(...altColor); doc.rect(mg, cy, tW, rH, 'F'); }
+          doc.setTextColor(...negro);
+          let rx = mg;
+          row.forEach((cell, ci) => { doc.text(String(cell ?? '—'), rx + padX, cy + 5); rx += colWidths[ci]; });
+          doc.setDrawColor(220, 220, 220); doc.setLineWidth(0.1);
+          doc.line(mg, cy + rH, mg + tW, cy + rH);
+          cy += rH;
+        });
+        doc.setDrawColor(...hColor); doc.setLineWidth(0.3);
+        doc.rect(mg, startY, tW, cy - startY, 'S');
+        return cy + 4;
+      };
+
+      const sectionTitle = (title, color, lineW) => {
+        if (y > pH - 60) { doc.addPage(); y = mg; }
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(...negro);
+        doc.text(title, mg, y);
+        doc.setDrawColor(...color); doc.setLineWidth(0.5);
+        doc.line(mg, y + 2, mg + lineW, y + 2);
+        y += 5;
+      };
+
+      if (topProducts.length > 0) {
+        sectionTitle('PRODUCTOS MÁS VENDIDOS', azul, 65);
+        y = drawTable(y,
+          ['#', 'Producto', 'Unidades', 'Ingresos'],
+          topProducts.slice(0, 10).map((p, i) => [
+            i + 1, p.nombre_producto || p.nombre || '—',
+            p.unidades_vendidas || 0, formatCurrency(p.total_generado || 0),
+          ]),
+          [10, 100, 35, 35], azulOsc, grisClaro
+        );
+      }
+      if (topClients.length > 0) {
+        sectionTitle('MEJORES CLIENTES', azul, 50);
+        y = drawTable(y,
+          ['#', 'Cliente', 'Teléfono', 'Compras', 'Total'],
+          topClients.slice(0, 10).map((c, i) => [
+            i + 1, c.nombre_cliente || c.nombre || '—',
+            c.telefono || '—', c.total_compras || 0, formatCurrency(c.total_gastado || 0),
+          ]),
+          [10, 75, 35, 25, 35], [22, 163, 74], grisClaro
+        );
+      }
+      if (lowStock.length > 0) {
+        sectionTitle('PRODUCTOS CON STOCK BAJO', [217, 119, 6], 72);
+        y = drawTable(y,
+          ['#', 'Producto', 'Stock', 'Mínimo'],
+          lowStock.slice(0, 15).map((p, i) => [
+            i + 1, p.nombre || p.nombre_producto || '—',
+            p.stock || p.cantidad || 0, p.stock_minimo || p.stock_min || '—',
+          ]),
+          [10, 115, 27, 28], [217, 119, 6], [255, 251, 235]
+        );
+      }
+      if (salesReport.length > 0) {
+        sectionTitle('DETALLE DE VENTAS', [124, 58, 237], 50);
+        drawTable(y,
+          ['ID', 'Fecha', 'Cliente', 'Estado', 'Total'],
+          salesReport.slice(0, 50).map((v) => [
+            v.id || '—', formatDate(v.fecha_venta || v.created_at),
+            v?.cliente?.nombre || 'Consumidor final', v.estado || '—', formatCurrency(v.total || 0),
+          ]),
+          [15, 28, 75, 25, 37], [124, 58, 237], grisClaro
+        );
+      }
+
+      // Pie de página
+      const totalPages = doc.internal.getNumberOfPages();
+      for (let i = 1; i <= totalPages; i++) {
+        doc.setPage(i);
+        doc.setFillColor(...grisClaro); doc.rect(0, pH - 12, pW, 12, 'F');
+        doc.setDrawColor(...azul); doc.setLineWidth(0.3); doc.line(0, pH - 12, pW, pH - 12);
+        doc.setFontSize(7); doc.setTextColor(...gris); doc.setFont('helvetica', 'normal');
+        doc.text((empresa.nombre || 'VerticalTech') + ' · ' + periodoLabel, mg, pH - 5);
+        doc.text('Página ' + i + ' de ' + totalPages, pW - mg, pH - 5, { align: 'right' });
+        doc.text('Documento generado automáticamente', pW / 2, pH - 5, { align: 'center' });
+      }
+      doc.save('Reporte_' + periodoLabel.replace(/\//g, '-').replace(/\s+/g, '_') + '.pdf');
+      toast.success('Reporte descargado correctamente');
+    } catch (err) {
+      console.error(err);
+      toast.error('Error al generar el PDF');
+    } finally {
+      setPdfLoading(false);
+    }
+  };
+
+  // ── Datos gráficas ──────────────────────────────────────────
+  const barData = topProducts.slice(0, 7).map((p) => ({
+    name:      (p.nombre_producto || p.nombre || '—').substring(0, 14),
+    vendidos:  p.unidades_vendidas || 0,
+    ingresos:  Number(p.total_generado || 0),
+  }));
+  const pieData = topClients.slice(0, 6).map((c) => ({
+    name:  (c.nombre_cliente || c.nombre || '—').substring(0, 18),
+    value: Number(c.total_gastado || 0),
+  }));
+
+  // ── Columnas tablas ─────────────────────────────────────────
+  const salesCols = [
+    { key: 'id',          label: '#' },
+    { key: 'fecha_venta', label: 'Fecha',   render: (v, r) => formatDate(v || r.created_at) },
+    { key: 'cliente',     label: 'Cliente', render: (_, r) => r?.cliente?.nombre || 'Consumidor final' },
+    { key: 'estado',      label: 'Estado',  render: (v) => (
+        <span className={'badge ' + (statusColors[v] || 'bg-gray-100 text-gray-600')}>{v || '—'}</span>
+      )
+    },
+    { key: 'total', label: 'Total', render: (v) => <span className="font-semibold">{formatCurrency(v || 0)}</span> },
+  ];
+  const prodCols = [
+    { key: 'nombre_producto',  label: 'Producto',  render: (v, r) => v || r.nombre || '—' },
+    { key: 'unidades_vendidas', label: 'Vendidos', render: (v) => v || 0 },
+    { key: 'total_generado',    label: 'Ingresos', render: (v) => formatCurrency(v || 0) },
+  ];
+  const clientCols = [
+    { key: 'nombre_cliente', label: 'Cliente',  render: (v, r) => v || r.nombre || '—' },
+    { key: 'telefono',       label: 'Teléfono', render: (v) => v || '—' },
+    { key: 'total_compras',  label: 'Compras',  render: (v) => v || 0 },
+    { key: 'total_gastado',  label: 'Gastado',  render: (v) => formatCurrency(v || 0) },
   ];
 
-  const topProductColumns = [
-    { key: '_rank', label: '#', render: (_, r, idx) => (
-      <span className="w-6 h-6 rounded-full bg-pastel-primary flex items-center justify-center text-blue-800 font-bold text-xs">
-        {(idx ?? 0) + 1}
-      </span>
-    )},
-    { key: 'nombre_producto', label: 'Producto', render: (v, r) => (
-      <div>
-        <p className="font-medium text-gray-800">{v}</p>
-        <p className="text-xs text-gray-400">{r.marca || ''}</p>
-      </div>
-    )},
-    { key: 'unidades_vendidas', label: 'Unidades', render: (v, r) => (
-      <div className="space-y-1">
-        <span className="font-semibold text-gray-700">{v}</span>
-        <ProgressBar value={Number(v)} max={Number(topProducts[0]?.unidades_vendidas || 1)} color="bg-blue-300" />
-      </div>
-    )},
-    { key: 'total_generado', label: 'Ingresos', render: v => (
-      <span className="font-semibold text-green-700">{formatCurrency(v)}</span>
-    )},
-  ];
+  const ingresosPeriodo = Number(summary?.ventas?.mes?.total    || 0);
+  const ventasPeriodo   = Number(summary?.ventas?.mes?.cantidad || 0);
+  const periodoLabel    = getPeriodLabel(tipo, { fecha, mes, anio });
 
-  const topClientColumns = [
-    { key: 'nombre',        label: 'Cliente',   render: v => <span className="font-medium">{v}</span> },
-    { key: 'telefono',      label: 'Teléfono',  render: v => v || '—' },
-    { key: 'total_compras', label: 'Compras',   render: v => <span className="badge bg-pastel-primary/30 text-blue-800">{v}</span> },
-    { key: 'total_gastado', label: 'Total gastado', render: v => (
-      <span className="font-semibold text-green-700">{formatCurrency(v)}</span>
-    )},
-  ];
-
-  const lowStockColumns = [
-    { key: 'nombre_producto', label: 'Producto', render: (v, r) => (
-      <div className="flex items-center gap-2">
-        <AlertTriangle size={14} className="text-orange-500 shrink-0" />
-        <div>
-          <p className="font-medium text-gray-800">{v}</p>
-          <p className="text-xs text-gray-400">{r.categoria || ''}</p>
-        </div>
-      </div>
-    )},
-    { key: 'stock_actual',  label: 'Stock actual',  render: v => <span className="font-semibold text-red-600">{v}</span> },
-    { key: 'stock_minimo',  label: 'Stock mínimo',  render: v => <span className="text-gray-600">{v}</span> },
-    { key: 'diferencia',    label: 'Faltante',      render: v => (
-      <span className="badge bg-pastel-accent/30 text-red-700">−{v}</span>
-    )},
-    { key: 'proveedor',     label: 'Proveedor',     render: v => v || '—' },
-  ];
-
-  // ── Métricas del resumen ───────────────────────────────────────────
-  const ingresosMes  = Number(summary?.ventas?.mes?.total    || 0);
-  const egresosMes   = Number(summary?.compras?.mes?.total   || 0);
-  const margenMes    = Number(summary?.margen_mes            || 0);
-  const ventasMes    = Number(summary?.ventas?.mes?.cantidad || 0);
-  const stockBajoCount = Number(summary?.productos_stock_bajo || lowStock.length || 0);
-
-  // ── Render ─────────────────────────────────────────────────────────
+  // ── Render ──────────────────────────────────────────────────
   return (
     <MainLayout title="Reportes">
       <div className="space-y-6">
 
-        {/* Filtros */}
-        <FilterBar
-          mes={mes}
-          anio={anio}
-          onMesChange={setMes}
-          onAnioChange={setAnio}
-          onApply={fetchAll}
-          loading={loading}
-        />
-
-        {/* Título del período */}
-        <div className="flex items-center gap-2 text-gray-500 text-sm">
-          <Calendar size={14} />
-          Mostrando datos de <strong className="text-gray-700">{MONTHS[mes - 1]} {anio}</strong>
+        {/* ════ FILTROS ════ */}
+        <div className="card">
+          <p className="mb-3 text-xs font-semibold tracking-wider text-gray-400 uppercase">
+            Filtrar por período
+          </p>
+          {/* Selector tipo */}
+          <div className="flex flex-wrap gap-2 mb-4">
+            {TIPOS.map(({ value, label, icon: Icon }) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => setTipo(value)}
+                className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium border transition-all
+                  ${tipo === value
+                    ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+                    : 'bg-white text-gray-600 border-gray-200 hover:border-blue-300 hover:text-blue-600'
+                  }`}
+              >
+                <Icon size={14} />
+                {label}
+              </button>
+            ))}
+          </div>
+          {/* Inputs según tipo */}
+          <div className="flex flex-wrap items-end gap-4">
+            {tipo === 'dia' && (
+              <div>
+                <label className="block mb-1 text-xs text-gray-500 uppercase">Seleccionar día</label>
+                <input type="date" value={fecha} max={todayStr} onChange={(e) => setFecha(e.target.value)} className="input-field" />
+              </div>
+            )}
+            {tipo === 'semana' && (
+              <div>
+                <label className="block mb-1 text-xs text-gray-500 uppercase">Cualquier día de la semana</label>
+                <input type="date" value={fecha} max={todayStr} onChange={(e) => setFecha(e.target.value)} className="input-field" />
+                <p className="mt-1 text-[10px] text-gray-400">
+                  Lun {getLunes(fecha)} → Dom {getDomingo(fecha)}
+                </p>
+              </div>
+            )}
+            {tipo === 'mes' && (
+              <div className="flex flex-wrap items-end gap-4">
+                <div>
+                  <label className="block mb-1 text-xs text-gray-500 uppercase">Mes</label>
+                  <select value={mes} onChange={(e) => setMes(Number(e.target.value))} className="input-field">
+                    {MONTHS.map((m, i) => <option key={i} value={i + 1}>{m}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block mb-1 text-xs text-gray-500 uppercase">Año</label>
+                  <select value={anio} onChange={(e) => setAnio(Number(e.target.value))} className="input-field">
+                    {YEARS.map((y) => <option key={y} value={y}>{y}</option>)}
+                  </select>
+                </div>
+              </div>
+            )}
+            {tipo === 'anio' && (
+              <div>
+                <label className="block mb-1 text-xs text-gray-500 uppercase">Año</label>
+                <select value={anio} onChange={(e) => setAnio(Number(e.target.value))} className="input-field">
+                  {YEARS.map((y) => <option key={y} value={y}>{y}</option>)}
+                </select>
+              </div>
+            )}
+            <button onClick={fetchAll} disabled={loading} className="flex items-center gap-2 btn-primary">
+              {loading
+                ? <><RefreshCw size={14} className="animate-spin" /> Cargando...</>
+                : <><Filter size={14} /> Aplicar filtros</>
+              }
+            </button>
+            <button
+              type="button"
+              onClick={generarPDF}
+              disabled={pdfLoading}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-xl hover:bg-red-700 disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {pdfLoading
+                ? <><RefreshCw size={14} className="animate-spin" /> Generando...</>
+                : <><FileText size={15} /> Descargar PDF</>
+              }
+            </button>
+          </div>
+          {/* Etiqueta del período activo */}
+          <div className="flex items-center gap-2 px-3 py-2 mt-4 text-sm font-medium text-blue-700 rounded-lg bg-blue-50">
+            <Calendar size={14} />
+            <span>Mostrando: <strong>{periodoLabel}</strong></span>
+          </div>
         </div>
 
-        {/* KPIs */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* ════ STAT CARDS ════ */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <StatCard
-            title="Ingresos del mes"
-            value={formatCurrency(ingresosMes)}
+            title="Ingresos del período"
+            value={formatCurrency(ingresosPeriodo)}
             icon={TrendingUp}
             color="green"
-            subtitle={`${ventasMes} ventas completadas`}
-          />
-          <StatCard
-            title="Egresos del mes"
-            value={formatCurrency(egresosMes)}
-            icon={ShoppingCart}
-            color="pink"
-            subtitle={`${summary?.compras?.mes?.cantidad || 0} compras`}
-          />
-          <StatCard
-            title="Margen neto"
-            value={formatCurrency(margenMes)}
-            icon={BarChart2}
-            color={margenMes >= 0 ? 'blue' : 'orange'}
-            subtitle={margenMes >= 0 ? 'Resultado positivo' : 'Resultado negativo'}
+            subtitle={ventasPeriodo + ' ventas'}
           />
           <StatCard
             title="Stock bajo"
-            value={stockBajoCount}
+            value={lowStock.length}
             icon={AlertTriangle}
             color="orange"
-            subtitle="Productos por reabastecer"
+            subtitle="Productos"
+          />
+          <StatCard
+            title="Período"
+            value={TIPOS.find(t => t.value === tipo)?.label || ''}
+            icon={Calendar}
+            color="blue"
+            subtitle={periodoLabel}
           />
         </div>
 
-        {/* Gráfico simple de ventas por período */}
-        {salesByPeriod.length > 0 && (
+        {/* ════ GRÁFICAS ════ */}
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           <div className="card">
-            <h3 className="text-base font-bold text-gray-800 flex items-center gap-2 mb-4">
-              <BarChart2 size={18} className="text-blue-500" />
-              Ventas últimos 12 meses
+            <h3 className="flex items-center gap-2 mb-4 text-base font-bold text-gray-800">
+              <Package size={18} className="text-blue-500" />
+              Unidades vendidas por producto
             </h3>
-            <div className="flex items-end gap-2 h-32 overflow-x-auto pb-2">
-              {salesByPeriod.map((p, i) => {
-                const maxTotal = Math.max(...salesByPeriod.map(x => Number(x.total || 0)), 1);
-                const heightPct = (Number(p.total || 0) / maxTotal) * 100;
-                return (
-                  <div key={i} className="flex flex-col items-center gap-1 flex-shrink-0 w-10 group">
-                    <div className="relative w-full">
-                      <div
-                        className="w-full bg-pastel-primary/60 hover:bg-blue-400 rounded-t transition-colors cursor-default"
-                        style={{ height: `${Math.max(heightPct * 1.1, 4)}px` }}
-                        title={`${p.periodo}: ${formatCurrency(p.total)}`}
-                      />
-                    </div>
-                    <span className="text-[9px] text-gray-400 whitespace-nowrap rotate-45 origin-left">
-                      {p.periodo?.slice(5) || p.periodo}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
+            {barData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={220}>
+                <BarChart data={barData} margin={{ top: 5, right: 10, left: 0, bottom: 40 }}>
+                  <XAxis dataKey="name" tick={{ fontSize: 11 }} angle={-30} textAnchor="end" interval={0} />
+                  <YAxis tick={{ fontSize: 11 }} />
+                  <Tooltip formatter={(v, n) => n === 'ingresos' ? [formatCurrency(v), 'Ingresos'] : [v, 'Vendidos']} />
+                  <Bar dataKey="vendidos" fill="#2563eb" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <p className="py-10 text-sm text-center text-gray-400">Sin datos para este período</p>
+            )}
           </div>
-        )}
-
-        {/* Tablas principales */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Top productos */}
-          <ReportTable
-            title="Top productos vendidos"
-            icon={Package}
-            columns={topProductColumns}
-            data={topProducts.slice(0, 10)}
-            emptyMsg="Sin ventas en este período"
-          />
-
-          {/* Top clientes */}
-          <ReportTable
-            title="Mejores clientes del mes"
-            icon={TrendingUp}
-            columns={topClientColumns}
-            data={topClients.slice(0, 10)}
-            emptyMsg="Sin clientes en este período"
-          />
+          <div className="card">
+            <h3 className="flex items-center gap-2 mb-4 text-base font-bold text-gray-800">
+              <TrendingUp size={18} className="text-blue-500" />
+              Participación de clientes
+            </h3>
+            {pieData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={220}>
+                <PieChart>
+                  <Pie
+                    data={pieData} cx="50%" cy="50%" outerRadius={80} dataKey="value"
+                    label={({ name, percent }) => name + ' ' + (percent * 100).toFixed(0) + '%'}
+                    labelLine={false}
+                  >
+                    {pieData.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
+                  </Pie>
+                  <Tooltip formatter={(v) => formatCurrency(v)} />
+                  <Legend wrapperStyle={{ fontSize: 11 }} />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <p className="py-10 text-sm text-center text-gray-400">Sin datos para este período</p>
+            )}
+          </div>
         </div>
 
-        {/* Detalle de ventas del mes */}
-        <ReportTable
-          title={`Detalle de ventas — ${MONTHS[mes - 1]} ${anio}`}
-          icon={ShoppingCart}
-          columns={salesColumns}
-          data={salesReport}
-          emptyMsg="Sin ventas registradas en este período"
-        />
-
-        {/* Stock bajo */}
-        {lowStock.length > 0 && (
-          <div>
-            <div className="mb-2 flex items-center gap-2 text-sm text-orange-700 font-medium">
-              <AlertTriangle size={15} />
-              {lowStock.length} producto(s) requieren reabastecimiento urgente
-            </div>
-            <ReportTable
-              title="Productos con stock bajo"
-              icon={AlertTriangle}
-              columns={lowStockColumns}
-              data={lowStock}
-            />
-          </div>
-        )}
+        {/* ════ TABLAS ════ */}
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <ReportTable title="Productos más vendidos" icon={Package}    columns={prodCols}   data={topProducts} />
+          <ReportTable title="Mejores clientes"       icon={TrendingUp} columns={clientCols} data={topClients}  />
+        </div>
+        <ReportTable title="Detalle de ventas" icon={ShoppingCart} columns={salesCols} data={salesReport} />
 
       </div>
     </MainLayout>

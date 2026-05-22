@@ -2,9 +2,9 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Package, Tag, Truck, Users, TrendingUp,
   UserCircle, ChevronLeft, ChevronRight, Boxes, BarChart2,
-  Shield, Ticket, ShoppingBag, LogOut, Store,
+  Shield, Ticket, ShoppingBag, LogOut, Store, Settings,
 } from 'lucide-react';
-import useAppStore  from '../../store/appStore';
+import useAppStore from '../../store/appStore';
 import useAuthStore from '../../store/authStore';
 
 /**
@@ -50,8 +50,9 @@ const navGroups = [
   {
     label: 'Sistema',
     items: [
-      { to: '/usuarios',  label: 'Usuarios',  icon: UserCircle, roles: ['super-admin', 'admin'] },
-      { to: '/auditoria', label: 'Auditoría', icon: Shield,     roles: ['super-admin', 'admin'] },
+      { to: '/usuarios',      label: 'Usuarios',      icon: UserCircle, roles: ['super-admin', 'admin'] },
+      { to: '/auditoria',     label: 'Auditoría',     icon: Shield,     roles: ['super-admin', 'admin'] },
+      { to: '/configuracion', label: 'Configuración', icon: Settings,   roles: ['super-admin', 'admin'] },
     ],
   },
 ];
@@ -65,9 +66,30 @@ const rolBadge = {
   'bodeguero':   { bg: 'bg-green-100',  text: 'text-green-700',  label: 'Bodeguero'   },
 };
 
+// ── Avatar pequeño reutilizable ──────────────────────────────────────────────
+function Avatar({ foto, nombre, size = 'sm' }) {
+  const dim = size === 'sm' ? 'w-7 h-7 text-[10px]' : 'w-8 h-8 text-xs';
+  const letra = nombre?.charAt(0)?.toUpperCase() || '?';
+  if (foto) {
+    return (
+      <img
+        src={foto}
+        alt={nombre}
+        className={`${dim} rounded-full object-cover flex-shrink-0 border border-gray-200`}
+      />
+    );
+  }
+  return (
+    <div className={`${dim} flex items-center justify-center font-bold text-blue-800 rounded-full bg-pastel-primary flex-shrink-0`}>
+      {letra}
+    </div>
+  );
+}
+
 export default function Sidebar() {
   const sidebarOpen   = useAppStore((s) => s.sidebarOpen);
   const toggleSidebar = useAppStore((s) => s.toggleSidebar);
+  const empresa       = useAppStore((s) => s.empresa);
   const user          = useAuthStore((s) => s.user);
   const hasRole       = useAuthStore((s) => s.hasRole);
   const logout        = useAuthStore((s) => s.logout);
@@ -86,16 +108,20 @@ export default function Sidebar() {
       className={`h-screen sticky top-0 bg-white border-r border-gray-100 flex flex-col transition-all duration-300 shadow-soft
         ${sidebarOpen ? 'w-60' : 'w-16'}`}
     >
-      {/* ── Logo ── */}
+      {/* ── Logo empresa ── */}
       <div className={`flex items-center gap-3 h-16 border-b border-gray-100 flex-shrink-0
         ${sidebarOpen ? 'px-4' : 'justify-center px-2'}`}
       >
-        <div className="w-8 h-8 bg-pastel-primary rounded-xl flex items-center justify-center flex-shrink-0">
-          <Boxes size={18} className="text-blue-800" />
+        <div className="w-8 h-8 bg-pastel-primary rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden">
+          {empresa?.logo_url ? (
+            <img src={empresa.logo_url} alt={empresa.nombre} className="object-cover w-full h-full" />
+          ) : (
+            <Boxes size={18} className="text-blue-800" />
+          )}
         </div>
         {sidebarOpen && (
-          <span className="font-display font-bold text-gray-800 text-lg leading-tight">
-            VerticalTech
+          <span className="text-lg font-bold leading-tight text-gray-800 truncate font-display">
+            {empresa?.nombre || 'VerticalTech'}
           </span>
         )}
       </div>
@@ -107,7 +133,6 @@ export default function Sidebar() {
             item.roles.some(r => hasRole(r))
           );
           if (itemsVisibles.length === 0) return null;
-
           return (
             <div key={gi} className="mb-1">
               {/* Etiqueta de sección — solo cuando el sidebar está abierto */}
@@ -120,7 +145,6 @@ export default function Sidebar() {
               {group.label && !sidebarOpen && gi > 0 && (
                 <div className="mx-3 my-2 border-t border-gray-100" />
               )}
-
               {itemsVisibles.map(({ to, label, icon: Icon }) => (
                 <NavLink
                   key={to + label}
@@ -144,9 +168,7 @@ export default function Sidebar() {
         {/* Info usuario expandido */}
         {sidebarOpen && user && (
           <div className="px-4 py-3 flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-pastel-primary flex items-center justify-center text-blue-800 font-bold text-xs flex-shrink-0">
-              {user.nombre?.charAt(0)?.toUpperCase() || '?'}
-            </div>
+            <Avatar foto={user.foto_url} nombre={user.nombre} size="md" />
             <div className="min-w-0 flex-1">
               <p className="text-xs font-semibold text-gray-700 truncate">{user.nombre}</p>
               <p className="text-[10px] text-gray-400 truncate">@{user.usuario}</p>
@@ -160,12 +182,7 @@ export default function Sidebar() {
         {/* Avatar colapsado */}
         {!sidebarOpen && user && (
           <div className="flex justify-center py-2">
-            <div
-              className="w-7 h-7 rounded-full bg-pastel-primary flex items-center justify-center text-blue-800 font-bold text-xs"
-              title={`${user.nombre} — ${badge.label}`}
-            >
-              {user.nombre?.charAt(0)?.toUpperCase() || '?'}
-            </div>
+            <Avatar foto={user.foto_url} nombre={user.nombre} size="sm" />
           </div>
         )}
 
