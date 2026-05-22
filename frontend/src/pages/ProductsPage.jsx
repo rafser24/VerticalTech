@@ -29,21 +29,25 @@ export default function ProductsPage() {
 
   useEffect(() => {
     const loadData = async () => {
-      try {
-        const [prodRes, catRes, supRes] = await Promise.all([
-          productService.getAll(),
-          categoryService.getAll(),
-          supplierService.getAll()
-        ]);
-        const list = prodRes.data?.data || prodRes.data || [];
-        const sorted = [...list].sort((a, b) => (b.activo ? 1 : 0) - (a.activo ? 1 : 0));
-        setProducts(sorted);
-        setCategories(catRes.data?.data || catRes.data || []);
-        setSuppliers(supRes.data?.data || supRes.data || []);
-      } catch (error) {
-        console.error("Error cargando datos:", error);
-        toast.error("Error al cargar la información inicial");
+      const [prodRes, catRes, supRes] = await Promise.allSettled([
+        productService.getAll(),
+        categoryService.getAll(),
+        supplierService.getAll(),
+      ]);
+
+      const unwrap = (settled) => {
+        if (settled.status === 'rejected') return [];
+        const d = settled.value?.data;
+        return Array.isArray(d?.data) ? d.data : Array.isArray(d) ? d : [];
+      };
+
+      if (prodRes.status === 'rejected') {
+        toast.error('Error al cargar los productos');
       }
+
+      setProducts(unwrap(prodRes));
+      setCategories(unwrap(catRes));
+      setSuppliers(unwrap(supRes));
     };
     loadData();
   }, []);
