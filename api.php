@@ -201,7 +201,6 @@ Route::middleware('auth:api')->group(function () {
         Route::post('/empresa',          [ConfiguracionController::class, 'updateEmpresa'])
             ->middleware('role:super-admin|admin');
         Route::post('/cambiar-password', [ConfiguracionController::class, 'cambiarPassword']);
-        Route::post('/perfil',           [ConfiguracionController::class, 'updatePerfil']);
     });
 
     // ── Promociones ───────────────────────────────────────────────────────────

@@ -335,101 +335,11 @@ export default function LoginPage() {
       <div className="vt-blob vt-blob-2" />
       <div className="vt-blob vt-blob-3" />
 
-<<<<<<< Updated upstream
-      <div className="vt-scene">
-        {/* Pastel blobs */}
-        <div className="vt-blob vt-blob-1" />
-        <div className="vt-blob vt-blob-2" />
-        <div className="vt-blob vt-blob-3" />
-
-        <div className="vt-card">
-            <div className="vt-card-header">
-              <p className="vt-card-eyebrow">VerticalTech</p>
-              <h2 className="vt-card-title">Bienvenido</h2>
-              <p className="vt-card-sub">Accede a tu panel de gestión</p>
-            </div>
-
-            <form onSubmit={handleSubmit(onSubmit)} className="vt-form" noValidate>
-              {/* Usuario */}
-              <div className="vt-field">
-                <label className="vt-label" htmlFor="usuario">Usuario</label>
-                <div className="vt-input-wrap">
-                  <span className="vt-input-icon"><User size={16} /></span>
-                  <input
-                    {...register('usuario')}
-                    id="usuario"
-                    type="text"
-                    placeholder="Nombre de usuario"
-                    className={`vt-input${errors.usuario ? ' error' : ''}`}
-                    autoComplete="username"
-                  />
-                </div>
-                {errors.usuario && (
-                  <p className="vt-error-msg">{errors.usuario.message}</p>
-                )}
-              </div>
-
-              {/* Contraseña */}
-              <div className="vt-field">
-                <label className="vt-label" htmlFor="password">Contraseña</label>
-                <div className="vt-input-wrap">
-                  <span className="vt-input-icon"><Lock size={16} /></span>
-                  <input
-                    {...register('password')}
-                    id="password"
-                    type={showPassword ? 'text' : 'password'}
-                    placeholder="••••••••"
-                    className={`vt-input${errors.password ? ' error' : ''}`}
-                    style={{ paddingRight: '2.75rem' }}
-                    autoComplete="current-password"
-                  />
-                  <button
-                    type="button"
-                    className="vt-eye-btn"
-                    onClick={() => setShowPassword(!showPassword)}
-                    aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
-                  >
-                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </button>
-                </div>
-                {errors.password && (
-                  <p className="vt-error-msg">{errors.password.message}</p>
-                )}
-              </div>
-
-              {/* Recordarme */}
-              <div className="vt-remember">
-                <input
-                  type="checkbox"
-                  id="remember"
-                  className="vt-checkbox"
-                  checked={remember}
-                  onChange={(e) => setRemember(e.target.checked)}
-                />
-                <label className="vt-remember-label" htmlFor="remember">Recordarme</label>
-              </div>
-
-              {/* Submit */}
-              <button type="submit" disabled={loading} className="vt-btn">
-                {loading ? (
-                  <>
-                    <span className="vt-spinner" />
-                    Iniciando sesión…
-                  </>
-                ) : 'Ingresar'}
-              </button>
-            </form>
-
-            <p className="vt-footer">
-              © {new Date().getFullYear()} VerticalTech · Todos los derechos reservados
-            </p>
-=======
       <div className="vt-card">
         <div className="vt-card-header">
           <p className="vt-card-eyebrow">VerticalTech</p>
           <h2 className="vt-card-title">Bienvenido</h2>
           <p className="vt-card-sub">Accede a tu panel de gestión</p>
->>>>>>> Stashed changes
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="vt-form" noValidate>

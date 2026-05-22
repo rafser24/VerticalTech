@@ -25,6 +25,9 @@ class Usuario extends Authenticatable implements JWTSubject
         'email',
         'contrasena',
         'activo',
+        'foto_path',
+        'telefono',
+        'cargo',
     ];
 
     protected $hidden = [
@@ -90,6 +93,19 @@ class Usuario extends Authenticatable implements JWTSubject
     public function getNombreCompletoAttribute(): string
     {
         return $this->nombre . ' ' . $this->apellido;
+    }
+
+    /** Devuelve la URL pública de la foto o null si no tiene */
+    public function getFotoUrlAttribute(): ?string
+    {
+        if (! $this->foto_path) return null;
+        return asset('storage/' . $this->foto_path);
+    }
+
+    /** Alias: correo → email (compatibilidad con el frontend) */
+    public function getCorreoAttribute(): ?string
+    {
+        return $this->email;
     }
 
     protected function setContrasenaAttribute(string $value): void
