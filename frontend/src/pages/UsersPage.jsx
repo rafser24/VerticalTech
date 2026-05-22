@@ -3,27 +3,23 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'react-toastify';
 import { z } from 'zod';
-import { Plus, Pencil, Trash2, ShieldCheck } from 'lucide-react';
+import { Plus, Pencil, Trash2, ShieldCheck, Eye, EyeOff, ToggleLeft, ToggleRight } from 'lucide-react';
 import MainLayout from '../components/layout/MainLayout';
 import DataTable from '../components/ui/DataTable';
 import Modal from '../components/ui/Modal';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import { FormField, FormInput, FormSelect } from '../components/ui/FormFields';
 import { userService } from '../services/api';
+import useAuthStore from '../store/authStore';
 import { formatDate } from '../utils/helpers';
 
 // ─── Schemas ──────────────────────────────────────────────────────────────────
 const createUserSchema = z.object({
-<<<<<<< Updated upstream
   nombre:   z.string().min(2, 'Mínimo 2 caracteres').max(100),
-  usuario:  z.string().min(3, 'Mínimo 3 caracteres').max(50)
-=======
-  nombre: z.string().min(2, 'Mínimo 2 caracteres').max(100),
   apellido: z.string().min(2, 'Mínimo 2 caracteres').max(100),
-  usuario: z.string().min(3, 'Mínimo 3 caracteres').max(50)
->>>>>>> Stashed changes
+  usuario:  z.string().min(3, 'Mínimo 3 caracteres').max(50)
     .regex(/^[a-zA-Z0-9_-]+$/, 'Solo letras, números, guiones y guiones bajos'),
-  correo: z.string().email('Correo inválido').optional().or(z.literal('')),
+  correo:   z.string().email('Correo inválido').optional().or(z.literal('')),
   password: z.string().min(8, 'Mínimo 8 caracteres'),
   password_confirmation: z.string().min(8, 'Mínimo 8 caracteres'),
   rol: z.enum(['admin', 'vendedor', 'tecnico', 'bodeguero'], {
@@ -35,23 +31,16 @@ const createUserSchema = z.object({
 });
 
 const editUserSchema = z.object({
-<<<<<<< Updated upstream
   nombre:   z.string().min(2, 'Mínimo 2 caracteres').max(100),
-  usuario:  z.string().min(3, 'Mínimo 3 caracteres').max(50)
-=======
-  nombre: z.string().min(2, 'Mínimo 2 caracteres').max(100),
   apellido: z.string().min(2, 'Mínimo 2 caracteres').max(100),
-  usuario: z.string().min(3, 'Mínimo 3 caracteres').max(50)
->>>>>>> Stashed changes
+  usuario:  z.string().min(3, 'Mínimo 3 caracteres').max(50)
     .regex(/^[a-zA-Z0-9_-]+$/, 'Solo letras, números, guiones y guiones bajos'),
-  correo: z.string().email('Correo inválido').optional().or(z.literal('')),
+  correo:   z.string().email('Correo inválido').optional().or(z.literal('')),
   password: z.string().min(8, 'Mínimo 8 caracteres').optional().or(z.literal('')),
   password_confirmation: z.string().optional().or(z.literal('')),
   rol: z.enum(['admin', 'vendedor', 'tecnico', 'bodeguero'], {
     required_error: 'Seleccione un rol',
   }),
-  // CORRECCIÓN 1: se usaba z.boolean() pero el checkbox de RHF
-  // devuelve string. Con z.coerce.boolean() se convierte correctamente.
   activo: z.coerce.boolean().default(true),
 }).refine(d => !d.password || d.password === d.password_confirmation, {
   message: 'Las contraseñas no coinciden',
@@ -61,52 +50,48 @@ const editUserSchema = z.object({
 // ─── Helpers visuales ─────────────────────────────────────────────────────────
 const rolBadgeColors = {
   'super-admin': 'bg-red-100 text-red-800',
-  admin: 'bg-pastel-purple text-purple-800',
-  vendedor: 'bg-pastel-primary text-blue-800',
-  tecnico: 'bg-yellow-100 text-yellow-800',
-  bodeguero: 'bg-pastel-secondary text-green-800',
+  admin:         'bg-pastel-purple text-purple-800',
+  vendedor:      'bg-pastel-primary text-blue-800',
+  tecnico:       'bg-yellow-100 text-yellow-800',
+  bodeguero:     'bg-pastel-secondary text-green-800',
 };
-
 const rolLabels = {
   'super-admin': 'Super Admin',
-  admin: 'Administrador',
-  vendedor: 'Vendedor',
-  tecnico: 'Técnico',
-  bodeguero: 'Bodeguero',
+  admin:         'Administrador',
+  vendedor:      'Vendedor',
+  tecnico:       'Técnico',
+  bodeguero:     'Bodeguero',
 };
 
 // ─── Formulario ───────────────────────────────────────────────────────────────
 function UserForm({ register, errors, editing }) {
-<<<<<<< Updated upstream
-=======
-  const [showPassword, setShowPassword] = useState(false);
+  const [showPassword, setShowPassword]               = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
->>>>>>> Stashed changes
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
-        <FormField label="Nombre completo" required error={errors.nombre?.message}>
-          <FormInput register={register('nombre')} placeholder="Ej. Juan Pérez" error={errors.nombre} />
+        <FormField label="Nombre" required error={errors.nombre?.message}>
+          <FormInput register={register('nombre')} placeholder="Ej. Juan" error={errors.nombre} />
         </FormField>
+        <FormField label="Apellido" required error={errors.apellido?.message}>
+          <FormInput register={register('apellido')} placeholder="Ej. Pérez" error={errors.apellido} />
+        </FormField>
+      </div>
+      <div className="grid grid-cols-2 gap-4">
         <FormField label="Usuario (login)" required error={errors.usuario?.message}>
           <FormInput register={register('usuario')} placeholder="juan_v" error={errors.usuario} />
         </FormField>
+        <FormField label="Correo electrónico (opcional)" error={errors.correo?.message}>
+          <FormInput register={register('correo')} type="email" placeholder="contacto@tienda.com" error={errors.correo} />
+        </FormField>
       </div>
-
-      <FormField label="Correo electrónico (opcional)" error={errors.correo?.message}>
-        <FormInput register={register('correo')} type="email" placeholder="contacto@tienda.com" error={errors.correo} />
-      </FormField>
-
       <div className="grid grid-cols-2 gap-4">
         <FormField
           label={editing ? 'Nueva contraseña (vacío = sin cambios)' : 'Contraseña'}
           required={!editing}
           error={errors.password?.message}
         >
-<<<<<<< Updated upstream
-          <FormInput register={register('password')} type="password" placeholder="Mínimo 8 caracteres" error={errors.password} />
-=======
           <div className="relative">
             <FormInput
               register={register('password')}
@@ -117,21 +102,14 @@ function UserForm({ register, errors, editing }) {
             <button
               type="button"
               onClick={() => setShowPassword(v => !v)}
-              className="absolute text-gray-400 transition-colors -translate-y-1/2 right-3 top-1/2 hover:text-gray-600"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
               tabIndex={-1}
             >
-              {showPassword
-                ? <EyeOff size={15} />
-                : <Eye size={15} />
-              }
+              {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
             </button>
           </div>
->>>>>>> Stashed changes
         </FormField>
         <FormField label="Confirmar contraseña" required={!editing} error={errors.password_confirmation?.message}>
-<<<<<<< Updated upstream
-          <FormInput register={register('password_confirmation')} type="password" placeholder="Repita la contraseña" error={errors.password_confirmation} />
-=======
           <div className="relative">
             <FormInput
               register={register('password_confirmation')}
@@ -142,19 +120,14 @@ function UserForm({ register, errors, editing }) {
             <button
               type="button"
               onClick={() => setShowConfirmPassword(v => !v)}
-              className="absolute text-gray-400 transition-colors -translate-y-1/2 right-3 top-1/2 hover:text-gray-600"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
               tabIndex={-1}
             >
-              {showConfirmPassword
-                ? <EyeOff size={15} />
-                : <Eye size={15} />
-              }
+              {showConfirmPassword ? <EyeOff size={15} /> : <Eye size={15} />}
             </button>
           </div>
->>>>>>> Stashed changes
         </FormField>
       </div>
-
       <FormField label="Rol del sistema" required error={errors.rol?.message}>
         <FormSelect register={register('rol')} error={errors.rol}>
           <option value="">Seleccionar rol...</option>
@@ -164,14 +137,9 @@ function UserForm({ register, errors, editing }) {
           <option value="bodeguero">Bodeguero</option>
         </FormSelect>
       </FormField>
-
       {editing && (
         <FormField label="Estado" error={errors.activo?.message}>
           <div className="flex items-center gap-2">
-            {/*
-              CORRECCIÓN 2: se agrega defaultValue para que RHF registre
-              correctamente el valor booleano inicial al pre-llenar el form.
-            */}
             <input
               type="checkbox"
               {...register('activo')}
@@ -190,45 +158,43 @@ function UserForm({ register, errors, editing }) {
 
 // ─── Página principal ─────────────────────────────────────────────────────────
 export default function UsersPage() {
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [editing, setEditing] = useState(null);
+  const [users, setUsers]             = useState([]);
+  const [loading, setLoading]         = useState(true);
+  const [modalOpen, setModalOpen]     = useState(false);
+  const [editing, setEditing]         = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
 
   const schema = editing ? editUserSchema : createUserSchema;
-
   const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm({
     resolver: zodResolver(schema),
   });
+  const currentUser = useAuthStore((s) => s.user);
 
   // ── Carga ──────────────────────────────────────────────────────────
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const res = await userService.getAll();
-      // El controller devuelve paginado: { data: [...], total, ... }
+      const res     = await userService.getAll();
       const payload = res.data?.data ?? res.data;
-      const list = Array.isArray(payload) ? payload : payload?.data ?? [];
-      setUsers(list);
+      const list    = Array.isArray(payload) ? payload : payload?.data ?? [];
+      // Activos arriba, inactivos abajo
+      const sorted  = [...list].sort((a, b) => (b.activo ? 1 : 0) - (a.activo ? 1 : 0));
+      setUsers(sorted);
     } catch {
       toast.error('Error al cargar los usuarios');
     } finally {
       setLoading(false);
     }
   };
-
   useEffect(() => { fetchUsers(); }, []);
 
   // ── Toggle activo/inactivo ─────────────────────────────────────────
   const handleToggle = async (row) => {
-    // CORRECCIÓN 3: se extrae el id de forma robusta y se verifica
-    // antes de llamar al endpoint para evitar llamadas con undefined.
     const id = row.id ?? row.id_usuario;
     if (!id) { toast.error('ID de usuario no encontrado'); return; }
     try {
       await userService.toggle(id);
-      toast.success('Estado actualizado');
+      toast.success(`Usuario ${row.activo ? 'desactivado' : 'activado'} correctamente`);
       await fetchUsers();
     } catch (error) {
       const msg = error.response?.data?.message || 'Error al cambiar el estado';
@@ -239,31 +205,20 @@ export default function UsersPage() {
   // ── Abrir modal ────────────────────────────────────────────────────
   const openCreate = () => {
     setEditing(null);
-    reset({ nombre: '', usuario: '', correo: '', password: '', password_confirmation: '', rol: '' });
+    reset({ nombre: '', apellido: '', usuario: '', correo: '', password: '', password_confirmation: '', rol: '' });
     setModalOpen(true);
   };
 
   const openEdit = (user) => {
     setEditing(user);
     reset({
-<<<<<<< Updated upstream
       nombre:                user.nombre,
+      apellido:              user.apellido ?? '',
       usuario:               user.usuario,
       correo:                user.correo || '',
       rol:                   user.rol,
-      // CORRECCIÓN 4: activo debe ser booleano real, no string,
-      // para que el checkbox aparezca marcado/desmarcado correctamente.
       activo:                Boolean(user.activo),
       password:              '',
-=======
-      nombre: user.nombre,
-      apellido: user.apellido ?? '',
-      usuario: user.usuario,
-      correo: user.correo || '',
-      rol: user.rol,
-      activo: Boolean(user.activo),
-      password: '',
->>>>>>> Stashed changes
       password_confirmation: '',
     });
     setModalOpen(true);
@@ -273,20 +228,14 @@ export default function UsersPage() {
 
   // ── Guardar ────────────────────────────────────────────────────────
   const onSubmit = async (data) => {
-    const id = editing?.id ?? editing?.id_usuario;
-
-    // Limpiar contraseñas vacías en edición
+    const id      = editing?.id ?? editing?.id_usuario;
     const payload = { ...data };
     if (editing && !payload.password) {
       delete payload.password;
       delete payload.password_confirmation;
     }
-
     try {
       if (editing) {
-        // CORRECCIÓN 5: se verificaba editing.id_usuario || editing.id
-        // pero si ambos son falsy (ej: 0) la llamada era a /users/undefined.
-        // Ahora se valida explícitamente.
         if (!id) throw new Error('ID de usuario inválido');
         await userService.update(id, payload);
         toast.success('Usuario actualizado correctamente');
@@ -319,9 +268,7 @@ export default function UsersPage() {
     }
   };
 
-  // ── Columnas (dentro del componente para acceder a handleToggle) ───
-  // CORRECCIÓN 6: se eliminó la definición duplicada de columns que
-  // estaba fuera del componente y nunca se usaba.
+  // ── Columnas ───────────────────────────────────────────────────────
   const columns = [
     {
       key: 'nombre',
@@ -344,26 +291,26 @@ export default function UsersPage() {
       render: v => <span className="text-sm text-gray-600">{v || '—'}</span>,
     },
     {
-      key: 'rol',
+      key: 'roles',
       label: 'Rol',
-      render: v => (
-        <span className={`badge ${rolBadgeColors[v] || 'bg-gray-100 text-gray-600'}`}>
-          {rolLabels[v] || v || '—'}
-        </span>
-      ),
+      render: (v, row) => {
+        const rol = v?.[0] ?? row.rol ?? null;
+        return (
+          <span className={`badge ${rolBadgeColors[rol] || 'bg-gray-100 text-gray-600'}`}>
+            {rolLabels[rol] || rol || '—'}
+          </span>
+        );
+      },
     },
     {
       key: 'activo',
       label: 'Estado',
-      render: (v, row) => (
-        <button
-          onClick={() => handleToggle(row)}
-          className={`badge cursor-pointer hover:opacity-75 transition-opacity ${v ? 'bg-pastel-secondary text-green-800' : 'bg-red-100 text-red-700'
-            }`}
-          title={v ? 'Clic para desactivar' : 'Clic para activar'}
-        >
+      render: v => (
+        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+          v ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'
+        }`}>
           {v ? 'Activo' : 'Inactivo'}
-        </button>
+        </span>
       ),
     },
     {
@@ -380,7 +327,6 @@ export default function UsersPage() {
         <ShieldCheck size={16} className="shrink-0" />
         Sección exclusiva para administradores. Gestiona el acceso al sistema.
       </div>
-
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <p className="text-sm text-gray-500">
@@ -390,32 +336,11 @@ export default function UsersPage() {
             <Plus size={16} /> Nuevo Usuario
           </button>
         </div>
-
         <div className="card">
           <DataTable
             data={users}
             columns={columns}
             searchFields={['nombre', 'usuario', 'correo', 'rol']}
-<<<<<<< Updated upstream
-            actions={(row) => (
-              <>
-                <button
-                  onClick={() => openEdit(row)}
-                  className="p-1.5 hover:bg-pastel-primary/20 rounded-lg transition-colors text-blue-600"
-                  title="Editar usuario"
-                >
-                  <Pencil size={14} />
-                </button>
-                <button
-                  onClick={() => setDeleteTarget(row)}
-                  className="p-1.5 hover:bg-pastel-accent/30 rounded-lg transition-colors text-red-500"
-                  title="Eliminar usuario"
-                >
-                  <Trash2 size={14} />
-                </button>
-              </>
-            )}
-=======
             actions={(row) => {
               const esMiUsuario = (row.id ?? row.id_usuario) === (currentUser?.id ?? currentUser?.id_usuario);
               return (
@@ -427,6 +352,19 @@ export default function UsersPage() {
                   >
                     <Pencil size={14} />
                   </button>
+                  {!esMiUsuario && (
+                    <button
+                      onClick={() => handleToggle(row)}
+                      className={`p-1.5 rounded-lg transition-colors ${
+                        row.activo
+                          ? 'hover:bg-orange-100 text-orange-500'
+                          : 'hover:bg-green-100 text-green-600'
+                      }`}
+                      title={row.activo ? 'Desactivar' : 'Activar'}
+                    >
+                      {row.activo ? <ToggleRight size={16} /> : <ToggleLeft size={16} />}
+                    </button>
+                  )}
                   {esMiUsuario ? (
                     <span
                       title="No puedes eliminar tu propio usuario"
@@ -446,7 +384,6 @@ export default function UsersPage() {
                 </div>
               );
             }}
->>>>>>> Stashed changes
           />
         </div>
       </div>

@@ -83,6 +83,31 @@ export const purchaseSchema = z.object({
   })).min(1, 'Agregue al menos un producto'),
 });
 
+export const promocionSchema = z.object({
+  nombre: z.string().min(2, 'Nombre mínimo 2 caracteres').max(150),
+  descripcion: z.string().max(500).optional().or(z.literal('')),
+  tipo_descuento: z.enum(['porcentaje', 'monto_fijo'], { required_error: 'Seleccione un tipo de descuento' }),
+  valor_descuento: z.coerce
+    .number({ invalid_type_error: 'Ingrese un valor numérico' })
+    .positive('El valor debe ser mayor a 0')
+    .max(100000, 'Valor demasiado alto'),
+  tipo_aplicacion: z.enum(['producto', 'categoria'], { required_error: 'Seleccione el tipo de aplicación' }),
+  producto_id: z.coerce.number().int().positive().nullable().optional(),
+  categoria_id: z.coerce.number().int().positive().nullable().optional(),
+  fecha_inicio: z.string().min(1, 'La fecha de inicio es obligatoria'),
+  fecha_fin: z.string().optional().or(z.literal('')),
+  activo: z.boolean().default(true),
+}).refine(
+  (data) => data.tipo_aplicacion !== 'producto' || (data.producto_id && data.producto_id > 0),
+  { message: 'Seleccione un producto', path: ['producto_id'] }
+).refine(
+  (data) => data.tipo_aplicacion !== 'categoria' || (data.categoria_id && data.categoria_id > 0),
+  { message: 'Seleccione una categoría', path: ['categoria_id'] }
+).refine(
+  (data) => data.tipo_descuento !== 'porcentaje' || data.valor_descuento <= 100,
+  { message: 'El porcentaje no puede superar 100', path: ['valor_descuento'] }
+);
+
 export const saleSchema = z.object({
   client_id: z.coerce.number().int().positive('Seleccione un cliente').optional(),
   payment_method_id: z.coerce.number().int().positive('Seleccione método de pago'),

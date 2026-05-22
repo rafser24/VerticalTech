@@ -344,7 +344,7 @@ export default function LoginPage() {
 
         <div className="vt-card">
             <div className="vt-card-header">
-              <p className="vt-card-eyebrow">Panel de gestión</p>
+              <p className="vt-card-eyebrow">VerticalTech</p>
               <h2 className="vt-card-title">Bienvenido</h2>
               <p className="vt-card-sub">Accede a tu panel de gestión</p>
             </div>

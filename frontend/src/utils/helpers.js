@@ -1,3 +1,19 @@
+/**
+ * Decodifica entidades HTML almacenadas como texto plano en la BD.
+ * Ej: &quot; → "   &amp; → &   &#39; → '   &lt; → <   &gt; → >
+ */
+export const decodeHtml = (str) => {
+  if (!str) return str;
+  return str
+    .replace(/&quot;/g, '"')
+    .replace(/&amp;/g, '&')
+    .replace(/&#39;/g, "'")
+    .replace(/&apos;/g, "'")
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&nbsp;/g, ' ');
+};
+
 export const formatCurrency = (value, currency = 'USD') =>
   new Intl.NumberFormat('es-SV', { style: 'currency', currency }).format(value);
 
@@ -16,14 +32,15 @@ export const formatDatetime = (dateStr) => {
   });
 };
 
+// DESPUÉS
 export const statusColors = {
-  completada: 'bg-pastel-secondary text-green-800',
-  pendiente: 'bg-pastel-warning text-yellow-800',
-  cancelada: 'bg-pastel-accent text-red-800',
-  activo: 'bg-pastel-secondary text-green-800',
-  inactivo: 'bg-gray-100 text-gray-600',
+  pendiente:  'bg-yellow-100 text-yellow-800',
+  confirmada: 'bg-blue-100 text-blue-800',
+  recibida:   'bg-green-100 text-green-800',
+  anulada:    'bg-red-100 text-red-700',
+  activo:     'bg-green-100 text-green-800',
+  inactivo:   'bg-gray-100 text-gray-600',
 };
-
 export const roleColors = {
   admin: 'bg-pastel-purple text-purple-800',
   user: 'bg-pastel-primary text-blue-800',

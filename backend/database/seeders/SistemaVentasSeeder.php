@@ -20,10 +20,10 @@ class SistemaVentasSeeder extends Seeder
         // ── Métodos de Pago ────────────────────────────────────────
         $metodos = collect([
             ['nombre' => 'Efectivo',              'descripcion' => 'Pago en efectivo'],
-            ['nombre' => 'Tarjeta de Crédito',    'descripcion' => 'Visa, Mastercard, etc.'],
-            ['nombre' => 'Tarjeta de Débito',     'descripcion' => 'Débito bancario'],
+          //  ['nombre' => 'Tarjeta de Crédito',    'descripcion' => 'Visa, Mastercard, etc.'],
+           // ['nombre' => 'Tarjeta de Débito',     'descripcion' => 'Débito bancario'],
             ['nombre' => 'Transferencia Bancaria','descripcion' => 'ACH / wire transfer'],
-            ['nombre' => 'Cheque',                'descripcion' => 'Cheque bancario'],
+          //  ['nombre' => 'Cheque',                'descripcion' => 'Cheque bancario'],
         ])->map(fn($m) => MetodoPago::firstOrCreate(['nombre' => $m['nombre']], $m));
 
         // ── Categorías ─────────────────────────────────────────────

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\CacheApiResponse;
 use App\Http\Middleware\RoleOrPermissionMiddleware;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -19,11 +20,15 @@ return Application::configure(basePath: dirname(__DIR__))
             'permission'         => \Spatie\Permission\Middleware\PermissionMiddleware::class,
             'role_or_permission' => RoleOrPermissionMiddleware::class,
             'rolePermission'     => \Spatie\Permission\Middleware\RoleMiddleware::class,
+            'cache.api'          => CacheApiResponse::class,
         ]);
 
         // ── API middleware stack ───────────────────────────────
+        // CacheApiResponse solo actúa en GET y respuestas 200,
+        // los demás métodos pasan transparentes.
         $middleware->api(append: [
             \Illuminate\Http\Middleware\HandleCors::class,
+            CacheApiResponse::class,
         ]);
 
        

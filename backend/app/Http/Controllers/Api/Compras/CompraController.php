@@ -49,6 +49,10 @@ class CompraController extends Controller
         );
     }
 
+    /**
+     * Registrar nueva compra — queda en estado "pendiente".
+     * El stock NO se toca todavía.
+     */
     public function store(CompraRequest $request): JsonResponse
     {
         $data = $request->validated();
@@ -83,7 +87,7 @@ class CompraController extends Controller
                 'descuento'      => round($montoDescuento, 2),
                 'impuesto'       => $montoImpuesto,
                 'total'          => round($total, 2),
-                'estado'         => 'completada',
+                'estado'         => 'pendiente',
                 'notas'          => $data['notas'] ?? null,
                 'fecha_compra'   => $data['fecha_compra'] ?? now(),
             ]);
@@ -95,11 +99,7 @@ class CompraController extends Controller
                     'precio_unitario' => $item['precio_unitario'],
                     'descuento'       => $item['descuento'],
                 ]);
-
-                // Incrementar stock e igualar precio_compra al último precio pagado
-                $producto = Producto::find($item['producto_id']);
-                $producto->incrementarStock($item['cantidad']);
-                $producto->update(['precio_compra' => $item['precio_unitario']]);
+                // Stock NO se modifica aquí
             }
 
             return $compra;
@@ -107,45 +107,130 @@ class CompraController extends Controller
 
         $compra->load(['proveedor', 'metodoPago', 'usuario', 'detalles.producto']);
 
-        return $this->success(new CompraResource($compra), 'Compra registrada exitosamente.', 201);
+        return $this->success(new CompraResource($compra), 'Compra registrada. En espera de confirmación.', 201);
     }
 
-    public function show(Compra $compra): JsonResponse
+    public function show(int $i): JsonResponse
     {
-        $compra->load(['proveedor', 'metodoPago', 'usuario', 'detalles.producto']);
+        $compra = Compra::with(['proveedor', 'metodoPago', 'usuario', 'detalles.producto'])
+            ->findOrFail($i);
 
         return $this->success(new CompraResource($compra));
     }
 
     /**
-     * PATCH /api/compras/{compra}/cancelar
-     * Revierte el stock incrementado en la compra.
+     * Confirmar compra: pendiente → confirmada
+     * El proveedor aceptó el pedido pero aún no entrega.
      */
-    public function cancelar(Compra $compra): JsonResponse
+    public function confirmar(int $i): JsonResponse
     {
-        if ($compra->estado === 'cancelada') {
-            return $this->error('La compra ya está cancelada.', 422);
+        $compra = Compra::findOrFail($i);
+
+        if ($compra->estado !== 'pendiente') {
+            return $this->error("Solo se puede confirmar una compra pendiente. Estado actual: {$compra->estado}.", 422);
+        }
+
+        $compra->update(['estado' => 'confirmada']);
+
+        return $this->success(new CompraResource($compra->fresh()), 'Compra confirmada. Esperando recepción de mercancía.');
+    }
+
+    /**
+     * Recibir compra: confirmada → recibida
+     * La mercancía llegó — aquí se sube el stock.
+     */
+    public function recibir(int $i): JsonResponse
+    {
+        $compra = Compra::with('detalles')->findOrFail($i);
+
+        if ($compra->estado !== 'confirmada') {
+            return $this->error("Solo se puede recibir una compra confirmada. Estado actual: {$compra->estado}.", 422);
         }
 
         DB::transaction(function () use ($compra) {
             foreach ($compra->detalles as $detalle) {
-                Producto::find($detalle->producto_id)
-                    ?->decrementarStock($detalle->cantidad);
+                $producto = Producto::find($detalle->producto_id);
+                if ($producto) {
+                    $producto->incrementarStock($detalle->cantidad);
+                    $producto->update(['precio_compra' => $detalle->precio_unitario]);
+                }
             }
-
-            $compra->update(['estado' => 'cancelada']);
+            $compra->update([
+                'estado'          => 'recibida',
+                'fecha_recepcion' => now(),
+            ]);
         });
 
-        return $this->success(message: 'Compra cancelada y stock revertido.');
+        $compra->load(['proveedor', 'metodoPago', 'usuario', 'detalles.producto']);
+
+        return $this->success(new CompraResource($compra), 'Compra recibida. Stock actualizado.');
     }
 
-    // ──────────────────────────────────────────────────────────
+    /**
+     * Anular compra: solo desde pendiente o confirmada.
+     * Si ya fue recibida el stock ya entró — no se puede anular.
+     */
+    public function anular(int $i): JsonResponse
+    {
+        $compra = Compra::findOrFail($i);
+
+        if ($compra->estado === 'anulada') {
+            return $this->error('La compra ya está anulada.', 422);
+        }
+
+        if ($compra->estado === 'recibida') {
+            return $this->error('No se puede anular una compra ya recibida. El stock ya fue ingresado.', 422);
+        }
+
+        $compra->update(['estado' => 'anulada']);
+
+        return $this->success(null, 'Compra anulada.');
+    }
+
+    /**
+     * Retroceder una etapa:
+     * recibida  → confirmada (revierte stock)
+     * confirmada → pendiente
+     */
+    public function retroceder(int $i): JsonResponse
+    {
+        $compra = Compra::with('detalles')->findOrFail($i);
+
+        if ($compra->estado === 'pendiente') {
+            return $this->error('La compra ya está en la primera etapa.', 422);
+        }
+
+        if ($compra->estado === 'anulada') {
+            return $this->error('No se puede retroceder una compra anulada.', 422);
+        }
+
+        DB::transaction(function () use ($compra) {
+            if ($compra->estado === 'recibida') {
+                foreach ($compra->detalles as $detalle) {
+                    $producto = Producto::find($detalle->producto_id);
+                    if ($producto) {
+                        $producto->decrement('stock', $detalle->cantidad);
+                    }
+                }
+                $compra->update([
+                    'estado'          => 'confirmada',
+                    'fecha_recepcion' => null,
+                ]);
+            } elseif ($compra->estado === 'confirmada') {
+                $compra->update(['estado' => 'pendiente']);
+            }
+        });
+
+        $compra->load(['proveedor', 'metodoPago', 'usuario', 'detalles.producto']);
+
+        return $this->success(new CompraResource($compra), 'Compra retrocedida correctamente.');
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
     private function generarNumeroCompra(): string
     {
         $anio   = now()->format('Y');
-        $ultimo = Compra::whereYear('created_at', $anio)
-            ->lockForUpdate()
-            ->count();
+        $ultimo = Compra::whereYear('created_at', $anio)->count();
 
         return 'CMP-' . $anio . '-' . str_pad($ultimo + 1, 6, '0', STR_PAD_LEFT);
     }

@@ -3,13 +3,17 @@
 namespace App\Models\Compras;
 
 use App\Traits\Auditable;
+use App\Traits\HasApiCache;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Compra extends Model
 {
-    use HasFactory, SoftDeletes, Auditable;
+    use HasFactory, SoftDeletes, Auditable, HasApiCache;
+
+    /** Una compra nueva/anulada afecta el dashboard (reporte-compras). */
+    protected array $cacheModules = ['compras', 'dashboard'];
 
     protected $table = 'compras';
 
@@ -24,15 +28,17 @@ class Compra extends Model
         'total',
         'estado',
         'notas',
-        'fecha_compra',
+      'fecha_compra',
+        'fecha_recepcion',
     ];
 
     protected $casts = [
-        'subtotal'     => 'decimal:2',
-        'impuesto'     => 'decimal:2',
-        'descuento'    => 'decimal:2',
-        'total'        => 'decimal:2',
-        'fecha_compra' => 'datetime',
+        'subtotal'        => 'decimal:2',
+        'impuesto'        => 'decimal:2',
+        'descuento'       => 'decimal:2',
+        'total'           => 'decimal:2',
+        'fecha_compra'    => 'datetime',
+        'fecha_recepcion' => 'datetime',
     ];
 
     // ──────────────────────────────────────────
@@ -63,9 +69,9 @@ class Compra extends Model
     // Scopes
     // ──────────────────────────────────────────
 
-    public function scopeCompletada($query)
+   public function scopeRecibida($query)
     {
-        return $query->where('estado', 'completada');
+        return $query->where('estado', 'recibida');
     }
 
     public function scopeDelPeriodo($query, string $desde, string $hasta)

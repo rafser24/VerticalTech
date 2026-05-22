@@ -71,4 +71,14 @@ class CategoriaController extends Controller
 
         return $this->success(message: 'Categoría eliminada.');
     }
+
+    public function toggleActivo(Categoria $categoria): JsonResponse
+    {
+        $categoria->update(['activo' => !$categoria->activo]);
+
+        return $this->success(
+            new CategoriaResource($categoria->fresh()),
+            $categoria->activo ? 'Categoría activada.' : 'Categoría desactivada.'
+        );
+    }
 }

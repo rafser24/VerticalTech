@@ -3,13 +3,16 @@
 namespace App\Models\Catalogos;
 
 use App\Traits\Auditable;
+use App\Traits\HasApiCache;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Proveedor extends Model
 {
-    use HasFactory, SoftDeletes, Auditable;
+    use HasFactory, SoftDeletes, Auditable, HasApiCache;
+
+    protected array $cacheModules = ['proveedores'];
 
     protected $table = 'proveedores';
 

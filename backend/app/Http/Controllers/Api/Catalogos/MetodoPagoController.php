@@ -14,8 +14,11 @@ class MetodoPagoController extends Controller
     public function index(Request $request): JsonResponse
     {
         $metodos = MetodoPago::when(
+            // Si se pasa ?activo=false explícitamente, muestra inactivos (admin)
+            // Por defecto (sin parámetro) devuelve solo los activos
             $request->filled('activo'),
-            fn($q) => $q->where('activo', filter_var($request->activo, FILTER_VALIDATE_BOOLEAN))
+            fn($q) => $q->where('activo', filter_var($request->activo, FILTER_VALIDATE_BOOLEAN)),
+            fn($q) => $q->where('activo', true)
         )->orderBy('nombre')->get();
 
         return $this->success(MetodoPagoResource::collection($metodos));

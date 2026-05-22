@@ -3,7 +3,7 @@ import { productService, categoryService, supplierService } from '../services/ap
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'react-toastify';
-import { Plus, Pencil, Trash2, AlertTriangle } from 'lucide-react';
+import { Plus, Pencil, Trash2, AlertTriangle, ToggleLeft, ToggleRight } from 'lucide-react';
 import MainLayout from '../components/layout/MainLayout';
 import DataTable from '../components/ui/DataTable';
 import Modal from '../components/ui/Modal';
@@ -13,12 +13,19 @@ import { productSchema } from '../schemas';
 import { formatCurrency } from '../utils/helpers';
 
 export default function ProductsPage() {
-  const [products, setProducts] = useState([]);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [editing, setEditing] = useState(null);
+  const [products, setProducts]         = useState([]);
+  const [modalOpen, setModalOpen]       = useState(false);
+  const [editing, setEditing]           = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
-  const [categories, setCategories] = useState([]);
-  const [suppliers, setSuppliers] = useState([]);
+  const [categories, setCategories]     = useState([]);
+  const [suppliers, setSuppliers]       = useState([]);
+
+  const loadProducts = async () => {
+    const prodRes = await productService.getAll();
+    const list = prodRes.data?.data || prodRes.data || [];
+    const sorted = [...list].sort((a, b) => (b.activo ? 1 : 0) - (a.activo ? 1 : 0));
+    setProducts(sorted);
+  };
 
   useEffect(() => {
     const loadData = async () => {
@@ -28,8 +35,9 @@ export default function ProductsPage() {
           categoryService.getAll(),
           supplierService.getAll()
         ]);
-
-        setProducts(prodRes.data?.data || prodRes.data || []);
+        const list = prodRes.data?.data || prodRes.data || [];
+        const sorted = [...list].sort((a, b) => (b.activo ? 1 : 0) - (a.activo ? 1 : 0));
+        setProducts(sorted);
         setCategories(catRes.data?.data || catRes.data || []);
         setSuppliers(supRes.data?.data || supRes.data || []);
       } catch (error) {
@@ -56,6 +64,16 @@ export default function ProductsPage() {
     setModalOpen(true);
   };
 
+  const handleToggle = async (row) => {
+    try {
+      await productService.toggle(row.id);
+      toast.success(`Producto ${row.activo ? 'desactivado' : 'activado'} correctamente`);
+      await loadProducts();
+    } catch (error) {
+      toast.error('Error al cambiar el estado del producto');
+    }
+  };
+
   const onSubmit = async (data) => {
     try {
       if (editing) {
@@ -65,10 +83,7 @@ export default function ProductsPage() {
         await productService.create(data);
         toast.success('Producto creado exitosamente');
       }
-
-      const prodRes = await productService.getAll();
-      setProducts(prodRes.data?.data || prodRes.data || []);
-
+      await loadProducts();
       setModalOpen(false);
       reset();
     } catch (error) {
@@ -90,11 +105,16 @@ export default function ProductsPage() {
     }
   };
 
-  // Columnas actualizadas
   const columns = [
-    { key: 'codigo', label: 'Código', render: v => <span className="font-mono text-xs text-gray-400">{v}</span> },
     {
-      key: 'nombre', label: 'Producto', render: (v, row) => (
+      key: 'codigo',
+      label: 'Código',
+      render: v => <span className="font-mono text-xs text-gray-400">{v}</span>
+    },
+    {
+      key: 'nombre',
+      label: 'Producto',
+      render: (v, row) => (
         <div>
           <p className="font-medium text-gray-800">{v}</p>
           <p className="text-xs text-gray-400">{row.unidad || 'Unidad'}</p>
@@ -102,22 +122,57 @@ export default function ProductsPage() {
       )
     },
     {
-      key: 'categoria_id', label: 'Categoría', render: v => (
-        <span className="text-blue-800 badge bg-pastel-primary/30">{v || 'Sin categoría'}</span>
-      )
+      key: 'categoria_id',
+      label: 'Categoría',
+      render: v => {
+        const cat = categories.find(c => c.id === v || c.id === Number(v));
+        return (
+          <span className="text-blue-800 badge bg-pastel-primary/30">
+            {cat ? (cat.nombre || cat.name) : (v || 'Sin categoría')}
+          </span>
+        );
+      }
     },
-    { key: 'precio_venta', label: 'Precio', render: v => <span className="font-semibold">{formatCurrency(v)}</span> },
     {
-      key: 'stock', label: 'Stock', render: (v, row) => (
+      key: 'precio_venta',
+      label: 'Precio',
+      render: v => <span className="font-semibold">{formatCurrency(v)}</span>
+    },
+    {
+      key: 'stock',
+      label: 'Stock',
+      render: (v, row) => (
         <div className="flex items-center gap-1.5">
           {v <= row.stock_minimo && <AlertTriangle size={12} className="text-yellow-500" />}
-          <span className={v === 0 ? 'text-red-500 font-semibold' : v <= row.stock_minimo ? 'text-yellow-600 font-semibold' : 'text-gray-700'}>
+          <span className={
+            v === 0 ? 'text-red-500 font-semibold'
+            : v <= row.stock_minimo ? 'text-yellow-600 font-semibold'
+            : 'text-gray-700'
+          }>
             {v}
           </span>
         </div>
       )
     },
-    { key: 'proveedor_id', label: 'Proveedor' },
+    {
+      key: 'proveedor_id',
+      label: 'Proveedor',
+      render: v => {
+        const proveedor = suppliers.find(s => s.id === v || s.id === Number(v));
+        return <span>{proveedor ? (proveedor.nombre || proveedor.name) : '—'}</span>;
+      }
+    },
+    {
+      key: 'activo',
+      label: 'Estado',
+      render: v => (
+        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+          v ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'
+        }`}>
+          {v ? 'Activo' : 'Inactivo'}
+        </span>
+      )
+    },
   ];
 
   return (
@@ -134,14 +189,32 @@ export default function ProductsPage() {
           <DataTable
             data={products}
             columns={columns}
-            //Campos de búsqueda en español
             searchFields={['nombre', 'codigo', 'categoria_id', 'proveedor_id']}
             actions={(row) => (
               <div className="flex items-center gap-1">
-                <button onClick={() => openEdit(row)} className="p-1.5 hover:bg-pastel-primary/20 rounded-lg transition-colors text-blue-600">
+                <button
+                  onClick={() => openEdit(row)}
+                  className="p-1.5 hover:bg-pastel-primary/20 rounded-lg transition-colors text-blue-600"
+                  title="Editar"
+                >
                   <Pencil size={14} />
                 </button>
-                <button onClick={() => setDeleteTarget(row)} className="p-1.5 hover:bg-pastel-accent/30 rounded-lg transition-colors text-red-500">
+                <button
+                  onClick={() => handleToggle(row)}
+                  className={`p-1.5 rounded-lg transition-colors ${
+                    row.activo
+                      ? 'hover:bg-orange-100 text-orange-500'
+                      : 'hover:bg-green-100 text-green-600'
+                  }`}
+                  title={row.activo ? 'Desactivar' : 'Activar'}
+                >
+                  {row.activo ? <ToggleRight size={16} /> : <ToggleLeft size={16} />}
+                </button>
+                <button
+                  onClick={() => setDeleteTarget(row)}
+                  className="p-1.5 hover:bg-pastel-accent/30 rounded-lg transition-colors text-red-500"
+                  title="Eliminar"
+                >
                   <Trash2 size={14} />
                 </button>
               </div>
@@ -159,7 +232,6 @@ export default function ProductsPage() {
       >
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
-            {/*'nombre' y 'codigo' */}
             <FormField label="Nombre" required error={errors.nombre?.message}>
               <FormInput register={register('nombre')} placeholder="Nombre del producto" error={errors.nombre} />
             </FormField>
@@ -167,14 +239,10 @@ export default function ProductsPage() {
               <FormInput register={register('codigo')} placeholder="Ej: PROD-001" error={errors.codigo} />
             </FormField>
           </div>
-
-
           <FormField label="Descripción" error={errors.descripcion?.message}>
             <FormTextarea register={register('descripcion')} placeholder="Descripción opcional..." error={errors.descripcion} />
           </FormField>
-
           <div className="grid grid-cols-3 gap-4">
-
             <FormField label="Precio de venta" required error={errors.precio_venta?.message}>
               <FormInput register={register('precio_venta')} type="number" step="0.01" placeholder="0.00" error={errors.precio_venta} />
             </FormField>
@@ -185,16 +253,13 @@ export default function ProductsPage() {
               <FormInput register={register('stock_minimo')} type="number" placeholder="0" error={errors.stock_minimo} />
             </FormField>
           </div>
-
           <div className="grid grid-cols-2 gap-4">
-
             <FormField label="Categoría" required error={errors.categoria_id?.message}>
               <FormSelect register={register('categoria_id')} error={errors.categoria_id}>
                 <option value="">Seleccionar...</option>
                 {categories.map(c => <option key={c.id} value={c.id}>{c.nombre || c.name}</option>)}
               </FormSelect>
             </FormField>
-
             <FormField label="Proveedor" error={errors.proveedor_id?.message}>
               <FormSelect register={register('proveedor_id')} error={errors.proveedor_id}>
                 <option value="">Seleccionar...</option>
@@ -202,7 +267,6 @@ export default function ProductsPage() {
               </FormSelect>
             </FormField>
           </div>
-
           <FormField label="Unidad de medida" error={errors.unidad?.message}>
             <FormSelect register={register('unidad')} error={errors.unidad}>
               <option value="unidad">Unidad</option>
@@ -212,9 +276,12 @@ export default function ProductsPage() {
               <option value="metro">Metro</option>
             </FormSelect>
           </FormField>
-
           <div className="flex justify-end gap-3 pt-2 border-t border-gray-100">
-            <button type="button" onClick={() => { setModalOpen(false); reset(); }} className="border border-gray-200 btn-ghost">
+            <button
+              type="button"
+              onClick={() => { setModalOpen(false); reset(); }}
+              className="border border-gray-200 btn-ghost"
+            >
               Cancelar
             </button>
             <button type="submit" className="btn-primary">
@@ -229,7 +296,6 @@ export default function ProductsPage() {
         onClose={() => setDeleteTarget(null)}
         onConfirm={handleDelete}
         title="¿Eliminar producto?"
-
         message={`Se eliminará "${deleteTarget?.nombre}" permanentemente.`}
       />
     </MainLayout>
