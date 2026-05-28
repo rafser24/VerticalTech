@@ -18,8 +18,8 @@ src/
 │   ├── layout/         # Sidebar, Header, MainLayout, RouteGuard
 │   └── ui/             # Modal, DataTable, StatCard, FormFields, CrudPage, ConfirmDialog
 ├── pages/              # Dashboard, Products, Categories, Suppliers, Clients, Purchases, Sales, Users, Login
-├── store/              # authStore (Zustand), appStore (Zustand)
-├── services/           # api.js (Axios + interceptors), mockData.js
+├── context/              # React Context + useReducer
+├── services/           # api.js (Axios + interceptors)
 ├── schemas/            # Validaciones Zod
 └── utils/              # Helpers (formateo, paginación, filtros)
 ```
@@ -58,5 +58,3 @@ El frontend consume los siguientes endpoints:
 - GET    /api/payment-methods
 - GET    /api/dashboard/stats
 
-## Demo
-En modo demo (sin backend), cualquier email/contraseña funciona para iniciar sesión.
