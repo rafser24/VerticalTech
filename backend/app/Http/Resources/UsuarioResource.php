@@ -16,6 +16,7 @@ class UsuarioResource extends JsonResource
             'nombre_completo'=> $this->nombre_completo,
             'usuario'        => $this->usuario,
             'email'          => $this->email,
+            'rol'            => $this->rol,   // campo de la tabla (fuente de verdad para el frontend)
             'activo'         => $this->activo,
             'roles'          => $this->getRoleNames(),
             'permisos'       => $this->getAllPermissions()->pluck('name'),

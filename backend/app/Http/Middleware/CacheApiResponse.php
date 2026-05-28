@@ -65,6 +65,7 @@ class CacheApiResponse
         'proveedores'  => 600,
         'promociones'  => 300,
         'productos'    => 300,
+        'pos'          => 120,  // init del POS: combina productos+clientes+metodos+promos
         'clientes'     => 120,
         'compras'      => 120,
         'ventas'       => 60,

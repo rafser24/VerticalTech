@@ -10,7 +10,7 @@ export const productSchema = z.object({
   nombre: z.string().min(2, 'Nombre mínimo 2 caracteres').max(100),
   descripcion: z.string().max(500).optional(),
   precio_venta: z.coerce.number().positive('El precio debe ser positivo'),
-  stock: z.coerce.number().int().min(0, 'El stock no puede ser negativo'),
+  // stock se omite intencionalmente: solo se mueve por compras/ventas
   stock_minimo: z.coerce.number().int().min(0).optional(),
   categoria_id: z.coerce.number().int().positive('Seleccione una categoría'),
   proveedor_id: z.coerce.number().int().positive('Seleccione un proveedor').optional(),

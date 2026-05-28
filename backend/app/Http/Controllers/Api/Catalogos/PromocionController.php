@@ -4,7 +4,10 @@ namespace App\Http\Controllers\Api\Catalogos;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Catalogos\PromocionRequest;
+use App\Http\Resources\Catalogos\CategoriaResource;
 use App\Http\Resources\Catalogos\PromocionResource;
+use App\Models\Catalogos\Categoria;
+use App\Models\Catalogos\Producto;
 use App\Models\Catalogos\Promocion;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -12,6 +15,30 @@ use Illuminate\Support\Facades\Auth;
 
 class PromocionController extends Controller
 {
+    /**
+     * Inicialización del módulo Promociones.
+     * Devuelve promociones + catálogos del formulario en un solo request.
+     */
+    public function init(): JsonResponse
+    {
+        $promociones = Promocion::with(['producto:id,nombre,codigo', 'categoria:id,nombre'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        // Solo id+nombre+codigo para el selector del formulario
+        $productos = Producto::where('activo', true)->orderBy('nombre')
+            ->get(['id', 'nombre', 'codigo'])
+            ->map(fn ($p) => ['id' => $p->id, 'nombre' => $p->nombre, 'codigo' => $p->codigo]);
+
+        $categorias = Categoria::where('activo', true)->orderBy('nombre')->get();
+
+        return $this->success([
+            'promociones' => PromocionResource::collection($promociones),
+            'productos'   => $productos,
+            'categorias'  => CategoriaResource::collection($categorias),
+        ]);
+    }
+
     public function index(Request $request): JsonResponse
     {
         $query = Promocion::with(['producto:id,nombre,codigo', 'categoria:id,nombre'])

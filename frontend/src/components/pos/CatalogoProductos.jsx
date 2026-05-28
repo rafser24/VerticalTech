@@ -59,13 +59,16 @@ export default function CatalogoProductos({
 
   // ── Filtrado ─────────────────────────────────────────────────────────
   const productosFiltrados = productos.filter(p => {
+    // activo y stock > 0 ya vienen filtrados desde el servidor;
+    // las condiciones se mantienen como guardia de seguridad.
+    if (!p.activo || p.stock <= 0) return false;
     const termino = busqueda.toLowerCase();
     const coincide =
       decodeHtml(p.nombre)?.toLowerCase().includes(termino) ||
       p.codigo?.toLowerCase().includes(termino) ||
       p.categoria?.nombre?.toLowerCase().includes(termino);
     const coincideCategoria = categoriaFiltro ? String(p.categoria_id) === categoriaFiltro : true;
-    return coincide && coincideCategoria && p.activo && p.stock > 0;
+    return coincide && coincideCategoria;
   });
 
   const categorias = [...new Map(

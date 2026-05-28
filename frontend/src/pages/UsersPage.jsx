@@ -10,7 +10,7 @@ import Modal from '../components/ui/Modal';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import { FormField, FormInput, FormSelect } from '../components/ui/FormFields';
 import { userService } from '../services/api';
-import useAuthStore from '../store/authStore';
+import { useAuth } from '../context/AuthContext';
 import { formatDate } from '../utils/helpers';
 
 // ─── Schemas ──────────────────────────────────────────────────────────────────
@@ -22,7 +22,7 @@ const createUserSchema = z.object({
   correo:   z.string().email('Correo inválido').optional().or(z.literal('')),
   password: z.string().min(8, 'Mínimo 8 caracteres'),
   password_confirmation: z.string().min(8, 'Mínimo 8 caracteres'),
-  rol: z.enum(['admin', 'vendedor', 'tecnico', 'bodeguero'], {
+  rol: z.enum(['admin', 'vendedor'], {
     required_error: 'Seleccione un rol',
   }),
 }).refine(d => d.password === d.password_confirmation, {
@@ -38,7 +38,7 @@ const editUserSchema = z.object({
   correo:   z.string().email('Correo inválido').optional().or(z.literal('')),
   password: z.string().min(8, 'Mínimo 8 caracteres').optional().or(z.literal('')),
   password_confirmation: z.string().optional().or(z.literal('')),
-  rol: z.enum(['admin', 'vendedor', 'tecnico', 'bodeguero'], {
+  rol: z.enum(['admin', 'vendedor'], {
     required_error: 'Seleccione un rol',
   }),
   activo: z.coerce.boolean().default(true),
@@ -52,15 +52,11 @@ const rolBadgeColors = {
   'super-admin': 'bg-red-100 text-red-800',
   admin:         'bg-pastel-purple text-purple-800',
   vendedor:      'bg-pastel-primary text-blue-800',
-  tecnico:       'bg-yellow-100 text-yellow-800',
-  bodeguero:     'bg-pastel-secondary text-green-800',
 };
 const rolLabels = {
   'super-admin': 'Super Admin',
   admin:         'Administrador',
   vendedor:      'Vendedor',
-  tecnico:       'Técnico',
-  bodeguero:     'Bodeguero',
 };
 
 // ─── Formulario ───────────────────────────────────────────────────────────────
@@ -133,8 +129,6 @@ function UserForm({ register, errors, editing }) {
           <option value="">Seleccionar rol...</option>
           <option value="admin">Administrador</option>
           <option value="vendedor">Vendedor</option>
-          <option value="tecnico">Técnico</option>
-          <option value="bodeguero">Bodeguero</option>
         </FormSelect>
       </FormField>
       {editing && (
@@ -168,7 +162,7 @@ export default function UsersPage() {
   const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm({
     resolver: zodResolver(schema),
   });
-  const currentUser = useAuthStore((s) => s.user);
+  const { user: currentUser, isSuperAdmin } = useAuth();
 
   // ── Carga ──────────────────────────────────────────────────────────
   const fetchUsers = async () => {
@@ -342,7 +336,19 @@ export default function UsersPage() {
             columns={columns}
             searchFields={['nombre', 'usuario', 'correo', 'rol']}
             actions={(row) => {
-              const esMiUsuario = (row.id ?? row.id_usuario) === (currentUser?.id ?? currentUser?.id_usuario);
+              const esMiUsuario  = (row.id ?? row.id_usuario) === (currentUser?.id ?? currentUser?.id_usuario);
+              const esSuperAdmin = row.rol === 'super-admin' || row.roles?.includes('super-admin');
+              // Solo el super-admin puede operar sobre cuentas super-admin; el admin no puede
+              const puedeOperar  = isSuperAdmin() || !esSuperAdmin;
+
+              if (!puedeOperar) {
+                return (
+                  <span className="text-xs text-gray-300 italic px-1" title="Solo el Super Admin puede modificar esta cuenta">
+                    —
+                  </span>
+                );
+              }
+
               return (
                 <div className="flex items-center gap-1">
                   <button

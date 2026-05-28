@@ -167,7 +167,7 @@ export default function DrawerVentasEspera({ isOpen, onClose, onVentaConfirmada 
         </div>
       </div>
 
-      <div className={`fixed inset-0 z-70 flex items-center justify-center p-4 transition-opacity duration-200 ${showModal ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
+      <div className={`fixed inset-0 z-[70] flex items-center justify-center p-4 transition-opacity duration-200 ${showModal ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
         <div className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm" onClick={() => setConfirmarAnular(null)} />
         <div className="relative bg-white rounded-2xl shadow-2xl w-80 p-6 space-y-4">
           <div className="flex flex-col items-center text-center gap-2">

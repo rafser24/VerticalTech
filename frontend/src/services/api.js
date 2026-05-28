@@ -1,5 +1,5 @@
 import axios from 'axios';
-import useAuthStore from '../store/authStore';
+import { AUTH_STORAGE_KEY } from '../context/AuthContext';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api';
 
@@ -9,10 +9,30 @@ const api = axios.create({
   withCredentials: true,
 });
 
+/**
+ * Lee el token JWT directamente desde localStorage.
+ *
+ * Los interceptores de Axios se ejecutan fuera del árbol de React,
+ * así que no pueden usar useContext(). Leer desde localStorage es la
+ * solución correcta: el AuthProvider mantiene ambos sincronizados
+ * en cada cambio de estado mediante un useEffect.
+ */
+function getToken() {
+  try {
+    const raw = localStorage.getItem(AUTH_STORAGE_KEY);
+    if (!raw) return null;
+    const data = JSON.parse(raw);
+    // Compatibilidad con formato antiguo Zustand: { state: { token }, version }
+    return (data.state ?? data)?.token ?? null;
+  } catch {
+    return null;
+  }
+}
+
 // ── Interceptor de request: inyecta token y sanitiza body ────────────────────
 api.interceptors.request.use(
   (config) => {
-    const token = useAuthStore.getState().getToken();
+    const token = getToken();
     if (token) config.headers.Authorization = `Bearer ${token}`;
     // Si es FormData (subida de archivos) NO sanitizar — lo dejamos pasar directo
     if (config.data && typeof config.data === 'object' && !(config.data instanceof FormData)) {
@@ -27,9 +47,12 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      console.error('401 DETECTADO EN LA RUTA:', error.config.url);
-      // useAuthStore.getState().logout();
-      // window.location.href = '/login';
+      // Token expirado o inválido — limpiar sesión y redirigir al login
+      localStorage.removeItem(AUTH_STORAGE_KEY);
+      // Solo redirigir si no estamos ya en /login (evita bucle)
+      if (!window.location.pathname.startsWith('/login')) {
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(error);
   }
@@ -73,7 +96,7 @@ export const productService       = crudService('/productos');
 export const categoryService      = crudService('/categorias');
 export const supplierService      = crudService('/proveedores');
 export const clientService        = crudService('/clientes');
-export const userService          = crudService('/users');
+export const userService          = crudService('/usuarios');
 export const paymentMethodService = crudService('/metodos-pago');
 
 export const purchaseService = {

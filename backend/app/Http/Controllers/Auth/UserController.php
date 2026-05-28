@@ -25,12 +25,12 @@ class UserController extends Controller
                     $term = $request->search;
                     $q->where(function ($q) use ($term) {
                         $q->where('nombre',  'ilike', "%{$term}%")
+                            ->orWhere('apellido', 'ilike', "%{$term}%")
                             ->orWhere('usuario', 'ilike', "%{$term}%")
-                            ->orWhere('correo', 'ilike', "%{$term}%")
-                            ->orWhere('rol',    'ilike', "%{$term}%");
+                            ->orWhere('email', 'ilike', "%{$term}%");
                     });
                 })
-                ->when($request->filled('rol'), fn($q) => $q->where('rol', $request->rol))
+                ->when($request->filled('rol'), fn($q) => $q->role($request->rol))
                 ->when($request->filled('activo'), function ($q) use ($request) {
                     $q->where('activo', filter_var($request->activo, FILTER_VALIDATE_BOOLEAN));
                 })
@@ -113,6 +113,12 @@ class UserController extends Controller
             $usuario   = Usuario::findOrFail($id);
             $validated = $request->validated();
 
+            // Los admins no pueden editar cuentas Super Admin.
+            // Solo otro super-admin puede hacerlo.
+            if ($usuario->hasRole('super-admin') && !auth('api')->user()->hasRole('super-admin')) {
+                return $this->error('No tienes permiso para editar a un Super Admin.', 403);
+            }
+
             $payload = [
                 'nombre'  => $validated['nombre'],
             'apellido'   => $validated['apellido'],
@@ -159,8 +165,13 @@ class UserController extends Controller
         try {
             $usuario = Usuario::findOrFail($id);
 
-            if ($usuario->id_usuario === auth('api')->id()) {
+            if ($usuario->id === auth('api')->id()) {
                 return $this->error('No puedes eliminar tu propio usuario', 422);
+            }
+
+            // Los admins no pueden eliminar cuentas Super Admin.
+            if ($usuario->hasRole('super-admin') && !auth('api')->user()->hasRole('super-admin')) {
+                return $this->error('No tienes permiso para eliminar a un Super Admin.', 403);
             }
 
             $usuario->syncRoles([]);
@@ -180,16 +191,21 @@ class UserController extends Controller
         try {
             $usuario = Usuario::findOrFail($id);
 
-            if ($usuario->id_usuario === auth('api')->id()) {
+            if ($usuario->id === auth('api')->id()) {
                 return $this->error('No puedes desactivar tu propio usuario', 422);
+            }
+
+            // Los admins no pueden activar/desactivar cuentas Super Admin.
+            if ($usuario->hasRole('super-admin') && !auth('api')->user()->hasRole('super-admin')) {
+                return $this->error('No tienes permiso para modificar a un Super Admin.', 403);
             }
 
             $usuario->update(['activo' => !$usuario->activo]);
             $estado = $usuario->activo ? 'activado' : 'desactivado';
 
             $data = [
-                'id'         => $usuario->id_usuario,
-                'id_usuario' => $usuario->id_usuario,
+                'id'         => $usuario->id,
+                'id_usuario' => $usuario->id,
                 'activo'     => $usuario->activo,
             ];
 

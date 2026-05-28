@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manual del Programador — ST Ventas</title>
+<style>
+  @page { size: A4; margin: 2cm 2.2cm 2cm 2.2cm; }
+  @media print {
+    .no-print { display: none; }
+    section { page-break-inside: avoid; }
+    h2 { page-break-before: always; }
+    h2.no-break { page-break-before: avoid; }
+    pre { page-break-inside: avoid; }
+  }
+  :root {
+    --blue: #1e40af; --blue-light: #dbeafe; --blue-mid: #3b82f6;
+    --gray: #374151; --gray-light: #f9fafb; --gray-mid: #e5e7eb;
+    --green: #065f46; --green-light: #d1fae5;
+    --red: #991b1b; --red-light: #fee2e2;
+    --orange: #92400e; --orange-light: #fef3c7;
+    --purple: #5b21b6; --purple-light: #ede9fe;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 11px; color: #1f2937; line-height: 1.6; background: #fff; }
+  /* ── PORTADA ── */
+  .cover { min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 50%, #0f172a 100%); color: #fff; padding: 40px; }
+  .cover-badge { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); border-radius: 20px; padding: 6px 18px; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 30px; }
+  .cover h1 { font-size: 40px; font-weight: 800; margin-bottom: 10px; letter-spacing: -1px; }
+  .cover h1 span { color: #93c5fd; }
+  .cover h2 { font-size: 18px; font-weight: 400; color: #bfdbfe; margin-bottom: 40px; }
+  .cover-line { width: 80px; height: 3px; background: #60a5fa; margin: 0 auto 40px; }
+  .cover-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 50px; max-width: 600px; }
+  .cover-item { background: rgba(255,255,255,0.1); border-radius: 10px; padding: 14px; }
+  .cover-item .label { font-size: 9px; color: #93c5fd; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+  .cover-item .value { font-size: 13px; font-weight: 600; }
+  .cover-footer { font-size: 10px; color: #93c5fd; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 20px; width: 100%; max-width: 600px; }
+  /* ── LAYOUT ── */
+  .page { max-width: 900px; margin: 0 auto; padding: 30px 20px; }
+  /* ── HEADINGS ── */
+  h2 { font-size: 20px; font-weight: 700; color: var(--blue); border-bottom: 3px solid var(--blue); padding-bottom: 8px; margin: 40px 0 20px; }
+  h3 { font-size: 14px; font-weight: 700; color: #1e3a8a; margin: 24px 0 10px; }
+  h4 { font-size: 12px; font-weight: 700; color: #374151; margin: 16px 0 8px; border-left: 3px solid var(--blue-mid); padding-left: 8px; }
+  p { margin-bottom: 10px; }
+  ul, ol { margin: 8px 0 12px 20px; }
+  li { margin-bottom: 4px; }
+  /* ── TOC ── */
+  .toc { background: var(--gray-light); border: 1px solid var(--gray-mid); border-radius: 10px; padding: 24px 28px; margin: 30px 0; }
+  .toc h3 { margin-top: 0; color: var(--blue); font-size: 15px; }
+  .toc-section { margin: 8px 0; }
+  .toc-section a { text-decoration: none; color: var(--gray); display: flex; justify-content: space-between; padding: 2px 0; border-bottom: 1px dotted #d1d5db; }
+  .toc-section a:hover { color: var(--blue); }
+  .toc-num { color: var(--blue-mid); font-weight: 700; margin-right: 8px; font-size: 10px; }
+  /* ── CODE ── */
+  pre { background: #0f172a; color: #e2e8f0; border-radius: 8px; padding: 16px; font-size: 10px; overflow-x: auto; margin: 12px 0; line-height: 1.5; border-left: 4px solid var(--blue-mid); }
+  code { background: #f1f5f9; color: #be185d; padding: 1px 5px; border-radius: 4px; font-size: 10px; font-family: 'Courier New', monospace; }
+  pre code { background: none; color: inherit; padding: 0; }
+  .comment { color: #94a3b8; }
+  .keyword { color: #c084fc; }
+  .string { color: #86efac; }
+  .func { color: #67e8f9; }
+  .class-name { color: #fbbf24; }
+  /* ── TABLES ── */
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 10px; }
+  th { background: var(--blue); color: #fff; padding: 8px 10px; text-align: left; font-size: 10px; }
+  td { padding: 7px 10px; border-bottom: 1px solid var(--gray-mid); vertical-align: top; }
+  tr:nth-child(even) td { background: var(--gray-light); }
+  tr:hover td { background: var(--blue-light); }
+  /* ── CARDS ── */
+  .card { background: var(--gray-light); border: 1px solid var(--gray-mid); border-radius: 8px; padding: 16px; margin: 12px 0; }
+  .card-blue { background: var(--blue-light); border-color: #93c5fd; }
+  .card-green { background: var(--green-light); border-color: #6ee7b7; }
+  .card-orange { background: var(--orange-light); border-color: #fcd34d; }
+  .card-red { background: var(--red-light); border-color: #fca5a5; }
+  .card-purple { background: var(--purple-light); border-color: #c4b5fd; }
+  .card h4 { border: none; padding: 0; margin-top: 0; }
+  /* ── BADGES ── */
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 9px; font-weight: 600; text-transform: uppercase; }
+  .badge-blue { background: var(--blue-light); color: var(--blue); }
+  .badge-green { background: var(--green-light); color: var(--green); }
+  .badge-red { background: var(--red-light); color: var(--red); }
+  .badge-orange { background: var(--orange-light); color: var(--orange); }
+  .badge-purple { background: var(--purple-light); color: var(--purple); }
+  /* ── ALERTS ── */
+  .alert { border-radius: 8px; padding: 12px 16px; margin: 12px 0; border-left: 4px solid; }
+  .alert-info { background: var(--blue-light); border-color: var(--blue-mid); color: #1e3a8a; }
+  .alert-warn { background: var(--orange-light); border-color: #f59e0b; color: var(--orange); }
+  .alert-success { background: var(--green-light); border-color: #10b981; color: var(--green); }
+  .alert-danger { background: var(--red-light); border-color: #ef4444; color: var(--red); }
+  .alert strong { display: block; margin-bottom: 4px; }
+  /* ── FLOW DIAGRAM ── */
+  .flow { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin: 12px 0; }
+  .flow-box { background: var(--blue); color: #fff; padding: 6px 12px; border-radius: 6px; font-size: 10px; font-weight: 600; }
+  .flow-box.gray { background: var(--gray); }
+  .flow-box.green { background: #059669; }
+  .flow-box.red { background: #dc2626; }
+  .flow-box.orange { background: #d97706; }
+  .flow-arrow { color: var(--blue-mid); font-size: 14px; font-weight: 700; }
+  /* ── GRID ── */
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 12px 0; }
+  .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin: 12px 0; }
+  /* ── DIR TREE ── */
+  .tree { background: #0f172a; color: #e2e8f0; border-radius: 8px; padding: 16px; font-family: 'Courier New', monospace; font-size: 10px; line-height: 1.8; }
+  .tree .dir { color: #67e8f9; font-weight: 700; }
+  .tree .file { color: #94a3b8; }
+  .tree .important { color: #86efac; font-weight: 700; }
+  .tree .comment-t { color: #64748b; font-style: italic; }
+  /* ── SECTION HEADER ── */
+  .section-header { background: linear-gradient(135deg, var(--blue) 0%, #1e3a8a 100%); color: #fff; border-radius: 10px; padding: 16px 20px; margin-bottom: 20px; }
+  .section-header h2 { border: none; color: #fff; margin: 0; padding: 0; font-size: 18px; }
+  .section-header p { color: #bfdbfe; margin: 4px 0 0; font-size: 11px; }
+  hr { border: none; border-top: 2px solid var(--gray-mid); margin: 30px 0; }
+</style>
+</head>
+<body>
+
+<!-- PORTADA -->
+<div class="cover">
+  <div class="cover-badge">Documentación Técnica</div>
+  <h1>ST <span>VENTAS</span></h1>
+  <h2>Manual del Programador</h2>
+  <div class="cover-line"></div>
+  <div class="cover-grid">
+    <div class="cover-item"><div class="label">Backend</div><div class="value">Laravel 12</div></div>
+    <div class="cover-item"><div class="label">Frontend</div><div class="value">React 19</div></div>
+    <div class="cover-item"><div class="label">Base de Datos</div><div class="value">PostgreSQL</div></div>
+    <div class="cover-item"><div class="label">Auth</div><div class="value">JWT / Sanctum</div></div>
+    <div class="cover-item"><div class="label">Cache</div><div class="value">Redis</div></div>
+    <div class="cover-item"><div class="label">Versión</div><div class="value">1.0.0</div></div>
+  </div>
+  <div class="cover-footer">Sistema de Gestión de Ventas &nbsp;|&nbsp; 2026 &nbsp;|&nbsp; Uso interno del equipo de desarrollo</div>
+</div>
+
+<div class="page">
+
+<!-- TABLA DE CONTENIDO -->
+<div class="toc">
+  <h3>📋 Tabla de Contenido</h3>
+  <div class="toc-section"><a href="#sec1"><span><span class="toc-num">1.</span> Visión General del Proyecto</span><span>→</span></a></div>
+  <div class="toc-section"><a href="#sec2"><span><span class="toc-num">2.</span> Stack Tecnológico</span><span>→</span></a></div>
+  <div class="toc-section"><a href="#sec3"><span><span class="toc-num">3.</span> Estructura de Directorios</span><span>→</span></a></div>
+  <div class="toc-section"><a href="#sec4"><span><span class="toc-num">4.</span> Configuración del Entorno</span><span>→</span></a></div>
+  <div class="toc-section"><a href="#sec5"><span><span class="toc-num">5.</span> Arquitectura Backend (Laravel)</span><span>→</span></a></div>
+  <div class="toc-section"><a href="#sec6"><span><span class="toc-num">6.</span> Base de Datos y Migraciones</span><span>→</span></a></div>
+  <div class="toc-section"><a href="#sec7"><span><span class="toc-num">7.</span> Sistema de Autenticación JWT</span><span>→</span></a></div>
+  <div class="toc-section"><a href="#sec8"><span><span class="toc-num">8.</span> Roles y Permisos (Spatie)</span><span>→</span></a></div>
+  <div class="toc-section"><a href="#sec9"><span><span class="toc-num">9.</span> Sistema de Caché (Redis)</span><span>→</span></a></div>
+  <div class="toc-section"><a href="#sec10"><span><span class="toc-num">10.</span> Sistema de Auditoría</span><span>→</span></a></div>
+  <div class="toc-section"><a href="#sec11"><span><span class="toc-num">11.</span> Referencia Completa de API</span><span>→</span></a></div>
+  <div class="toc-section"><a href="#sec12"><span><span class="toc-num">12.</span> Arquitectura Frontend (React)</span><span>→</span></a></div>
+  <div class="toc-section"><a href="#sec13"><span><span class="toc-num">13.</span> Estado Global — Context API</span><span>→</span></a></div>
+  <div class="toc-section"><a href="#sec14"><span><span class="toc-num">14.</span> Capa de Servicios (api.js)</span><span>→</span></a></div>
+  <div class="toc-section"><a href="#sec15"><span><span class="toc-num">15.</span> Módulos del Frontend — Detalle</span><span>→</span></a></div>
+  <div class="toc-section"><a href="#sec16"><span><span class="toc-num">16.</span> Patrones y Decisiones Técnicas</span><span>→</span></a></div>
+  <div class="toc-section"><a href="#sec17"><span><span class="toc-num">17.</span> Guía de Despliegue</span><span>→</span></a></div>
+  <div class="toc-section"><a href="#sec18"><span><span class="toc-num">18.</span> Guía para Agregar un Nuevo Módulo</span><span>→</span></a></div>
+</div>
+
+<!-- SECCIÓN 1 -->
+<div class="section-header" id="sec1">
+  <h2>1. Visión General del Proyecto</h2>
+  <p>Descripción, objetivos y alcance del sistema</p>
+</div>
+
+<p><strong>ST Ventas</strong> es un sistema de gestión de punto de venta (POS) y administración de inventario desarrollado como aplicación web con arquitectura desacoplada: una API REST en Laravel 12 (PHP 8.2) y una SPA en React 19. Permite registrar ventas, gestionar inventario, controlar compras a proveedores y generar reportes, con autenticación JWT, control de acceso por roles y auditoría automática de todos los cambios.</p>
+
+<div class="grid2">
+  <div class="card card-blue">
+    <h4>Objetivos Principales</h4>
+    <ul>
+      <li>POS ágil con carrito + confirmación de pago</li>
+      <li>Control de stock con alertas de nivel mínimo</li>
+      <li>Gestión de compras con flujo de estados</li>
+      <li>Dashboard con KPIs y gráficos en tiempo real</li>
+      <li>Auditoría completa de operaciones</li>
+      <li>Control de acceso por roles (super-admin / admin / vendedor)</li>
+    </ul>
+  </div>
+  <div class="card card-green">
+    <h4>Características Técnicas Destacadas</h4>
+    <ul>
+      <li>Patrón Init Endpoint — 1 HTTP para cargar múltiples catálogos</li>
+      <li>Caché Redis versionado con invalidación automática</li>
+      <li>Trait Auditable — log automático en todos los modelos</li>
+      <li>JWT con Rate Limiter en login</li>
+      <li>Transacciones de BD para ventas y compras</li>
+      <li>Columna storedAs en detalle_venta/compra</li>
+    </ul>
+  </div>
+</div>
+
+<h3>Flujo General del Sistema</h3>
+<div class="flow">
+  <div class="flow-box">Navegador React</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box gray">HTTPS</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box">Laravel API</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box orange">Middleware JWT</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box green">Controlador</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box gray">PostgreSQL</div>
+</div>
+<div class="flow">
+  <div class="flow-box">GET Requests</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box orange">CacheApiResponse</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box red">HIT: Redis</div>
+  <div class="flow-arrow">/</div>
+  <div class="flow-box green">MISS: BD → Redis</div>
+</div>
+
+<!-- SECCIÓN 2 -->
+<div class="section-header" id="sec2">
+  <h2>2. Stack Tecnológico</h2>
+  <p>Todas las dependencias y versiones del proyecto</p>
+</div>
+
+<h3>Backend (composer.json)</h3>
+<table>
+  <tr><th>Paquete</th><th>Versión</th><th>Propósito</th></tr>
+  <tr><td><code>laravel/framework</code></td><td>^12.0</td><td>Framework principal PHP</td></tr>
+  <tr><td><code>tymon/jwt-auth</code></td><td>^2.2</td><td>Autenticación con tokens JWT</td></tr>
+  <tr><td><code>spatie/laravel-permission</code></td><td>^7.3</td><td>Roles y permisos granulares</td></tr>
+  <tr><td><code>laravel/sanctum</code></td><td>^4.0</td><td>SPA guard (complementario)</td></tr>
+  <tr><td><code>predis/predis</code></td><td>^3.1</td><td>Cliente Redis para caché</td></tr>
+  <tr><td><code>dedoc/scramble</code></td><td>^0.12.23</td><td>Auto-documentación OpenAPI</td></tr>
+  <tr><td><code>pestphp/pest</code></td><td>^3.8</td><td>Tests unitarios y de features</td></tr>
+  <tr><td><code>laravel/sail</code></td><td>^1.41</td><td>Entorno Docker para desarrollo</td></tr>
+</table>
+
+<h3>Frontend (package.json)</h3>
+<table>
+  <tr><th>Paquete</th><th>Versión</th><th>Propósito</th></tr>
+  <tr><td><code>react</code></td><td>^19.2.5</td><td>UI framework principal</td></tr>
+  <tr><td><code>react-router-dom</code></td><td>^7.14.2</td><td>Enrutamiento SPA</td></tr>
+  <tr><td><code>axios</code></td><td>^1.15.2</td><td>Cliente HTTP (con interceptores)</td></tr>
+  <tr><td><code>react-hook-form</code></td><td>^7.74.0</td><td>Formularios con validación</td></tr>
+  <tr><td><code>zod</code></td><td>^4.3.6</td><td>Esquemas de validación tipados</td></tr>
+  <tr><td><code>recharts</code></td><td>^3.8.1</td><td>Gráficos y visualizaciones</td></tr>
+  <tr><td><code>lucide-react</code></td><td>^1.11.0</td><td>Iconos SVG</td></tr>
+  <tr><td><code>react-hot-toast</code></td><td>^2.6.0</td><td>Notificaciones toast</td></tr>
+  <tr><td><code>jspdf + html2canvas</code></td><td>^4.2.1</td><td>Exportar tickets a PDF</td></tr>
+  <tr><td><code>tailwindcss</code></td><td>^3.4.19</td><td>Utilidades CSS</td></tr>
+  <tr><td><code>vite</code></td><td>^8.0.10</td><td>Build tool y dev server</td></tr>
+</table>
+
+<div class="alert alert-info">
+  <strong>⚠️ Zustand en package.json</strong>
+  La dependencia <code>zustand ^5.0.13</code> aún figura en package.json pero todos los stores (authStore, appStore, usePosStore) han sido migrados a React Context API + useReducer. Puede eliminarse con <code>npm uninstall zustand</code>.
+</div>
+
+<!-- SECCIÓN 3 -->
+<div class="section-header" id="sec3">
+  <h2>3. Estructura de Directorios</h2>
+  <p>Organización completa del monorepo</p>
+</div>
+
+<div class="tree">
+<span class="dir">st_ventas/</span><br>
+├── <span class="dir">backend/</span>                    <span class="comment-t"># Laravel 12 — API REST</span><br>
+│   ├── <span class="dir">app/</span><br>
+│   │   ├── <span class="dir">Http/</span><br>
+│   │   │   ├── <span class="dir">Controllers/</span><br>
+│   │   │   │   ├── <span class="dir">Auth/</span>           <span class="comment-t"># AuthenticationController, UsuarioController</span><br>
+│   │   │   │   └── <span class="dir">Api/</span><br>
+│   │   │   │       ├── <span class="dir">Catalogos/</span>  <span class="comment-t"># ProductoController, CategoriaController…</span><br>
+│   │   │   │       ├── <span class="dir">Ventas/</span>     <span class="comment-t"># VentaController</span><br>
+│   │   │   │       ├── <span class="dir">Compras/</span>    <span class="comment-t"># CompraController</span><br>
+│   │   │   │       ├── <span class="dir">Pos/</span>        <span class="comment-t"># PosController — init endpoint</span><br>
+│   │   │   │       ├── <span class="dir">Dashboard/</span>  <span class="comment-t"># DashboardController — KPIs + reportes</span><br>
+│   │   │   │       ├── <span class="dir">Auditoria/</span>  <span class="comment-t"># AuditoriaController — solo super-admin</span><br>
+│   │   │   │       └── <span class="dir">Configuracion/</span> <span class="comment-t"># ConfiguracionController</span><br>
+│   │   │   ├── <span class="dir">Middleware/</span><br>
+│   │   │   │   ├── <span class="important">CacheApiResponse.php</span>    <span class="comment-t"># Redis cache versionado</span><br>
+│   │   │   │   └── <span class="file">RoleOrPermissionMiddleware.php</span><br>
+│   │   │   ├── <span class="dir">Requests/</span>               <span class="comment-t"># Form Requests por módulo</span><br>
+│   │   │   └── <span class="dir">Resources/</span>              <span class="comment-t"># API Resources (transformers JSON)</span><br>
+│   │   ├── <span class="dir">Models/</span><br>
+│   │   │   ├── <span class="important">Usuario.php</span>             <span class="comment-t"># JWTSubject + HasRoles + Auditable</span><br>
+│   │   │   ├── <span class="dir">Catalogos/</span>              <span class="comment-t"># Producto, Categoria, Cliente…</span><br>
+│   │   │   ├── <span class="dir">Ventas/</span>                 <span class="comment-t"># Venta, DetalleVenta</span><br>
+│   │   │   ├── <span class="dir">Compras/</span>                <span class="comment-t"># Compra, DetalleCompra</span><br>
+│   │   │   ├── <span class="dir">Configuracion/</span>          <span class="comment-t"># ConfiguracionEmpresa</span><br>
+│   │   │   └── <span class="dir">Logs/</span>                   <span class="comment-t"># AuditoriaLog</span><br>
+│   │   ├── <span class="dir">Traits/</span><br>
+│   │   │   ├── <span class="important">Auditable.php</span>           <span class="comment-t"># Log automático de CUD</span><br>
+│   │   │   ├── <span class="important">HasApiCache.php</span>         <span class="comment-t"># Invalidación de caché Redis</span><br>
+│   │   │   ├── <span class="important">ApiResponse.php</span>         <span class="comment-t"># success() / error() helpers</span><br>
+│   │   │   └── <span class="file">Sanitizable.php</span><br>
+│   │   └── <span class="dir">Providers/</span><br>
+│   ├── <span class="dir">database/</span><br>
+│   │   ├── <span class="dir">migrations/</span>             <span class="comment-t"># Una migración por tabla</span><br>
+│   │   └── <span class="dir">seeders/</span>                <span class="comment-t"># RolePermissionSeeder, SistemaVentasSeeder</span><br>
+│   ├── <span class="dir">routes/</span><br>
+│   │   └── <span class="important">api.php</span>                 <span class="comment-t"># Todas las rutas API bajo /api/</span><br>
+│   └── <span class="file">.env.example</span><br>
+│<br>
+└── <span class="dir">frontend/</span>                   <span class="comment-t"># React 19 + Vite — SPA</span><br>
+    └── <span class="dir">src/</span><br>
+        ├── <span class="important">App.jsx</span>                 <span class="comment-t"># Providers + Router + Routes</span><br>
+        ├── <span class="dir">context/</span><br>
+        │   ├── <span class="important">AuthContext.jsx</span>     <span class="comment-t"># Auth state (useReducer + localStorage)</span><br>
+        │   └── <span class="important">AppContext.jsx</span>      <span class="comment-t"># Sidebar + empresa global</span><br>
+        ├── <span class="dir">services/</span><br>
+        │   └── <span class="important">api.js</span>              <span class="comment-t"># Axios + interceptores + servicios CRUD</span><br>
+        ├── <span class="dir">components/</span><br>
+        │   ├── <span class="dir">layout/</span>             <span class="comment-t"># Header, Sidebar, RouteGuard, MainLayout</span><br>
+        │   ├── <span class="dir">ui/</span>                 <span class="comment-t"># Modal, DataTable, StatCard, CrudPage…</span><br>
+        │   └── <span class="dir">pos/</span>                <span class="comment-t"># PosScreen, CatalogoProductos, CarritoActivo…</span><br>
+        ├── <span class="dir">pages/</span>                  <span class="comment-t"># Una página por módulo</span><br>
+        ├── <span class="dir">schemas/</span>                <span class="comment-t"># Validaciones Zod centralizadas</span><br>
+        └── <span class="dir">utils/</span>                  <span class="comment-t"># helpers.js — formateo de fechas y monedas</span><br>
+</div>
+
+<!-- SECCIÓN 4 -->
+<div class="section-header" id="sec4">
+  <h2>4. Configuración del Entorno</h2>
+  <p>Variables de entorno, instalación y arranque</p>
+</div>
+
+<h3>Variables de Entorno Backend (.env)</h3>
+<table>
+  <tr><th>Variable</th><th>Valor ejemplo</th><th>Descripción</th></tr>
+  <tr><td><code>APP_NAME</code></td><td>ST_Ventas</td><td>Nombre de la aplicación</td></tr>
+  <tr><td><code>APP_ENV</code></td><td>local / production</td><td>Entorno de ejecución</td></tr>
+  <tr><td><code>APP_KEY</code></td><td>base64:...</td><td>Clave de cifrado Laravel (generada con artisan)</td></tr>
+  <tr><td><code>APP_URL</code></td><td>http://localhost:8000</td><td>URL base del servidor</td></tr>
+  <tr><td><code>DB_CONNECTION</code></td><td>pgsql</td><td>Driver de BD — PostgreSQL obligatorio</td></tr>
+  <tr><td><code>DB_HOST</code></td><td>127.0.0.1</td><td>Host de PostgreSQL</td></tr>
+  <tr><td><code>DB_PORT</code></td><td>5432</td><td>Puerto de PostgreSQL</td></tr>
+  <tr><td><code>DB_DATABASE</code></td><td>st_ventas</td><td>Nombre de la base de datos</td></tr>
+  <tr><td><code>DB_USERNAME</code></td><td>postgres</td><td>Usuario de PostgreSQL</td></tr>
+  <tr><td><code>DB_PASSWORD</code></td><td>secret</td><td>Contraseña de PostgreSQL</td></tr>
+  <tr><td><code>CACHE_STORE</code></td><td>redis</td><td>Driver de caché — Redis obligatorio</td></tr>
+  <tr><td><code>REDIS_HOST</code></td><td>127.0.0.1</td><td>Host de Redis</td></tr>
+  <tr><td><code>REDIS_PORT</code></td><td>6379</td><td>Puerto de Redis</td></tr>
+  <tr><td><code>JWT_SECRET</code></td><td>generado por artisan</td><td>Clave secreta para firmar tokens JWT</td></tr>
+  <tr><td><code>JWT_TTL</code></td><td>1440</td><td>Tiempo de vida del token en minutos (24h)</td></tr>
+  <tr><td><code>FILESYSTEM_DISK</code></td><td>public</td><td>Disco para fotos y logos</td></tr>
+</table>
+
+<h3>Variable de Entorno Frontend (.env)</h3>
+<pre><code>VITE_API_URL=http://127.0.0.1:8000/api</code></pre>
+
+<h3>Instalación desde Cero</h3>
+<pre><code><span class="comment"># 1. Backend</span>
+cd backend
+composer install
+cp .env.example .env
+php artisan key:generate
+php artisan jwt:secret
+php artisan migrate --seed        <span class="comment"># Crea tablas + roles + usuarios de prueba</span>
+php artisan storage:link          <span class="comment"># Enlace simbólico para storage/app/public</span>
+php artisan serve                 <span class="comment"># Puerto 8000</span>
+
+<span class="comment"># 2. Frontend</span>
+cd ../frontend
+npm install
+npm run dev                       <span class="comment"># Puerto 5173 (Vite)</span></code></pre>
+
+<div class="alert alert-warn">
+  <strong>⚠️ Script Composer dev</strong>
+  El proyecto incluye un script <code>composer dev</code> que lanza en paralelo el servidor, queue worker y Vite usando <code>concurrently</code>. Requiere Node.js instalado en el mismo entorno que PHP.
+</div>
+
+<h3>Usuarios Iniciales (Seeders)</h3>
+<table>
+  <tr><th>Usuario</th><th>Rol</th><th>Contraseña por defecto</th></tr>
+  <tr><td>superadmin</td><td>super-admin</td><td>Definida en UsuarioSeeder</td></tr>
+  <tr><td>admin</td><td>admin</td><td>Definida en UsuarioSeeder</td></tr>
+  <tr><td>vendedor1</td><td>vendedor</td><td>Definida en UsuarioSeeder</td></tr>
+</table>
+
+<!-- SECCIÓN 5 -->
+<div class="section-header" id="sec5">
+  <h2>5. Arquitectura Backend (Laravel)</h2>
+  <p>Capas, patrones y traits del servidor</p>
+</div>
+
+<h3>Patrón de Capas</h3>
+<div class="flow">
+  <div class="flow-box">Request HTTP</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box orange">Middleware Stack</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box">Form Request</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box green">Controller</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box gray">Eloquent Model</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box">API Resource</div>
+</div>
+
+<p>No se usa capa de Service ni Repository intencionalmente: la lógica de negocio vive directamente en los controladores (thin controller <em>con excepciones</em> — los controladores de ventas y compras sí son gruesos por la lógica de stocks y transacciones).</p>
+
+<h3>Trait ApiResponse</h3>
+<p>Todos los controladores heredan de <code>App\Http\Controllers\Controller</code> que usa el trait <code>ApiResponse</code>. Esto estandariza el formato de respuesta en toda la API.</p>
+<pre><code><span class="comment">// Éxito:</span>
+<span class="keyword">return</span> <span class="func">$this->success</span>($data, <span class="string">'Mensaje'</span>, 200, $meta);
+<span class="comment">// → { "status": true, "message": "Mensaje", "data": {...}, "meta": {...} }</span>
+
+<span class="comment">// Error:</span>
+<span class="keyword">return</span> <span class="func">$this->error</span>(<span class="string">'Error de stock.'</span>, 422, $erroresStock);
+<span class="comment">// → { "status": false, "message": "Error de stock.", "errors": [...] }</span></code></pre>
+
+<h3>Form Requests — Validación</h3>
+<p>Cada operación de escritura tiene su propio Form Request con reglas y mensajes en español. La validación fallida retorna automáticamente HTTP 422 con los errores en el campo <code>errors</code>.</p>
+<table>
+  <tr><th>Módulo</th><th>Form Request</th><th>Campos validados</th></tr>
+  <tr><td>Auth</td><td>AuthLoginRequest</td><td>usuario (required|string), password (required)</td></tr>
+  <tr><td>Productos</td><td>ProductoRequest</td><td>codigo, nombre, precio_venta, categoria_id, stock_minimo</td></tr>
+  <tr><td>Ventas</td><td>VentaRequest</td><td>items (array), metodo_pago_id, cliente_id (nullable)</td></tr>
+  <tr><td>Compras</td><td>CompraRequest</td><td>items, proveedor_id, metodo_pago_id, estado</td></tr>
+  <tr><td>Usuarios</td><td>UsuarioCreateRequest / UsuarioUpdateRequest</td><td>nombre, usuario (unique), email, contrasena</td></tr>
+  <tr><td>Config</td><td>ConfiguracionEmpresaRequest</td><td>nombre, nit, nrc, correo, telefono, direccion</td></tr>
+</table>
+
+<h3>API Resources — Transformación JSON</h3>
+<p>Cada modelo tiene su Resource que transforma los datos antes de devolverlos al cliente, evitando exponer campos internos (como <code>contrasena</code>, <code>remember_token</code>, <code>deleted_at</code>).</p>
+<pre><code><span class="comment">// Ejemplo: ProductoResource</span>
+<span class="keyword">class</span> <span class="class-name">ProductoResource</span> <span class="keyword">extends</span> JsonResource {
+    <span class="keyword">public function</span> <span class="func">toArray</span>($request): array {
+        <span class="keyword">return</span> [
+            <span class="string">'id'</span>            => <span class="func">$this->id</span>,
+            <span class="string">'codigo'</span>        => <span class="func">$this->codigo</span>,
+            <span class="string">'nombre'</span>        => <span class="func">$this->nombre</span>,
+            <span class="string">'precio_venta'</span>  => (float) <span class="func">$this->precio_venta</span>,
+            <span class="string">'stock'</span>         => <span class="func">$this->stock</span>,
+            <span class="string">'activo'</span>        => <span class="func">$this->activo</span>,
+            <span class="string">'categoria'</span>     => <span class="keyword">new</span> <span class="class-name">CategoriaResource</span>(<span class="func">$this->whenLoaded</span>(<span class="string">'categoria'</span>)),
+        ];
+    }
+}</code></pre>
+
+<!-- SECCIÓN 6 -->
+<div class="section-header" id="sec6">
+  <h2>6. Base de Datos y Migraciones</h2>
+  <p>Esquema completo — PostgreSQL</p>
+</div>
+
+<h3>Diagrama de Entidades Principal</h3>
+<div class="card">
+<pre style="background:#fff; color:#1f2937; border:none; font-size:10px; line-height:1.9;">
+usuarios ─────┬──── ventas ──────── detalle_venta ──── productos ──── categorias
+              │                                              │
+              └──── compras ─────── detalle_compra ─────────┘
+                         │
+                    proveedores       clientes ──── ventas
+                    metodo_pago ──── ventas / compras
+
+auditoria_logs ──── usuarios (nullable)
+configuracion_empresa  (tabla singleton)
+permissions, roles, role_has_permissions  (Spatie)
+</pre>
+</div>
+
+<h3>Tablas — Descripción de Campos Clave</h3>
+
+<h4>tabla: usuarios</h4>
+<table>
+  <tr><th>Campo</th><th>Tipo</th><th>Notas</th></tr>
+  <tr><td>id</td><td>BIGINT PK</td><td>Auto-incremental</td></tr>
+  <tr><td>nombre, apellido</td><td>VARCHAR(150)</td><td>Nombre completo en dos partes</td></tr>
+  <tr><td>usuario</td><td>VARCHAR UNIQUE</td><td>Username de login (no email)</td></tr>
+  <tr><td>contrasena</td><td>VARCHAR</td><td>Bcrypt — alias interno de 'password' para JWT</td></tr>
+  <tr><td>email</td><td>VARCHAR UNIQUE</td><td>Accesible como correo (alias Eloquent)</td></tr>
+  <tr><td>activo</td><td>BOOLEAN</td><td>false = usuario bloqueado, no puede hacer login</td></tr>
+  <tr><td>foto_path</td><td>VARCHAR nullable</td><td>Ruta relativa en storage/app/public</td></tr>
+  <tr><td>cargo, telefono</td><td>VARCHAR nullable</td><td>Campos de perfil adicionales</td></tr>
+  <tr><td>deleted_at</td><td>TIMESTAMP</td><td>SoftDeletes activado</td></tr>
+</table>
+
+<h4>tabla: productos</h4>
+<table>
+  <tr><th>Campo</th><th>Tipo</th><th>Notas</th></tr>
+  <tr><td>codigo</td><td>VARCHAR(60) UNIQUE</td><td>Código de barras o SKU</td></tr>
+  <tr><td>precio_compra</td><td>DECIMAL(12,2)</td><td>Costo de adquisición</td></tr>
+  <tr><td>precio_venta</td><td>DECIMAL(12,2)</td><td>Precio al cliente</td></tr>
+  <tr><td>stock</td><td>INTEGER</td><td>Unidades actuales — gestionado por incrementarStock/decrementarStock</td></tr>
+  <tr><td>stock_minimo</td><td>INTEGER</td><td>Umbral de alerta (stock &lt;= stock_minimo = bajo)</td></tr>
+  <tr><td>categoria_id</td><td>FK → categorias</td><td>RESTRICT on delete</td></tr>
+  <tr><td>proveedor_id</td><td>FK → proveedores nullable</td><td>NULL on delete</td></tr>
+</table>
+
+<h4>tabla: ventas</h4>
+<table>
+  <tr><th>Campo</th><th>Tipo</th><th>Notas</th></tr>
+  <tr><td>numero_venta</td><td>VARCHAR(30) UNIQUE</td><td>Formato: VTA-YYYY-NNNNNN</td></tr>
+  <tr><td>estado</td><td>ENUM</td><td>pendiente | completada | cancelada | anulada</td></tr>
+  <tr><td>subtotal, impuesto, descuento, total</td><td>DECIMAL(12,2)</td><td>total = subtotal - descuento + impuesto</td></tr>
+  <tr><td>referencia_transferencia</td><td>VARCHAR nullable</td><td>Agregado en migración 2026_05_19 para transferencias bancarias</td></tr>
+  <tr><td>cliente_id</td><td>FK nullable</td><td>Venta puede ser anónima</td></tr>
+</table>
+
+<h4>tabla: detalle_venta</h4>
+<table>
+  <tr><th>Campo</th><th>Tipo</th><th>Notas</th></tr>
+  <tr><td>cantidad</td><td>INTEGER</td><td></td></tr>
+  <tr><td>precio_unitario</td><td>DECIMAL(12,2)</td><td>Precio en el momento de la venta (histórico)</td></tr>
+  <tr><td>descuento</td><td>DECIMAL(12,2)</td><td>Descuento por línea</td></tr>
+  <tr><td>subtotal</td><td>DECIMAL(12,2)</td><td><strong>storedAs:</strong> columna calculada en BD = (cantidad * precio_unitario) - descuento</td></tr>
+</table>
+
+<div class="alert alert-info">
+  <strong>💡 Columna storedAs</strong>
+  <code>detalle_venta.subtotal</code> y <code>detalle_compra.subtotal</code> son columnas generadas por PostgreSQL. El valor siempre es consistente con los otros campos, sin necesidad de calcularlo en PHP. Esto evita inconsistencias si se actualizan cantidad o precio directamente.
+</div>
+
+<h3>Migraciones Cronológicas</h3>
+<table>
+  <tr><th>Archivo</th><th>Qué crea / modifica</th></tr>
+  <tr><td>0001_01_01_000000_create_usuarios_table</td><td>Tabla usuarios con SoftDeletes</td></tr>
+  <tr><td>2025_01_01_100000..100004</td><td>Catalogos: categorias, proveedores, metodo_pago, clientes, productos</td></tr>
+  <tr><td>2025_01_01_100005</td><td>compras + detalle_compra (storedAs subtotal)</td></tr>
+  <tr><td>2025_01_01_100006</td><td>ventas + detalle_venta (storedAs subtotal)</td></tr>
+  <tr><td>2025_01_01_100007</td><td>auditoria_logs con jsonb para valores anteriores/nuevos</td></tr>
+  <tr><td>2026_04_28_061213</td><td>Tablas de Spatie Permission (roles, permissions, model_has_roles…)</td></tr>
+  <tr><td>2026_05_15_000001</td><td>promociones</td></tr>
+  <tr><td>2026_05_19_000003</td><td>Agrega referencia_transferencia y cliente_nombre_manual a ventas</td></tr>
+  <tr><td>2026_05_19_222416</td><td>configuracion_empresa (tabla singleton)</td></tr>
+  <tr><td>2026_05_22_000001</td><td>Actualiza ENUM estado de compras (agrega 'recibida')</td></tr>
+  <tr><td>2026_05_22_000002</td><td>Agrega cargo y telefono a usuarios</td></tr>
+</table>
+
+<!-- SECCIÓN 7 -->
+<div class="section-header" id="sec7">
+  <h2>7. Sistema de Autenticación JWT</h2>
+  <p>Flujo completo: login → token → request protegido → logout</p>
+</div>
+
+<h3>Configuración JWT</h3>
+<p>Se usa <code>tymon/jwt-auth</code>. El guard <code>api</code> está configurado en <code>config/auth.php</code> con el driver <code>jwt</code> y el provider <code>usuarios</code>.</p>
+
+<pre><code><span class="comment">// config/auth.php (extracto)</span>
+<span class="string">'guards'</span> => [
+    <span class="string">'api'</span> => [
+        <span class="string">'driver'</span>   => <span class="string">'jwt'</span>,
+        <span class="string">'provider'</span> => <span class="string">'usuarios'</span>,
+    ],
+],
+<span class="string">'providers'</span> => [
+    <span class="string">'usuarios'</span> => [
+        <span class="string">'driver'</span> => <span class="string">'eloquent'</span>,
+        <span class="string">'model'</span>  => <span class="class-name">App\Models\Usuario</span>::class,
+    ],
+],</code></pre>
+
+<h3>Modelo Usuario — Interfaz JWTSubject</h3>
+<pre><code><span class="keyword">class</span> <span class="class-name">Usuario</span> <span class="keyword">extends</span> Authenticatable <span class="keyword">implements</span> JWTSubject {
+    <span class="comment">// Claims adicionales incluidos en el payload del token:</span>
+    <span class="keyword">public function</span> <span class="func">getJWTCustomClaims</span>(): array {
+        <span class="keyword">return</span> [
+            <span class="string">'id'</span>      => <span class="func">$this->id</span>,
+            <span class="string">'nombre'</span>  => <span class="func">$this->nombre</span> . <span class="string">' '</span> . <span class="func">$this->apellido</span>,
+            <span class="string">'usuario'</span> => <span class="func">$this->usuario</span>,
+        ];
+    }
+    <span class="comment">// JWT usa 'password' internamente; nuestro campo se llama 'contrasena':</span>
+    <span class="keyword">public function</span> <span class="func">getAuthPassword</span>(): string {
+        <span class="keyword">return</span> <span class="func">$this->contrasena</span>;
+    }
+}</code></pre>
+
+<h3>Flujo de Login</h3>
+<div class="flow">
+  <div class="flow-box">POST /auth/login</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box orange">Rate Limiter (5 intentos/IP)</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box">auth()->attempt()</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box gray">Verificar activo=true</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box green">JWT + AuditoriaLog</div>
+</div>
+
+<h4>Respuesta exitosa del login</h4>
+<pre><code>{
+  <span class="string">"status"</span>:       true,
+  <span class="string">"access_token"</span>: <span class="string">"eyJ0eXAiOiJKV1QiLCJhbGci..."</span>,
+  <span class="string">"token_type"</span>:   <span class="string">"bearer"</span>,
+  <span class="string">"expires_in"</span>:   86400,         <span class="comment">// segundos (JWT_TTL * 60)</span>
+  <span class="string">"user"</span>:         { <span class="comment">/* UsuarioResource */</span> },
+  <span class="string">"roles"</span>:        [<span class="string">"admin"</span>],
+  <span class="string">"permissions"</span>:  [<span class="string">"ver-productos"</span>, <span class="string">"crear-ventas"</span>, ...]
+}</code></pre>
+
+<h3>Protección de Rutas API</h3>
+<pre><code><span class="comment">// routes/api.php — grupo protegido</span>
+Route::middleware([<span class="string">'auth:api'</span>, <span class="string">'cache.api'</span>])->group(<span class="keyword">function</span>() {
+    Route::apiResource(<span class="string">'productos'</span>, ProductoController::class);
+    Route::get(<span class="string">'pos/init'</span>, [PosController::class, <span class="string">'init'</span>]);
+    <span class="comment">// ...</span>
+});
+
+<span class="comment">// Solo super-admin:</span>
+Route::middleware([<span class="string">'auth:api'</span>, <span class="string">'role:super-admin'</span>])->group(<span class="keyword">function</span>() {
+    Route::get(<span class="string">'auditoria'</span>, [AuditoriaController::class, <span class="string">'index'</span>]);
+    Route::apiResource(<span class="string">'configuracion'</span>, ConfiguracionController::class);
+});</code></pre>
+
+</div><!-- /page -->
+</body>
+</html>

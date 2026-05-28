@@ -1,6 +1,8 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { AuthProvider } from './context/AuthContext';
+import { AppProvider }  from './context/AppContext';
 
 import {
   PrivateRoute,
@@ -28,6 +30,8 @@ import NotFound        from './components/NotFound';
 
 export default function App() {
   return (
+    <AuthProvider>
+    <AppProvider>
     <BrowserRouter>
       <Routes>
         {/* Pública */}
@@ -48,9 +52,9 @@ export default function App() {
         <Route path="/compras"       element={<AdminRoute><PurchasesPage /></AdminRoute>} />
         <Route path="/reportes"      element={<AdminRoute><ReportsPage /></AdminRoute>} />
         <Route path="/usuarios"      element={<AdminRoute><UsersPage /></AdminRoute>} />
-        <Route path="/auditoria"     element={<AdminRoute><AuditoriaPage /></AdminRoute>} />
+        <Route path="/auditoria"     element={<SuperAdminRoute><AuditoriaPage /></SuperAdminRoute>} />
         <Route path="/promociones"   element={<AdminRoute><PromocionesPage /></AdminRoute>} />
-        <Route path="/configuracion" element={<AdminRoute><ConfiguracionPage /></AdminRoute>} />
+        <Route path="/configuracion" element={<SuperAdminRoute><ConfiguracionPage /></SuperAdminRoute>} />
 
         {/* Redirección y 404 */}
         <Route path="/"  element={<Navigate to="/dashboard" replace />} />
@@ -66,5 +70,7 @@ export default function App() {
         theme="light"
       />
     </BrowserRouter>
+    </AppProvider>
+    </AuthProvider>
   );
 }

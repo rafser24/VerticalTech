@@ -4,8 +4,8 @@ import {
   UserCircle, ChevronLeft, ChevronRight, Boxes, BarChart2,
   Shield, Ticket, ShoppingBag, LogOut, Store, Settings,
 } from 'lucide-react';
-import useAppStore from '../../store/appStore';
-import useAuthStore from '../../store/authStore';
+import { useApp }  from '../../context/AppContext';
+import { useAuth } from '../../context/AuthContext';
 
 const navGroups = [
   {
@@ -47,8 +47,8 @@ const navGroups = [
     label: 'Sistema',
     items: [
       { to: '/usuarios',      label: 'Usuarios',      icon: UserCircle, roles: ['super-admin', 'admin'] },
-      { to: '/auditoria',     label: 'Auditoría',     icon: Shield,     roles: ['super-admin', 'admin'] },
-      { to: '/configuracion', label: 'Configuración', icon: Settings,   roles: ['super-admin', 'admin'] },
+      { to: '/auditoria',     label: 'Auditoría',     icon: Shield,     roles: ['super-admin'] },
+      { to: '/configuracion', label: 'Configuración', icon: Settings,   roles: ['super-admin'] },
     ],
   },
 ];
@@ -57,8 +57,6 @@ const rolBadge = {
   'super-admin': { bg: 'bg-red-100',    text: 'text-red-700',    label: 'Super Admin' },
   'admin':       { bg: 'bg-purple-100', text: 'text-purple-700', label: 'Admin'       },
   'vendedor':    { bg: 'bg-blue-100',   text: 'text-blue-700',   label: 'Vendedor'    },
-  'tecnico':     { bg: 'bg-yellow-100', text: 'text-yellow-700', label: 'Técnico'     },
-  'bodeguero':   { bg: 'bg-green-100',  text: 'text-green-700',  label: 'Bodeguero'   },
 };
 
 function Avatar({ foto, nombre, size = 'sm' }) {
@@ -77,12 +75,8 @@ function Avatar({ foto, nombre, size = 'sm' }) {
 }
 
 export default function Sidebar() {
-  const sidebarOpen   = useAppStore((s) => s.sidebarOpen);
-  const toggleSidebar = useAppStore((s) => s.toggleSidebar);
-  const empresa       = useAppStore((s) => s.empresa);
-  const user          = useAuthStore((s) => s.user);
-  const hasRole       = useAuthStore((s) => s.hasRole);
-  const logout        = useAuthStore((s) => s.logout);
+  const { sidebarOpen, toggleSidebar, empresa } = useApp();
+  const { user, hasRole, logout }               = useAuth();
   const navigate      = useNavigate();
 
   const rolActual = user?.rol ?? '';
@@ -94,17 +88,24 @@ export default function Sidebar() {
     <aside className={`h-screen sticky top-0 bg-white border-r border-gray-100 flex flex-col transition-all duration-300 shadow-soft ${sidebarOpen ? 'w-60' : 'w-16'}`}>
       {/* Logo */}
       <div className={`flex items-center gap-3 h-16 border-b border-gray-100 flex-shrink-0 ${sidebarOpen ? 'px-4' : 'justify-center px-2'}`}>
-        <div className="w-8 h-8 bg-pastel-primary rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden">
-          {empresa?.logo_url ? (
-            <img src={empresa.logo_url} alt={empresa.nombre} className="object-cover w-full h-full" />
-          ) : (
-            <Boxes size={18} className="text-blue-800" />
-          )}
-        </div>
-        {sidebarOpen && (
-          <span className="text-lg font-bold leading-tight text-gray-800 truncate font-display">
-            {empresa?.nombre || 'VerticalTech'}
-          </span>
+        {sidebarOpen ? (
+          /* Sidebar expandido: logo vertical centrado */
+          <div className="flex items-center justify-center flex-1">
+            <img
+              src={empresa?.logo_url || '/logovertical.png'}
+              alt={empresa?.nombre || 'Logo'}
+              className="h-25 max-w-[190px] object-contain"
+            />
+          </div>
+        ) : (
+          /* Sidebar colapsado: ícono cuadrado */
+          <div className="w-8 h-8 bg-pastel-primary rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden">
+            <img
+              src={empresa?.logo_url || '/logovertical.png'}
+              alt={empresa?.nombre || 'Logo'}
+              className="object-contain w-full h-full p-0.5"
+            />
+          </div>
         )}
       </div>
 

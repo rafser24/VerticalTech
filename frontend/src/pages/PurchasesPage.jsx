@@ -10,7 +10,7 @@ import ConfirmDialog from '../components/ui/ConfirmDialog';
 import { FormField, FormSelect, FormTextarea } from '../components/ui/FormFields';
 import { purchaseSchema } from '../schemas';
 import { formatCurrency, formatDate, statusColors } from '../utils/helpers';
-import { purchaseService, supplierService, productService, paymentMethodService } from '../services/api';
+import api, { purchaseService } from '../services/api';
 
 // ── Etiquetas y flujo de etapas ──────────────────────────────────────────────
 const ESTADO_LABEL = {
@@ -28,12 +28,23 @@ const ACCIONES = {
 };
 
 // ── Formulario de nueva compra ───────────────────────────────────────────────
-function PurchaseForm({ register, control, errors, watch, suppliers, products, paymentMethods }) {
+function PurchaseForm({ register, control, errors, watch, setValue, suppliers, products, paymentMethods }) {
   const { fields, append, remove } = useFieldArray({ control, name: 'items' });
   const items = watch('items') || [];
   const total = items.reduce((sum, item) => {
     return sum + (Number(item.quantity || 0) * Number(item.unit_price || 0));
   }, 0);
+
+  // Cuando el usuario elige un producto, precarga su precio de compra
+  const handleProductChange = (i, productoId) => {
+    setValue(`items.${i}.product_id`, productoId);
+    const producto = products.find(
+      p => String(p.id_producto ?? p.id) === String(productoId)
+    );
+    if (producto && producto.precio_compra != null && Number(producto.precio_compra) > 0) {
+      setValue(`items.${i}.unit_price`, Number(producto.precio_compra));
+    }
+  };
 
   return (
     <div className="space-y-4">
@@ -87,7 +98,11 @@ function PurchaseForm({ register, control, errors, watch, suppliers, products, p
           {fields.map((field, i) => (
             <div key={field.id} className="grid grid-cols-12 gap-2 items-center p-3 bg-gray-50 rounded-xl">
               <div className="col-span-5">
-                <select {...register(`items.${i}.product_id`)} className="input-field text-xs py-2">
+                <select
+                  {...register(`items.${i}.product_id`)}
+                  onChange={(e) => handleProductChange(i, e.target.value)}
+                  className="input-field text-xs py-2"
+                >
                   <option value="">Producto...</option>
                   {products.map(p => (
                     <option key={p.id_producto ?? p.id} value={p.id_producto ?? p.id}>
@@ -173,7 +188,7 @@ export default function PurchasesPage() {
   const [loading, setLoading]               = useState(true);
   const [actionTarget, setActionTarget]     = useState(null);
 
-  const { register, handleSubmit, reset, control, watch, formState: { errors } } = useForm({
+  const { register, handleSubmit, reset, control, watch, setValue, formState: { errors } } = useForm({
     resolver: zodResolver(purchaseSchema),
     defaultValues: { items: [] },
   });
@@ -182,22 +197,12 @@ export default function PurchasesPage() {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [purchasesRes, suppliersRes, productsRes, paymentsRes] = await Promise.all([
-          purchaseService.getAll(),
-          supplierService.getAll(),
-          productService.getAll(),
-          paymentMethodService.getAll(),
-        ]);
-
-        const unwrap = (res) => {
-          const d = res.data?.data ?? res.data;
-          return Array.isArray(d) ? d : d?.data ?? d?.items ?? [];
-        };
-
-        setPurchases(unwrap(purchasesRes));
-        setSuppliers(unwrap(suppliersRes));
-        setProducts(unwrap(productsRes));
-        setPaymentMethods(unwrap(paymentsRes));
+        const res  = await api.get('/compras/init');
+        const data = res.data?.data ?? {};
+        setPurchases(    Array.isArray(data.compras)      ? data.compras      : []);
+        setSuppliers(    Array.isArray(data.proveedores)  ? data.proveedores  : []);
+        setProducts(     Array.isArray(data.productos)    ? data.productos    : []);
+        setPaymentMethods(Array.isArray(data.metodos_pago) ? data.metodos_pago : []);
       } catch (error) {
         console.error('Error al cargar datos de compras:', error);
         toast.error('Error al cargar los datos');
@@ -208,9 +213,10 @@ export default function PurchasesPage() {
     fetchData();
   }, []);
 
+  // Solo recarga la lista de compras tras una acción (los catálogos no cambian)
   const recargar = async () => {
     const res = await purchaseService.getAll();
-    const d = res.data?.data ?? res.data;
+    const d   = res.data?.data ?? res.data;
     setPurchases(Array.isArray(d) ? d : d?.data ?? []);
   };
 
@@ -395,6 +401,7 @@ export default function PurchasesPage() {
             control={control}
             errors={errors}
             watch={watch}
+            setValue={setValue}
             suppliers={suppliers}
             products={products}
             paymentMethods={paymentMethods}

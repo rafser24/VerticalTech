@@ -48,7 +48,7 @@ class RolePermissionSeeder extends Seeder
         $superAdmin = Role::firstOrCreate(['name' => 'super-admin', 'guard_name' => 'api']);
         $superAdmin->syncPermissions(Permission::where('guard_name', 'api')->get());
 
-        // Admin — todo excepto auditoría detallada
+        // Admin — todo excepto auditoría detallada y gestión de usuarios avanzada
         $admin = Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'api']);
         $admin->syncPermissions([
             'ver-categorias', 'crear-categorias', 'editar-categorias', 'eliminar-categorias',
@@ -73,26 +73,12 @@ class RolePermissionSeeder extends Seeder
             'ver-dashboard',
         ]);
 
-        // Bodeguero — inventario y compras
-        $bodeguero = Role::firstOrCreate(['name' => 'bodeguero', 'guard_name' => 'api']);
-        $bodeguero->syncPermissions([
-            'ver-categorias', 'crear-categorias', 'editar-categorias',
-            'ver-proveedores', 'crear-proveedores', 'editar-proveedores',
-            'ver-productos', 'crear-productos', 'editar-productos',
-            'ver-compras', 'crear-compras',
-            'ver-metodos-pago',
-            'ver-dashboard',
-        ]);
-
-        // Técnico — solo lectura
-        $tecnico = Role::firstOrCreate(['name' => 'tecnico', 'guard_name' => 'api']);
-        $tecnico->syncPermissions([
-            'ver-categorias',
-            'ver-proveedores',
-            'ver-productos',
-            'ver-ventas',
-            'ver-compras',
-            'ver-dashboard',
-        ]);
+        // Eliminar roles obsoletos si aún existen en la BD
+        Role::where('guard_name', 'api')
+            ->whereIn('name', ['bodeguero', 'tecnico'])
+            ->each(function ($rol) {
+                $rol->syncPermissions([]);
+                $rol->delete();
+            });
     }
 }

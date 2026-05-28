@@ -4,8 +4,12 @@ namespace App\Http\Controllers\Api\Compras;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Compras\CompraRequest;
+use App\Http\Resources\Catalogos\MetodoPagoResource;
+use App\Http\Resources\Catalogos\ProveedorResource;
 use App\Http\Resources\Compras\CompraResource;
+use App\Models\Catalogos\MetodoPago;
 use App\Models\Catalogos\Producto;
+use App\Models\Catalogos\Proveedor;
 use App\Models\Compras\Compra;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -13,6 +17,38 @@ use Illuminate\Support\Facades\DB;
 
 class CompraController extends Controller
 {
+    /**
+     * Inicialización del módulo Compras.
+     * Devuelve compras + catálogos del formulario en un solo request.
+     */
+    public function init(): JsonResponse
+    {
+        $compras = Compra::with(['proveedor', 'metodoPago', 'usuario'])
+            ->orderBy('fecha_compra', 'desc')
+            ->get();
+
+        $proveedores = Proveedor::where('activo', true)->orderBy('nombre')
+            ->get(['id', 'nombre', 'razon_social']);
+
+        // Solo lo esencial para el selector del formulario
+        $productos = Producto::where('activo', true)->orderBy('nombre')
+            ->get(['id', 'nombre', 'codigo', 'precio_compra']);
+
+        $metodosPago = MetodoPago::where('activo', true)->orderBy('nombre')->get();
+
+        return $this->success([
+            'compras'      => CompraResource::collection($compras),
+            'proveedores'  => ProveedorResource::collection($proveedores),
+            'productos'    => $productos->map(fn ($p) => [
+                'id'            => $p->id,
+                'nombre'        => $p->nombre,
+                'codigo'        => $p->codigo,
+                'precio_compra' => (float) $p->precio_compra,
+            ]),
+            'metodos_pago' => MetodoPagoResource::collection($metodosPago),
+        ]);
+    }
+
     public function index(Request $request): JsonResponse
     {
         $query = Compra::with(['proveedor', 'metodoPago', 'usuario'])
@@ -138,6 +174,10 @@ class CompraController extends Controller
     /**
      * Recibir compra: confirmada → recibida
      * La mercancía llegó — aquí se sube el stock.
+     *
+     * OPTIMIZACIÓN: en lugar de iterar con Eloquent (N+1 queries + caché por cada
+     * producto), se usa DB::table() con un UPDATE directo por fila y se invalida
+     * el caché UNA sola vez al final, fuera de la transacción.
      */
     public function recibir(int $i): JsonResponse
     {
@@ -148,18 +188,28 @@ class CompraController extends Controller
         }
 
         DB::transaction(function () use ($compra) {
+            $now = now();
             foreach ($compra->detalles as $detalle) {
-                $producto = Producto::find($detalle->producto_id);
-                if ($producto) {
-                    $producto->incrementarStock($detalle->cantidad);
-                    $producto->update(['precio_compra' => $detalle->precio_unitario]);
-                }
+                // UPDATE directo: suma stock + actualiza precio_compra en una sola query,
+                // sin cargar el modelo ni disparar eventos Eloquent dentro del loop.
+                DB::table('productos')
+                    ->where('id', $detalle->producto_id)
+                    ->whereNull('deleted_at')
+                    ->update([
+                        'stock'         => DB::raw("stock + {$detalle->cantidad}"),
+                        'precio_compra' => $detalle->precio_unitario,
+                        'updated_at'    => $now,
+                    ]);
             }
             $compra->update([
                 'estado'          => 'recibida',
-                'fecha_recepcion' => now(),
+                'fecha_recepcion' => $now,
             ]);
         });
+
+        // Invalida caché una sola vez, fuera de la transacción.
+        // Cubre: lista de productos, POS (stock + precios), dashboard y compras.
+        (new Producto)->invalidateCache(['productos', 'pos', 'dashboard', 'compras']);
 
         $compra->load(['proveedor', 'metodoPago', 'usuario', 'detalles.producto']);
 
@@ -204,22 +254,34 @@ class CompraController extends Controller
             return $this->error('No se puede retroceder una compra anulada.', 422);
         }
 
-        DB::transaction(function () use ($compra) {
+        $revertioStock = false;
+
+        DB::transaction(function () use ($compra, &$revertioStock) {
             if ($compra->estado === 'recibida') {
+                // UPDATE directo: resta stock sin cargar modelos ni disparar eventos
                 foreach ($compra->detalles as $detalle) {
-                    $producto = Producto::find($detalle->producto_id);
-                    if ($producto) {
-                        $producto->decrement('stock', $detalle->cantidad);
-                    }
+                    DB::table('productos')
+                        ->where('id', $detalle->producto_id)
+                        ->whereNull('deleted_at')
+                        ->update([
+                            'stock'      => DB::raw("GREATEST(stock - {$detalle->cantidad}, 0)"),
+                            'updated_at' => now(),
+                        ]);
                 }
                 $compra->update([
                     'estado'          => 'confirmada',
                     'fecha_recepcion' => null,
                 ]);
+                $revertioStock = true;
             } elseif ($compra->estado === 'confirmada') {
                 $compra->update(['estado' => 'pendiente']);
             }
         });
+
+        // Invalida caché una sola vez si se tocó el stock
+        if ($revertioStock) {
+            (new Producto)->invalidateCache(['productos', 'pos', 'dashboard', 'compras']);
+        }
 
         $compra->load(['proveedor', 'metodoPago', 'usuario', 'detalles.producto']);
 

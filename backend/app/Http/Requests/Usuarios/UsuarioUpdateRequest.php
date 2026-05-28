@@ -41,7 +41,7 @@ class UsuarioUpdateRequest extends FormRequest
             ],
             'password'              => 'nullable|string|min:8|confirmed',
             'password_confirmation' => 'nullable|string',
-            'rol'                   => 'required|string|in:admin,vendedor,tecnico,bodeguero',
+            'rol'                   => 'required|string|in:admin,vendedor',
             'activo'                => 'boolean',
         ];
     }
@@ -58,7 +58,7 @@ class UsuarioUpdateRequest extends FormRequest
             'password.min'       => 'La contraseña debe tener al menos 8 caracteres.',
             'password.confirmed' => 'Las contraseñas no coinciden.',
             'rol.required'       => 'El rol es obligatorio.',
-            'rol.in'             => 'Rol no válido. Valores: admin, vendedor, tecnico, bodeguero.',
+            'rol.in'             => 'Rol no válido. Valores permitidos: admin, vendedor.',
         ];
     }
 

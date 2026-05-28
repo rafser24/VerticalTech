@@ -30,7 +30,7 @@ class UsuarioCreateRequest extends FormRequest
             'correo'                => 'nullable|email|max:100|unique:usuarios,email',
             'password'              => 'required|string|min:8|confirmed',
             'password_confirmation' => 'required|string|min:8',
-            'rol'                   => 'required|string|in:admin,vendedor,tecnico,bodeguero',
+            'rol'                   => 'required|string|in:admin,vendedor',
         ];
     }
 
@@ -49,7 +49,7 @@ class UsuarioCreateRequest extends FormRequest
             'password.min'       => 'La contraseña debe tener al menos 8 caracteres.',
             'password.confirmed' => 'Las contraseñas no coinciden.',
             'rol.required'       => 'El rol es obligatorio.',
-            'rol.in'             => 'Rol no válido. Valores: admin, vendedor, tecnico, bodeguero.',
+            'rol.in'             => 'Rol no válido. Valores permitidos: admin, vendedor.',
         ];
     }
 

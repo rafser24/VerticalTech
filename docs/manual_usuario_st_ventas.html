@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Manual de Usuario — Sistema st_ventas</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:14px;scroll-behavior:smooth}
+body{font-family:'Segoe UI',Arial,sans-serif;color:#1e293b;background:#f1f5f9;line-height:1.7}
+
+/* ── Layout ── */
+.wrap{max-width:1000px;margin:0 auto;padding:32px 24px;background:#fff}
+
+/* ── Portada ── */
+.cover{background:linear-gradient(135deg,#1e3a5f,#2563eb);color:#fff;border-radius:14px;padding:72px 48px;margin-bottom:48px;text-align:center}
+.cover .badge{display:inline-block;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:20px;padding:4px 16px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:20px}
+.cover h1{font-size:2.6rem;font-weight:700;margin-bottom:10px}
+.cover .sub{font-size:1.05rem;opacity:.85;margin-bottom:36px}
+.cover .meta{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:28px}
+.cover .mi{background:rgba(255,255,255,.1);border-radius:9px;padding:14px 10px}
+.cover .mi .ml{font-size:10px;text-transform:uppercase;letter-spacing:.1em;opacity:.7;margin-bottom:4px}
+.cover .mi .mv{font-size:13px;font-weight:600}
+
+/* ── TOC ── */
+.toc{background:#f1f5f9;border-left:4px solid #2563eb;border-radius:0 10px 10px 0;padding:22px 26px;margin-bottom:48px}
+.toc h2{font-size:12px;text-transform:uppercase;letter-spacing:.1em;color:#64748b;margin-bottom:14px}
+.toc-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px 24px}
+.toc a{font-size:13px;color:#1e3a5f;text-decoration:none;display:flex;align-items:center;gap:6px;padding:3px 0}
+.toc a:hover{color:#2563eb}
+.toc .num{color:#2563eb;font-weight:600;min-width:18px}
+
+/* ── Secciones ── */
+section{margin-bottom:60px}
+.sec-hdr{display:flex;align-items:center;gap:14px;border-bottom:2px solid #e2e8f0;padding-bottom:12px;margin-bottom:28px}
+.sec-num{width:38px;height:38px;background:#1e3a5f;color:#fff;border-radius:9px;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+h2.sec-title{font-size:1.4rem;font-weight:700;color:#1e3a5f}
+h3{font-size:1rem;font-weight:700;color:#1e3a5f;margin:22px 0 10px;padding-left:10px;border-left:3px solid #2563eb}
+p{margin-bottom:10px;color:#334155}
+
+/* ── Callouts ── */
+.note{border-radius:8px;padding:12px 16px;margin:14px 0;font-size:13px;display:flex;gap:10px}
+.note-icon{flex-shrink:0;font-size:16px}
+.note.info{background:#eff6ff;border-left:4px solid #3b82f6}
+.note.warn{background:#fffbeb;border-left:4px solid #f59e0b}
+.note.tip{background:#f0fdf4;border-left:4px solid #22c55e}
+.note.danger{background:#fff1f2;border-left:4px solid #ef4444}
+
+/* ── Pasos ── */
+.steps{counter-reset:step;margin:14px 0}
+.step{counter-increment:step;display:flex;gap:14px;margin-bottom:14px;align-items:flex-start}
+.step::before{content:counter(step);min-width:26px;height:26px;background:#2563eb;color:#fff;border-radius:50%;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px}
+.step p{margin:0;font-size:13px;color:#334155}
+
+/* ── Tabla de funciones ── */
+.ftable{width:100%;border-collapse:collapse;font-size:13px;margin:14px 0}
+.ftable thead tr{background:#1e3a5f;color:#fff}
+.ftable th{padding:9px 12px;text-align:left;font-weight:600}
+.ftable tbody tr:nth-child(even){background:#f8fafc}
+.ftable tbody tr:hover{background:#eff6ff}
+.ftable td{padding:8px 12px;border-bottom:1px solid #e2e8f0;vertical-align:top}
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600}
+.b-green{background:#dcfce7;color:#166534}
+.b-blue{background:#dbeafe;color:#1e40af}
+.b-red{background:#fee2e2;color:#991b1b}
+.b-yellow{background:#fef9c3;color:#854d0e}
+.b-gray{background:#f1f5f9;color:#475569}
+
+/* ── Mockup base ── */
+.mockup{border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;margin:18px 0;box-shadow:0 4px 20px rgba(0,0,0,.08);background:#f8fafc}
+.mockup-bar{background:#1e3a5f;color:#fff;padding:8px 14px;font-size:11px;display:flex;align-items:center;gap:8px}
+.mockup-bar .dots{display:flex;gap:5px}
+.mockup-bar .dot{width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.3)}
+.mockup-bar .url{flex:1;background:rgba(255,255,255,.1);border-radius:4px;padding:2px 10px;font-size:10px;color:rgba(255,255,255,.7);text-align:center}
+.mockup-body{display:flex;min-height:420px}
+
+/* ── Sidebar mockup ── */
+.m-sidebar{width:200px;background:#fff;border-right:1px solid #e2e8f0;padding:16px 0;flex-shrink:0}
+.m-logo{display:flex;align-items:center;gap:8px;padding:0 14px 14px;border-bottom:1px solid #e2e8f0;margin-bottom:10px}
+.m-logo-icon{width:30px;height:30px;background:#dbeafe;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#1e40af}
+.m-logo-text{font-size:13px;font-weight:700;color:#1e293b}
+.m-nav-group{margin-bottom:8px}
+.m-nav-label{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:#94a3b8;padding:8px 14px 4px}
+.m-nav-item{display:flex;align-items:center;gap:8px;padding:7px 14px;font-size:12px;color:#64748b;cursor:pointer}
+.m-nav-item.active{background:#eff6ff;color:#2563eb;font-weight:600;border-right:3px solid #2563eb}
+.m-nav-item .ico{font-size:14px;opacity:.8}
+
+/* ── Content area ── */
+.m-content{flex:1;padding:20px;overflow:hidden}
+.m-topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.m-topbar h1{font-size:16px;font-weight:700;color:#1e293b}
+.m-btn{padding:6px 14px;border-radius:7px;font-size:11px;font-weight:600;cursor:pointer;border:none}
+.m-btn-primary{background:#2563eb;color:#fff}
+.m-btn-ghost{background:#f1f5f9;color:#334155;border:1px solid #e2e8f0}
+
+/* ── Cards ── */
+.m-card{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:14px}
+.m-stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+.m-stat{background:#f8fafc;border-radius:8px;padding:12px}
+.m-stat .label{font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+.m-stat .value{font-size:18px;font-weight:700;color:#1e293b}
+.m-stat .sub{font-size:10px;color:#22c55e;margin-top:2px}
+
+/* ── Table mockup ── */
+.m-table{width:100%;border-collapse:collapse;font-size:11px}
+.m-table th{background:#f8fafc;padding:7px 10px;text-align:left;font-weight:600;color:#64748b;border-bottom:1px solid #e2e8f0}
+.m-table td{padding:7px 10px;border-bottom:1px solid #f1f5f9;color:#334155}
+.m-table tr:last-child td{border-bottom:none}
+.m-table .actions{display:flex;gap:4px}
+.m-icon-btn{width:24px;height:24px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:10px;cursor:pointer}
+.m-icon-btn.edit{background:#eff6ff;color:#2563eb}
+.m-icon-btn.del{background:#fff1f2;color:#ef4444}
+.m-icon-btn.tog{background:#fff7ed;color:#f59e0b}
+.m-search{display:flex;align-items:center;gap:8px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:7px;padding:6px 10px;margin-bottom:12px;font-size:11px;color:#94a3b8;width:240px}
+
+/* ── POS mockup ── */
+.m-pos{display:grid;grid-template-columns:1fr 340px;gap:0;min-height:420px}
+.m-pos-cat{padding:16px;border-right:1px solid #e2e8f0}
+.m-pos-cart{background:#f8fafc;padding:16px}
+.m-cat-search{background:#fff;border:1px solid #e2e8f0;border-radius:7px;padding:6px 10px;font-size:11px;color:#94a3b8;margin-bottom:12px;width:100%}
+.m-prod-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.m-prod-card{background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:10px;cursor:pointer;transition:border-color .2s}
+.m-prod-card:hover{border-color:#2563eb}
+.m-prod-name{font-size:11px;font-weight:600;color:#1e293b;margin-bottom:2px}
+.m-prod-price{font-size:12px;font-weight:700;color:#2563eb}
+.m-prod-stock{font-size:9px;color:#94a3b8}
+.m-cart-title{font-size:13px;font-weight:700;color:#1e293b;margin-bottom:12px;display:flex;justify-content:space-between}
+.m-cart-item{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #e2e8f0;font-size:11px}
+.m-cart-item-name{flex:1;color:#1e293b;font-weight:500}
+.m-cart-qty{display:flex;align-items:center;gap:4px}
+.m-cart-qty-btn{width:18px;height:18px;border-radius:4px;background:#e2e8f0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;cursor:pointer}
+.m-cart-total-row{display:flex;justify-content:space-between;padding:5px 0;font-size:11px;color:#64748b}
+.m-cart-final{display:flex;justify-content:space-between;padding:10px 0 0;font-size:14px;font-weight:700;color:#1e293b;border-top:1px solid #e2e8f0;margin-top:8px}
+.m-btn-vender{width:100%;padding:10px;background:#16a34a;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;margin-top:12px}
+
+/* ── Login mockup ── */
+.m-login-bg{min-height:420px;background:#eef2ff;display:flex;align-items:center;justify-content:center;padding:30px}
+.m-login-card{background:#fff;border-radius:14px;padding:32px;width:320px;box-shadow:0 4px 24px rgba(0,0,0,.08)}
+.m-login-logo{text-align:center;margin-bottom:20px}
+.m-login-logo .icon{width:48px;height:48px;background:#dbeafe;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:#1e40af;margin:0 auto 8px}
+.m-login-logo h2{font-size:18px;font-weight:700;color:#1e293b}
+.m-login-logo p{font-size:12px;color:#94a3b8}
+.m-field{margin-bottom:14px}
+.m-field label{display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:5px}
+.m-field input{width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:7px;font-size:12px;background:#f8fafc;color:#1e293b}
+.m-btn-login{width:100%;padding:10px;background:#2563eb;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;margin-top:6px}
+
+/* ── Dashboard charts ── */
+.m-chart-bar{display:flex;align-items:flex-end;gap:6px;height:80px;margin-top:8px}
+.m-bar{flex:1;background:#bfdbfe;border-radius:3px 3px 0 0;position:relative}
+.m-bar.high{background:#2563eb}
+.m-bar-label{font-size:9px;color:#94a3b8;text-align:center;margin-top:3px}
+
+/* ── Modal mockup ── */
+.m-modal-bg{min-height:420px;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:20px}
+.m-modal{background:#fff;border-radius:12px;padding:24px;width:380px}
+.m-modal-title{font-size:15px;font-weight:700;color:#1e293b;margin-bottom:16px;display:flex;justify-content:space-between}
+.m-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.m-form-field label{display:block;font-size:11px;font-weight:600;color:#374151;margin-bottom:4px}
+.m-form-field input,.m-form-field select{width:100%;padding:7px 9px;border:1px solid #e2e8f0;border-radius:6px;font-size:11px;background:#f8fafc;color:#1e293b}
+.m-modal-footer{display:flex;justify-content:flex-end;gap:8px;border-top:1px solid #f1f5f9;padding-top:12px;margin-top:4px}
+
+/* ── Auditoria mockup ── */
+.m-audit-row{display:flex;align-items:center;gap:10px;padding:8px 10px;border-bottom:1px solid #f1f5f9;font-size:11px}
+.m-audit-action{padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;min-width:56px;text-align:center}
+.aa-create{background:#dcfce7;color:#166534}
+.aa-update{background:#dbeafe;color:#1e40af}
+.aa-delete{background:#fee2e2;color:#991b1b}
+.aa-login{background:#fef9c3;color:#854d0e}
+.m-audit-user{font-weight:600;color:#1e293b;min-width:100px}
+.m-audit-desc{flex:1;color:#64748b}
+.m-audit-time{color:#94a3b8;min-width:80px;text-align:right}
+
+/* ── Report ── */
+.m-kpi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+.m-kpi{background:#f8fafc;border-radius:8px;padding:12px}
+.m-kpi .kl{font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em}
+.m-kpi .kv{font-size:20px;font-weight:700;color:#1e293b;margin:2px 0}
+.m-kpi .ks{font-size:10px;color:#22c55e}
+
+hr{border:none;border-top:1px solid #e2e8f0;margin:40px 0}
+footer{text-align:center;font-size:11px;color:#94a3b8;padding:20px 0;border-top:1px solid #e2e8f0;margin-top:48px}
+
+@media print{
+  body{background:#fff}
+  .wrap{padding:0;max-width:100%}
+  .cover{break-after:page}
+  section{break-inside:avoid}
+  .mockup{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- ══════════ PORTADA ══════════ -->
+<div class="cover">
+  <div class="badge">Manual de Usuario — Versión 1.0</div>
+  <h1>Sistema st_ventas</h1>
+  <p class="sub">Guía completa de uso para todos los módulos del sistema de punto de venta</p>
+  <div class="meta">
+    <div class="mi"><div class="ml">Sistema</div><div class="mv">st_ventas POS/ERP</div></div>
+    <div class="mi"><div class="ml">Versión</div><div class="mv">1.0</div></div>
+    <div class="mi"><div class="ml">Fecha</div><div class="mv">2025</div></div>
+    <div class="mi"><div class="ml">Roles</div><div class="mv">Super Admin · Admin · Vendedor</div></div>
+    <div class="mi"><div class="ml">Módulos</div><div class="mv">11 módulos</div></div>
+    <div class="mi"><div class="ml">Soporte</div><div class="mv">Interno</div></div>
+  </div>
+</div>
+
+<!-- ══════════ TOC ══════════ -->
+<div class="toc">
+  <h2>Contenido</h2>
+  <div class="toc-grid">
+    <a href="#s1"><span class="num">1</span> Acceso al sistema (Login)</a>
+    <a href="#s7"><span class="num">7</span> Clientes</a>
+    <a href="#s2"><span class="num">2</span> Panel principal (Dashboard)</a>
+    <a href="#s8"><span class="num">8</span> Usuarios y roles</a>
+    <a href="#s3"><span class="num">3</span> Punto de Venta (POS)</a>
+    <a href="#s9"><span class="num">9</span> Reportes y análisis</a>
+    <a href="#s4"><span class="num">4</span> Historial de ventas</a>
+    <a href="#s10"><span class="num">10</span> Auditoría</a>
+    <a href="#s5"><span class="num">5</span> Productos e inventario</a>
+    <a href="#s11"><span class="num">11</span> Configuración</a>
+    <a href="#s6"><span class="num">6</span> Compras</a>
+    <a href="#s12"><span class="num">12</span> Roles y permisos</a>
+  </div>
+</div>
+
+<!-- ══════════ §1 LOGIN ══════════ -->
+<section id="s1">
+  <div class="sec-hdr"><div class="sec-num">1</div><h2 class="sec-title">Acceso al sistema</h2></div>
+
+  <p>La pantalla de inicio de sesión es el punto de entrada al sistema. Solo los usuarios registrados con credenciales válidas pueden acceder. El sistema usa autenticación segura con token JWT que expira automáticamente por inactividad.</p>
+
+  <!-- Mockup Login -->
+  <div class="mockup">
+    <div class="mockup-bar"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div><div class="url">localhost:5173/login</div></div>
+    <div class="m-login-bg">
+      <div class="m-login-card">
+        <div class="m-login-logo">
+          <div class="icon">V</div>
+          <h2>VerticalTech</h2>
+          <p>Sistema de Gestión Comercial</p>
+        </div>
+        <div class="m-field"><label>Usuario</label><input type="text" value="admin@empresa.com" readonly/></div>
+        <div class="m-field"><label>Contraseña</label><input type="password" value="••••••••" readonly/></div>
+        <button class="m-btn-login">Iniciar sesión</button>
+        <p style="font-size:10px;color:#94a3b8;text-align:center;margin-top:12px">¿Problemas para acceder? Contacta al administrador</p>
+      </div>
+    </div>
+  </div>
+
+  <h3>Cómo iniciar sesión</h3>
+  <div class="steps">
+    <div class="step"><p>Abre el navegador y escribe la dirección del sistema (ej. <strong>http://localhost:5173</strong>).</p></div>
+    <div class="step"><p>En el campo <strong>Usuario</strong>, escribe tu correo electrónico o nombre de usuario asignado por el administrador.</p></div>
+    <div class="step"><p>En el campo <strong>Contraseña</strong>, escribe tu contraseña. Los caracteres no se muestran por seguridad.</p></div>
+    <div class="step"><p>Haz clic en el botón <strong>Iniciar sesión</strong>. El sistema te redirigirá al panel principal según tu rol.</p></div>
+  </div>
+
+  <div class="note warn"><span class="note-icon">⚠️</span><div>Si aparece el mensaje <em>"Credenciales incorrectas"</em>, verifica que el nombre de usuario y contraseña sean exactos. El sistema distingue mayúsculas y minúsculas en la contraseña.</div></div>
+  <div class="note info"><span class="note-icon">ℹ️</span><div>Si olvidaste tu contraseña, contacta al <strong>Administrador</strong> o <strong>Super Admin</strong> del sistema para que la restablezca desde el módulo de Usuarios.</div></div>
+</section>
+
+<!-- ══════════ §2 DASHBOARD ══════════ -->
+<section id="s2">
+  <div class="sec-hdr"><div class="sec-num">2</div><h2 class="sec-title">Panel principal (Dashboard)</h2></div>
+
+  <p>El Dashboard es la primera pantalla que ves al iniciar sesión. Muestra un resumen en tiempo real del rendimiento del negocio: ventas del día, productos con stock bajo, clientes nuevos y el total de ingresos. Es una vista de lectura — no se pueden hacer cambios desde aquí.</p>
+
+  <!-- Mockup Dashboard -->
+  <div class="mockup">
+    <div class="mockup-bar"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div><div class="url">localhost:5173/dashboard</div></div>
+    <div class="mockup-body">
+      <div class="m-sidebar">
+        <div class="m-logo"><div class="m-logo-icon">V</div><div class="m-logo-text">VerticalTech</div></div>
+        <div class="m-nav-item active"><span class="ico">📊</span> Dashboard</div>
+        <div class="m-nav-item"><span class="ico">🛒</span> Punto de Venta</div>
+        <div class="m-nav-group"><div class="m-nav-label">Operaciones</div>
+          <div class="m-nav-item"><span class="ico">📈</span> Ventas</div>
+          <div class="m-nav-item"><span class="ico">🛍️</span> Compras</div>
+        </div>
+        <div class="m-nav-group"><div class="m-nav-label">Inventario</div>
+          <div class="m-nav-item"><span class="ico">📦</span> Productos</div>
+          <div class="m-nav-item"><span class="ico">🏷️</span> Categorías</div>
+        </div>
+        <div class="m-nav-group"><div class="m-nav-label">Contactos</div>
+          <div class="m-nav-item"><span class="ico">👥</span> Clientes</div>
+        </div>
+      </div>
+      <div class="m-content">
+        <div class="m-topbar"><h1>Dashboard</h1><span style="font-size:11px;color:#94a3b8">Hoy · Lunes 26 mayo 2025</span></div>
+        <div class="m-stat-grid">
+          <div class="m-stat"><div class="label">Ventas hoy</div><div class="value">$2,840</div><div class="sub">↑ 12% vs ayer</div></div>
+          <div class="m-stat"><div class="label">Transacciones</div><div class="value">18</div><div class="sub">↑ 3 más</div></div>
+          <div class="m-stat"><div class="label">Stock bajo</div><div class="value" style="color:#ef4444">5</div><div class="sub" style="color:#ef4444">Productos</div></div>
+          <div class="m-stat"><div class="label">Clientes</div><div class="value">142</div><div class="sub">↑ 2 nuevos</div></div>
+        </div>
+        <div class="m-card">
+          <div style="font-size:12px;font-weight:600;color:#1e293b;margin-bottom:8px">Ventas de la semana</div>
+          <div class="m-chart-bar">
+            <div style="display:flex;flex-direction:column;align-items:center;flex:1"><div class="m-bar" style="height:40%"></div><div class="m-bar-label">Lun</div></div>
+            <div style="display:flex;flex-direction:column;align-items:center;flex:1"><div class="m-bar" style="height:60%"></div><div class="m-bar-label">Mar</div></div>
+            <div style="display:flex;flex-direction:column;align-items:center;flex:1"><div class="m-bar high" style="height:85%"></div><div class="m-bar-label">Mié</div></div>
+            <div style="display:flex;flex-direction:column;align-items:center;flex:1"><div class="m-bar" style="height:55%"></div><div class="m-bar-label">Jue</div></div>
+            <div style="display:flex;flex-direction:column;align-items:center;flex:1"><div class="m-bar" style="height:70%"></div><div class="m-bar-label">Vie</div></div>
+            <div style="display:flex;flex-direction:column;align-items:center;flex:1"><div class="m-bar high" style="height:95%"></div><div class="m-bar-label">Sáb</div></div>
+            <div style="display:flex;flex-direction:column;align-items:center;flex:1"><div class="m-bar" style="height:30%"></div><div class="m-bar-label">Dom</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h3>Elementos del Dashboard</h3>
+  <table class="ftable">
+    <thead><tr><th>Tarjeta</th><th>Qué muestra</th><th>Nota</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Ventas hoy</strong></td><td>Suma total de dinero vendido en el día actual</td><td>Incluye todos los métodos de pago</td></tr>
+      <tr><td><strong>Transacciones</strong></td><td>Número de ventas realizadas hoy</td><td>Cada ticket cuenta como una transacción</td></tr>
+      <tr><td><strong>Stock bajo</strong></td><td>Productos cuyo stock está por debajo del mínimo configurado</td><td>En rojo si hay urgencia</td></tr>
+      <tr><td><strong>Clientes</strong></td><td>Total de clientes registrados en el sistema</td><td>Incluye clientes nuevos del día</td></tr>
+      <tr><td><strong>Gráfico semanal</strong></td><td>Barras de ventas de los últimos 7 días</td><td>Barra más alta = día con mayor venta</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ══════════ §3 POS ══════════ -->
+<section id="s3">
+  <div class="sec-hdr"><div class="sec-num">3</div><h2 class="sec-title">Punto de Venta (POS)</h2></div>
+
+  <p>El módulo de Punto de Venta es donde se realizan las ventas en tiempo real. Permite buscar productos, agregarlos al carrito, aplicar descuentos y registrar el pago del cliente. El stock se descuenta automáticamente al confirmar la venta.</p>
+
+  <!-- Mockup POS -->
+  <div class="mockup">
+    <div class="mockup-bar"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div><div class="url">localhost:5173/pos</div></div>
+    <div class="m-pos">
+      <div class="m-pos-cat">
+        <div style="font-size:13px;font-weight:700;color:#1e293b;margin-bottom:12px">Catálogo de Productos</div>
+        <input class="m-cat-search" type="text" placeholder="🔍 Buscar producto..." readonly/>
+        <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap">
+          <span style="padding:3px 10px;border-radius:12px;font-size:10px;font-weight:600;background:#2563eb;color:#fff">Todos</span>
+          <span style="padding:3px 10px;border-radius:12px;font-size:10px;font-weight:600;background:#f1f5f9;color:#64748b">Bebidas</span>
+          <span style="padding:3px 10px;border-radius:12px;font-size:10px;font-weight:600;background:#f1f5f9;color:#64748b">Snacks</span>
+          <span style="padding:3px 10px;border-radius:12px;font-size:10px;font-weight:600;background:#f1f5f9;color:#64748b">Lácteos</span>
+        </div>
+        <div class="m-prod-grid">
+          <div class="m-prod-card"><div class="m-prod-name">Coca Cola 500ml</div><div class="m-prod-price">$1.50</div><div class="m-prod-stock">Stock: 48</div></div>
+          <div class="m-prod-card" style="border-color:#2563eb"><div class="m-prod-name">Agua Cristal</div><div class="m-prod-price">$0.80</div><div class="m-prod-stock">Stock: 120</div></div>
+          <div class="m-prod-card"><div class="m-prod-name">Leche Entera 1L</div><div class="m-prod-price">$1.20</div><div class="m-prod-stock">Stock: 35</div></div>
+          <div class="m-prod-card"><div class="m-prod-name">Pan Bimbo</div><div class="m-prod-price">$2.50</div><div class="m-prod-stock">Stock: 12</div></div>
+          <div class="m-prod-card"><div class="m-prod-name">Papas Ruffles</div><div class="m-prod-price">$1.80</div><div class="m-prod-stock">Stock: 60</div></div>
+          <div class="m-prod-card"><div class="m-prod-name">Aceite 1L</div><div class="m-prod-price">$3.20</div><div class="m-prod-stock">Stock: 28</div></div>
+        </div>
+      </div>
+      <div class="m-pos-cart">
+        <div class="m-cart-title"><span>🛒 Carrito</span><span style="font-size:10px;background:#f1f5f9;padding:2px 8px;border-radius:10px;color:#64748b">3 items</span></div>
+        <div style="font-size:11px;font-weight:600;color:#64748b;margin-bottom:8px">Cliente: General</div>
+        <div class="m-cart-item"><div class="m-cart-item-name">Coca Cola 500ml</div><div class="m-cart-qty"><div class="m-cart-qty-btn">−</div><span style="font-size:11px;padding:0 4px">2</span><div class="m-cart-qty-btn">+</div></div><span style="font-size:11px;font-weight:600;min-width:36px;text-align:right">$3.00</span></div>
+        <div class="m-cart-item"><div class="m-cart-item-name">Agua Cristal</div><div class="m-cart-qty"><div class="m-cart-qty-btn">−</div><span style="font-size:11px;padding:0 4px">1</span><div class="m-cart-qty-btn">+</div></div><span style="font-size:11px;font-weight:600;min-width:36px;text-align:right">$0.80</span></div>
+        <div class="m-cart-item"><div class="m-cart-item-name">Pan Bimbo</div><div class="m-cart-qty"><div class="m-cart-qty-btn">−</div><span style="font-size:11px;padding:0 4px">1</span><div class="m-cart-qty-btn">+</div></div><span style="font-size:11px;font-weight:600;min-width:36px;text-align:right">$2.50</span></div>
+        <div style="margin-top:12px">
+          <div class="m-cart-total-row"><span>Subtotal</span><span>$6.30</span></div>
+          <div class="m-cart-total-row"><span>Descuento</span><span>$0.00</span></div>
+          <div class="m-cart-total-row"><span>Impuesto</span><span>$0.00</span></div>
+          <div class="m-cart-final"><span>TOTAL</span><span style="color:#16a34a">$6.30</span></div>
+        </div>
+        <div style="margin-top:10px;font-size:11px">
+          <div style="font-size:10px;font-weight:600;color:#374151;margin-bottom:5px">Método de pago</div>
+          <select style="width:100%;padding:6px 8px;border:1px solid #e2e8f0;border-radius:6px;font-size:11px;background:#fff;margin-bottom:10px"><option>Efectivo</option></select>
+        </div>
+        <button class="m-btn-vender">✓ Confirmar venta</button>
+      </div>
+    </div>
+  </div>
+
+  <h3>Cómo realizar una venta</h3>
+  <div class="steps">
+    <div class="step"><p>Haz clic en <strong>Punto de Venta</strong> en el menú lateral. El sistema cargará el catálogo de productos automáticamente.</p></div>
+    <div class="step"><p>Busca el producto usando el campo de búsqueda o filtra por <strong>categoría</strong> usando los botones de colores.</p></div>
+    <div class="step"><p>Haz clic sobre el producto para agregarlo al carrito. Cada clic adicional suma una unidad más.</p></div>
+    <div class="step"><p>Si necesitas ajustar la cantidad, usa los botones <strong>+</strong> y <strong>−</strong> que aparecen junto a cada ítem en el carrito.</p></div>
+    <div class="step"><p>(Opcional) Selecciona el <strong>cliente</strong> y el <strong>método de pago</strong>. Si no seleccionas cliente, la venta se registra como "Cliente General".</p></div>
+    <div class="step"><p>(Opcional) Aplica un <strong>descuento</strong> en el campo correspondiente.</p></div>
+    <div class="step"><p>Revisa el <strong>TOTAL</strong> y haz clic en <strong>Confirmar venta</strong>. El sistema registrará la venta y descontará el stock.</p></div>
+    <div class="step"><p>Aparecerá el <strong>ticket de venta</strong> que puedes imprimir o cerrar.</p></div>
+  </div>
+
+  <h3>Funciones adicionales del POS</h3>
+  <table class="ftable">
+    <thead><tr><th>Función</th><th>Cómo acceder</th><th>Para qué sirve</th></tr></thead>
+    <tbody>
+      <tr><td>Ventas pendientes</td><td>Botón "Ventas en espera" (icono reloj)</td><td>Pausar una venta y atender otro cliente. Luego retomar desde el cajón de pendientes.</td></tr>
+      <tr><td>Descuento global</td><td>Campo "Descuento" en el carrito</td><td>Aplicar un descuento en porcentaje o monto fijo a toda la venta</td></tr>
+      <tr><td>Cambiar cliente</td><td>Campo "Cliente" en el carrito</td><td>Asociar la venta a un cliente registrado para historial y crédito</td></tr>
+      <tr><td>Limpiar carrito</td><td>Botón X (esquina del carrito)</td><td>Vaciar todos los productos del carrito actual sin registrar venta</td></tr>
+    </tbody>
+  </table>
+
+  <div class="note tip"><span class="note-icon">💡</span><div>Si un producto aparece en <strong>rojo</strong> o con número pequeño en stock, significa que está por agotarse. Crea una compra desde el módulo Compras para reponer el inventario.</div></div>
+</section>
+
+<!-- ══════════ §4 VENTAS ══════════ -->
+<section id="s4">
+  <div class="sec-hdr"><div class="sec-num">4</div><h2 class="sec-title">Historial de ventas</h2></div>
+
+  <p>El módulo de Ventas muestra el registro histórico de todas las transacciones realizadas en el sistema. Puedes consultar los detalles de cada venta: productos vendidos, cliente, método de pago y estado.</p>
+
+  <!-- Mockup Ventas -->
+  <div class="mockup">
+    <div class="mockup-bar"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div><div class="url">localhost:5173/ventas</div></div>
+    <div class="mockup-body">
+      <div class="m-sidebar">
+        <div class="m-logo"><div class="m-logo-icon">V</div><div class="m-logo-text">VerticalTech</div></div>
+        <div class="m-nav-item"><span class="ico">📊</span> Dashboard</div>
+        <div class="m-nav-item"><span class="ico">🛒</span> Punto de Venta</div>
+        <div class="m-nav-group"><div class="m-nav-label">Operaciones</div>
+          <div class="m-nav-item active"><span class="ico">📈</span> Ventas</div>
+          <div class="m-nav-item"><span class="ico">🛍️</span> Compras</div>
+        </div>
+      </div>
+      <div class="m-content">
+        <div class="m-topbar"><h1>Ventas</h1><span style="font-size:11px;color:#94a3b8">38 ventas registradas</span></div>
+        <div class="m-search">🔍 Buscar por cliente, estado...</div>
+        <table class="m-table">
+          <thead><tr><th>#</th><th>Cliente</th><th>Fecha</th><th>Total</th><th>Pago</th><th>Estado</th><th>Acción</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">#0038</td><td>Juan Pérez</td><td>26/05/25 14:32</td><td style="font-weight:700;color:#16a34a">$6.30</td><td>Efectivo</td><td><span class="badge b-green">Completada</span></td><td><div class="actions"><div class="m-icon-btn edit">👁</div></div></td></tr>
+            <tr><td class="mono">#0037</td><td>María López</td><td>26/05/25 13:10</td><td style="font-weight:700;color:#16a34a">$18.50</td><td>Tarjeta</td><td><span class="badge b-green">Completada</span></td><td><div class="actions"><div class="m-icon-btn edit">👁</div></div></td></tr>
+            <tr><td class="mono">#0036</td><td>General</td><td>26/05/25 11:45</td><td style="font-weight:700;color:#16a34a">$3.20</td><td>Efectivo</td><td><span class="badge b-green">Completada</span></td><td><div class="actions"><div class="m-icon-btn edit">👁</div></div></td></tr>
+            <tr><td class="mono">#0035</td><td>Carlos Ruiz</td><td>25/05/25 16:20</td><td style="font-weight:700;color:#16a34a">$45.00</td><td>Transferencia</td><td><span class="badge b-yellow">Pendiente</span></td><td><div class="actions"><div class="m-icon-btn edit">👁</div></div></td></tr>
+            <tr><td class="mono">#0034</td><td>Ana García</td><td>25/05/25 10:05</td><td style="font-weight:700;color:#ef4444">$12.80</td><td>Efectivo</td><td><span class="badge b-red">Anulada</span></td><td><div class="actions"><div class="m-icon-btn edit">👁</div></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <h3>Estados de una venta</h3>
+  <table class="ftable">
+    <thead><tr><th>Estado</th><th>Significado</th></tr></thead>
+    <tbody>
+      <tr><td><span class="badge b-green">Completada</span></td><td>La venta se procesó correctamente. El stock ya fue descontado y el pago registrado.</td></tr>
+      <tr><td><span class="badge b-yellow">Pendiente</span></td><td>Venta en espera (transferencia no confirmada o venta pausada en el POS).</td></tr>
+      <tr><td><span class="badge b-red">Anulada</span></td><td>La venta fue cancelada. El stock se devuelve automáticamente al inventario.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Ver el detalle de una venta</h3>
+  <div class="steps">
+    <div class="step"><p>Localiza la venta en la tabla. Puedes buscar por número, cliente o estado usando la barra de búsqueda.</p></div>
+    <div class="step"><p>Haz clic en el ícono 👁 de la columna <strong>Acción</strong>.</p></div>
+    <div class="step"><p>Se abrirá un panel con el detalle completo: productos, cantidades, precios, descuentos, total y datos del cliente.</p></div>
+  </div>
+
+  <div class="note info"><span class="note-icon">ℹ️</span><div>El historial de ventas es de solo lectura. No se pueden editar ventas pasadas para mantener la integridad del inventario y los reportes.</div></div>
+</section>
+
+<!-- ══════════ §5 PRODUCTOS ══════════ -->
+<section id="s5">
+  <div class="sec-hdr"><div class="sec-num">5</div><h2 class="sec-title">Productos e inventario</h2></div>
+
+  <p>El módulo de Productos permite gestionar el catálogo completo del negocio: crear nuevos productos, editar información, activar o desactivar productos temporalmente y configurar alertas de stock mínimo.</p>
+
+  <div class="note danger"><span class="note-icon">🔒</span><div><strong>Regla importante:</strong> El stock de un producto NO se puede editar directamente desde este módulo. El stock solo sube cuando registras una <strong>Compra</strong> y baja cuando registras una <strong>Venta</strong>. Esto garantiza que el historial de inventario sea siempre trazable.</div></div>
+
+  <!-- Mockup Productos lista -->
+  <div class="mockup">
+    <div class="mockup-bar"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div><div class="url">localhost:5173/productos</div></div>
+    <div class="mockup-body">
+      <div class="m-sidebar">
+        <div class="m-logo"><div class="m-logo-icon">V</div><div class="m-logo-text">VerticalTech</div></div>
+        <div class="m-nav-group"><div class="m-nav-label">Inventario</div>
+          <div class="m-nav-item active"><span class="ico">📦</span> Productos</div>
+          <div class="m-nav-item"><span class="ico">🏷️</span> Categorías</div>
+        </div>
+      </div>
+      <div class="m-content">
+        <div class="m-topbar"><h1>Productos</h1><button class="m-btn m-btn-primary">+ Nuevo Producto</button></div>
+        <p style="font-size:11px;color:#94a3b8;margin-bottom:10px">24 productos registrados</p>
+        <div class="m-search">🔍 Buscar productos...</div>
+        <table class="m-table">
+          <thead><tr><th>Código</th><th>Producto</th><th>Categoría</th><th>Precio</th><th>Stock</th><th>Proveedor</th><th>Estado</th><th>Acciones</th></tr></thead>
+          <tbody>
+            <tr><td style="font-family:monospace;font-size:10px;color:#94a3b8">PROD-001</td><td><strong>Coca Cola 500ml</strong><br><span style="font-size:10px;color:#94a3b8">Unidad</span></td><td><span class="badge b-blue">Bebidas</span></td><td style="font-weight:600">$1.50</td><td style="font-weight:600;color:#16a34a">48</td><td>Destilería SA</td><td><span class="badge b-green">Activo</span></td><td><div class="actions"><div class="m-icon-btn edit">✏️</div><div class="m-icon-btn tog">🔄</div><div class="m-icon-btn del">🗑</div></div></td></tr>
+            <tr><td style="font-family:monospace;font-size:10px;color:#94a3b8">PROD-002</td><td><strong>Leche Entera 1L</strong><br><span style="font-size:10px;color:#94a3b8">Litro</span></td><td><span class="badge b-blue">Lácteos</span></td><td style="font-weight:600">$1.20</td><td style="font-weight:600;color:#f59e0b">⚠ 4</td><td>Lácteos XYZ</td><td><span class="badge b-green">Activo</span></td><td><div class="actions"><div class="m-icon-btn edit">✏️</div><div class="m-icon-btn tog">🔄</div><div class="m-icon-btn del">🗑</div></div></td></tr>
+            <tr><td style="font-family:monospace;font-size:10px;color:#94a3b8">PROD-003</td><td><strong>Chocolate Nestlé</strong><br><span style="font-size:10px;color:#94a3b8">Unidad</span></td><td><span class="badge b-blue">Dulces</span></td><td style="font-weight:600">$0.75</td><td style="font-weight:600;color:#ef4444">0</td><td>—</td><td><span class="badge b-red">Inactivo</span></td><td><div class="actions"><div class="m-icon-btn edit">✏️</div><div class="m-icon-btn tog" style="background:#dcfce7;color:#166534">▶</div><div class="m-icon-btn del">🗑</div></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mockup formulario -->
+  <div class="mockup" style="margin-top:18px">
+    <div class="mockup-bar"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div><div class="url">Formulario — Nuevo Producto</div></div>
+    <div class="m-modal-bg">
+      <div class="m-modal" style="width:440px">
+        <div class="m-modal-title">Nuevo Producto <span style="font-size:16px;cursor:pointer;color:#94a3b8">×</span></div>
+        <div class="m-form-grid">
+          <div class="m-form-field"><label>Nombre *</label><input type="text" value="Coca Cola 600ml" readonly/></div>
+          <div class="m-form-field"><label>Código</label><input type="text" value="PROD-012" readonly/></div>
+        </div>
+        <div class="m-form-field" style="margin-bottom:10px"><label>Descripción</label><input type="text" placeholder="Descripción opcional..." readonly/></div>
+        <div class="m-form-grid">
+          <div class="m-form-field"><label>Precio de venta *</label><input type="number" value="1.75" readonly/></div>
+          <div class="m-form-field"><label>Stock mínimo</label><input type="number" value="10" readonly/></div>
+        </div>
+        <div class="m-form-grid">
+          <div class="m-form-field"><label>Categoría *</label><select><option>Bebidas</option></select></div>
+          <div class="m-form-field"><label>Proveedor</label><select><option>Destilería SA</option></select></div>
+        </div>
+        <div class="m-form-field" style="margin-bottom:14px"><label>Unidad</label><select><option>Unidad</option></select></div>
+        <div class="m-modal-footer"><button class="m-btn m-btn-ghost">Cancelar</button><button class="m-btn m-btn-primary">Crear producto</button></div>
+      </div>
+    </div>
+  </div>
+
+  <h3>Crear un nuevo producto</h3>
+  <div class="steps">
+    <div class="step"><p>Haz clic en el botón <strong>+ Nuevo Producto</strong> en la esquina superior derecha.</p></div>
+    <div class="step"><p>Completa el <strong>Nombre</strong> (obligatorio) y el <strong>Código</strong> (opcional — si lo dejas vacío el sistema puede generarlo automáticamente).</p></div>
+    <div class="step"><p>Escribe el <strong>Precio de venta</strong> y el <strong>Stock mínimo</strong> (umbral de alerta — no es el stock real).</p></div>
+    <div class="step"><p>Selecciona la <strong>Categoría</strong> y opcionalmente el <strong>Proveedor</strong> y la <strong>Unidad de medida</strong>.</p></div>
+    <div class="step"><p>Haz clic en <strong>Crear producto</strong>. El producto aparecerá en la lista con stock en 0. Para cargar stock, ve al módulo de <strong>Compras</strong>.</p></div>
+  </div>
+
+  <h3>Indicadores de stock en la tabla</h3>
+  <table class="ftable">
+    <thead><tr><th>Color del stock</th><th>Significado</th></tr></thead>
+    <tbody>
+      <tr><td style="color:#16a34a;font-weight:700">Verde</td><td>Stock suficiente — por encima del stock mínimo configurado</td></tr>
+      <tr><td style="color:#f59e0b;font-weight:700">⚠ Amarillo</td><td>Alerta — stock por debajo del mínimo. Considera hacer una compra pronto</td></tr>
+      <tr><td style="color:#ef4444;font-weight:700">Rojo (0)</td><td>Sin existencias — el producto no puede venderse hasta reabastecer</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ══════════ §6 COMPRAS ══════════ -->
+<section id="s6">
+  <div class="sec-hdr"><div class="sec-num">6</div><h2 class="sec-title">Compras</h2></div>
+
+  <p>El módulo de Compras registra la entrada de mercancía al inventario. Cada vez que recibes productos de un proveedor, debes crear una compra para que el stock se actualice automáticamente en el sistema.</p>
+
+  <!-- Mockup Compras -->
+  <div class="mockup">
+    <div class="mockup-bar"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div><div class="url">localhost:5173/compras</div></div>
+    <div class="mockup-body">
+      <div class="m-sidebar">
+        <div class="m-logo"><div class="m-logo-icon">V</div><div class="m-logo-text">VerticalTech</div></div>
+        <div class="m-nav-group"><div class="m-nav-label">Operaciones</div>
+          <div class="m-nav-item"><span class="ico">📈</span> Ventas</div>
+          <div class="m-nav-item active"><span class="ico">🛍️</span> Compras</div>
+        </div>
+      </div>
+      <div class="m-content">
+        <div class="m-topbar"><h1>Compras</h1><button class="m-btn m-btn-primary">+ Nueva Compra</button></div>
+        <div class="m-search">🔍 Buscar compras...</div>
+        <table class="m-table">
+          <thead><tr><th>#</th><th>Proveedor</th><th>Fecha</th><th>Total</th><th>Estado</th><th>Acciones</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">#C-018</td><td>Destilería SA</td><td>24/05/25</td><td style="font-weight:700">$320.00</td><td><span class="badge b-green">Recibida</span></td><td><div class="actions"><div class="m-icon-btn edit">👁</div></div></td></tr>
+            <tr><td class="mono">#C-017</td><td>Lácteos XYZ</td><td>20/05/25</td><td style="font-weight:700">$185.50</td><td><span class="badge b-yellow">Pendiente</span></td><td><div class="actions"><div class="m-icon-btn edit">👁</div><div class="m-icon-btn" style="background:#dcfce7;color:#166534">✓</div></div></td></tr>
+            <tr><td class="mono">#C-016</td><td>Alimentos SA</td><td>15/05/25</td><td style="font-weight:700">$520.00</td><td><span class="badge b-green">Recibida</span></td><td><div class="actions"><div class="m-icon-btn edit">👁</div></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <h3>Estados de una compra</h3>
+  <table class="ftable">
+    <thead><tr><th>Estado</th><th>Descripción</th><th>¿Actualiza stock?</th></tr></thead>
+    <tbody>
+      <tr><td><span class="badge b-gray">Borrador</span></td><td>Compra creada pero no confirmada. Puedes editarla o eliminarla.</td><td>No</td></tr>
+      <tr><td><span class="badge b-yellow">Pendiente</span></td><td>Compra confirmada y enviada al proveedor. En espera de recibir la mercancía.</td><td>No</td></tr>
+      <tr><td><span class="badge b-green">Recibida</span></td><td>Mercancía llegó y fue verificada. El stock sube automáticamente.</td><td>✅ Sí</td></tr>
+      <tr><td><span class="badge b-red">Anulada</span></td><td>Compra cancelada. El stock no cambia.</td><td>No</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Registrar una compra</h3>
+  <div class="steps">
+    <div class="step"><p>Haz clic en <strong>+ Nueva Compra</strong>.</p></div>
+    <div class="step"><p>Selecciona el <strong>Proveedor</strong> de la lista desplegable.</p></div>
+    <div class="step"><p>Agrega los productos que recibiste: selecciona el producto, escribe la cantidad y el costo unitario.</p></div>
+    <div class="step"><p>Guarda la compra. Quedará en estado <strong>Borrador</strong>.</p></div>
+    <div class="step"><p>Cuando confirmes que el pedido fue enviado, cámbiala a <strong>Pendiente</strong>.</p></div>
+    <div class="step"><p>Cuando recibas físicamente la mercancía, cámbiala a <strong>Recibida</strong>. En este momento el stock de los productos se actualizará.</p></div>
+  </div>
+</section>
+
+<!-- ══════════ §7 CLIENTES ══════════ -->
+<section id="s7">
+  <div class="sec-hdr"><div class="sec-num">7</div><h2 class="sec-title">Clientes</h2></div>
+
+  <p>El módulo de Clientes permite registrar y administrar la cartera de clientes del negocio. Un cliente registrado puede asociarse a las ventas del POS para llevar un historial de compras.</p>
+
+  <!-- Mockup Clientes -->
+  <div class="mockup">
+    <div class="mockup-bar"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div><div class="url">localhost:5173/clientes</div></div>
+    <div class="mockup-body">
+      <div class="m-sidebar">
+        <div class="m-logo"><div class="m-logo-icon">V</div><div class="m-logo-text">VerticalTech</div></div>
+        <div class="m-nav-group"><div class="m-nav-label">Contactos</div>
+          <div class="m-nav-item active"><span class="ico">👥</span> Clientes</div>
+          <div class="m-nav-item"><span class="ico">🚚</span> Proveedores</div>
+        </div>
+      </div>
+      <div class="m-content">
+        <div class="m-topbar"><h1>Clientes</h1><button class="m-btn m-btn-primary">+ Nuevo Cliente</button></div>
+        <p style="font-size:11px;color:#94a3b8;margin-bottom:10px">142 clientes registrados</p>
+        <div class="m-search">🔍 Buscar clientes...</div>
+        <table class="m-table">
+          <thead><tr><th>Nombre</th><th>Teléfono</th><th>Email</th><th>DUI/NIT</th><th>Estado</th><th>Acciones</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Juan Pérez</strong></td><td>7788-9900</td><td>juan@mail.com</td><td>01234567-8</td><td><span class="badge b-green">Activo</span></td><td><div class="actions"><div class="m-icon-btn edit">✏️</div><div class="m-icon-btn del">🗑</div></div></td></tr>
+            <tr><td><strong>María López</strong></td><td>6699-1122</td><td>maria@mail.com</td><td>—</td><td><span class="badge b-green">Activo</span></td><td><div class="actions"><div class="m-icon-btn edit">✏️</div><div class="m-icon-btn del">🗑</div></div></td></tr>
+            <tr><td><strong>Carlos Ruiz</strong></td><td>5544-7788</td><td>—</td><td>0022334-5</td><td><span class="badge b-red">Inactivo</span></td><td><div class="actions"><div class="m-icon-btn edit">✏️</div><div class="m-icon-btn del">🗑</div></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <h3>Campos del formulario de cliente</h3>
+  <table class="ftable">
+    <thead><tr><th>Campo</th><th>Obligatorio</th><th>Descripción</th></tr></thead>
+    <tbody>
+      <tr><td>Nombre</td><td><span class="badge b-red">Sí</span></td><td>Nombre completo del cliente</td></tr>
+      <tr><td>Apellido</td><td><span class="badge b-gray">No</span></td><td>Apellido del cliente</td></tr>
+      <tr><td>Teléfono</td><td><span class="badge b-gray">No</span></td><td>Número de contacto principal</td></tr>
+      <tr><td>Email</td><td><span class="badge b-gray">No</span></td><td>Correo electrónico</td></tr>
+      <tr><td>DUI / NIT</td><td><span class="badge b-gray">No</span></td><td>Documento de identidad para facturación</td></tr>
+      <tr><td>Dirección</td><td><span class="badge b-gray">No</span></td><td>Dirección de entrega o facturación</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ══════════ §8 USUARIOS ══════════ -->
+<section id="s8">
+  <div class="sec-hdr"><div class="sec-num">8</div><h2 class="sec-title">Usuarios y roles</h2></div>
+
+  <p>El módulo de Usuarios permite al Administrador y al Super Admin gestionar las cuentas de acceso al sistema. Puedes crear nuevos usuarios, asignarles un rol, activarlos o desactivarlos y cambiar su contraseña.</p>
+
+  <!-- Mockup Usuarios -->
+  <div class="mockup">
+    <div class="mockup-bar"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div><div class="url">localhost:5173/usuarios</div></div>
+    <div class="mockup-body">
+      <div class="m-sidebar">
+        <div class="m-logo"><div class="m-logo-icon">V</div><div class="m-logo-text">VerticalTech</div></div>
+        <div class="m-nav-group"><div class="m-nav-label">Sistema</div>
+          <div class="m-nav-item active"><span class="ico">👤</span> Usuarios</div>
+          <div class="m-nav-item"><span class="ico">🛡</span> Auditoría</div>
+          <div class="m-nav-item"><span class="ico">⚙️</span> Configuración</div>
+        </div>
+      </div>
+      <div class="m-content">
+        <div class="m-topbar"><h1>Usuarios</h1><button class="m-btn m-btn-primary">+ Nuevo Usuario</button></div>
+        <div class="m-search">🔍 Buscar usuarios...</div>
+        <table class="m-table">
+          <thead><tr><th>Nombre</th><th>Usuario</th><th>Email</th><th>Rol</th><th>Estado</th><th>Acciones</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Roberto Admin</strong></td><td>@roberto</td><td>roberto@empresa.com</td><td><span class="badge" style="background:#fef3c7;color:#92400e">Super Admin</span></td><td><span class="badge b-green">Activo</span></td><td><span style="font-size:11px;color:#94a3b8;font-style:italic">—</span></td></tr>
+            <tr><td><strong>Andrea Manager</strong></td><td>@andrea</td><td>andrea@empresa.com</td><td><span class="badge b-blue">Admin</span></td><td><span class="badge b-green">Activo</span></td><td><div class="actions"><div class="m-icon-btn edit">✏️</div><div class="m-icon-btn tog">🔄</div><div class="m-icon-btn del">🗑</div></div></td></tr>
+            <tr><td><strong>Luis Vendedor</strong></td><td>@luis</td><td>luis@empresa.com</td><td><span class="badge b-green">Vendedor</span></td><td><span class="badge b-green">Activo</span></td><td><div class="actions"><div class="m-icon-btn edit">✏️</div><div class="m-icon-btn tog">🔄</div><div class="m-icon-btn del">🗑</div></div></td></tr>
+            <tr><td><strong>Carla Cajera</strong></td><td>@carla</td><td>carla@empresa.com</td><td><span class="badge b-green">Vendedor</span></td><td><span class="badge b-red">Inactivo</span></td><td><div class="actions"><div class="m-icon-btn edit">✏️</div><div class="m-icon-btn tog" style="background:#dcfce7;color:#166534">▶</div><div class="m-icon-btn del">🗑</div></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="note danger"><span class="note-icon">🔒</span><div>Los usuarios con rol <strong>Super Admin</strong> están completamente protegidos. Un Administrador no puede editar, desactivar ni eliminar cuentas de Super Admin. Esta protección opera en el servidor y no puede omitirse.</div></div>
+
+  <h3>Crear un nuevo usuario</h3>
+  <div class="steps">
+    <div class="step"><p>Haz clic en <strong>+ Nuevo Usuario</strong>.</p></div>
+    <div class="step"><p>Completa los campos: <strong>Nombre</strong>, <strong>Apellido</strong>, <strong>Nombre de usuario</strong>, <strong>Correo</strong>.</p></div>
+    <div class="step"><p>Escribe una <strong>contraseña</strong> inicial. El usuario puede cambiarla después desde Configuración.</p></div>
+    <div class="step"><p>Selecciona el <strong>Rol</strong>: <em>Super Admin</em>, <em>Admin</em> o <em>Vendedor</em>.</p></div>
+    <div class="step"><p>Haz clic en <strong>Crear usuario</strong>. El usuario quedará activo inmediatamente.</p></div>
+  </div>
+</section>
+
+<!-- ══════════ §9 REPORTES ══════════ -->
+<section id="s9">
+  <div class="sec-hdr"><div class="sec-num">9</div><h2 class="sec-title">Reportes y análisis</h2></div>
+
+  <p>El módulo de Reportes proporciona análisis detallados del negocio: ventas por período, productos más vendidos, clientes con mayor gasto y alertas de stock bajo. Permite filtrar por día, mes o año.</p>
+
+  <!-- Mockup Reportes -->
+  <div class="mockup">
+    <div class="mockup-bar"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div><div class="url">localhost:5173/reportes</div></div>
+    <div class="mockup-body">
+      <div class="m-sidebar">
+        <div class="m-logo"><div class="m-logo-icon">V</div><div class="m-logo-text">VerticalTech</div></div>
+        <div class="m-nav-group"><div class="m-nav-label">Análisis</div>
+          <div class="m-nav-item active"><span class="ico">📊</span> Reportes</div>
+        </div>
+      </div>
+      <div class="m-content">
+        <div class="m-topbar"><h1>Reportes</h1>
+          <div style="display:flex;gap:6px">
+            <button class="m-btn m-btn-ghost" style="font-size:10px">📅 Día</button>
+            <button class="m-btn m-btn-primary" style="font-size:10px">📆 Mes</button>
+            <button class="m-btn m-btn-ghost" style="font-size:10px">🗓 Año</button>
+          </div>
+        </div>
+        <div class="m-kpi-grid">
+          <div class="m-kpi"><div class="kl">Total ventas</div><div class="kv">$8,420</div><div class="ks">↑ 14% vs anterior</div></div>
+          <div class="m-kpi"><div class="kl">Transacciones</div><div class="kv">312</div><div class="ks">↑ 28 más</div></div>
+          <div class="m-kpi"><div class="kl">Ticket promedio</div><div class="kv">$27.02</div><div class="ks">↑ 5%</div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div class="m-card">
+            <div style="font-size:12px;font-weight:700;margin-bottom:8px">Top productos</div>
+            <div style="font-size:11px;display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #f1f5f9"><span>1. Coca Cola 500ml</span><span style="font-weight:600">148 uds</span></div>
+            <div style="font-size:11px;display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #f1f5f9"><span>2. Leche Entera 1L</span><span style="font-weight:600">96 uds</span></div>
+            <div style="font-size:11px;display:flex;justify-content:space-between;padding:4px 0"><span>3. Pan Bimbo</span><span style="font-weight:600">84 uds</span></div>
+          </div>
+          <div class="m-card">
+            <div style="font-size:12px;font-weight:700;margin-bottom:8px">Stock bajo ⚠</div>
+            <div style="font-size:11px;display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #f1f5f9"><span style="color:#ef4444">Leche Entera 1L</span><span style="color:#ef4444;font-weight:600">4 unid</span></div>
+            <div style="font-size:11px;display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #f1f5f9"><span style="color:#f59e0b">Aceite 1L</span><span style="color:#f59e0b;font-weight:600">6 unid</span></div>
+            <div style="font-size:11px;display:flex;justify-content:space-between;padding:4px 0"><span style="color:#ef4444">Chocolate Nestlé</span><span style="color:#ef4444;font-weight:600">0 unid</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h3>Filtros disponibles</h3>
+  <table class="ftable">
+    <thead><tr><th>Filtro</th><th>Descripción</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Día</strong></td><td>Muestra los datos de una fecha específica. Selecciona la fecha en el calendario.</td></tr>
+      <tr><td><strong>Mes</strong></td><td>Muestra el acumulado de un mes completo. Selecciona mes y año.</td></tr>
+      <tr><td><strong>Año</strong></td><td>Vista anual con comparativa mes a mes.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="note tip"><span class="note-icon">💡</span><div>El reporte se actualiza automáticamente al cambiar el filtro de período. No necesitas hacer clic en ningún botón de búsqueda.</div></div>
+</section>
+
+<!-- ══════════ §10 AUDITORIA ══════════ -->
+<section id="s10">
+  <div class="sec-hdr"><div class="sec-num">10</div><h2 class="sec-title">Auditoría</h2></div>
+
+  <p>El módulo de Auditoría registra todas las acciones sensibles del sistema: quién hizo qué, cuándo y desde qué dirección IP. Este registro es inmutable — no se puede editar ni eliminar. Solo tiene acceso el <strong>Super Admin</strong>.</p>
+
+  <!-- Mockup Auditoría -->
+  <div class="mockup">
+    <div class="mockup-bar"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div><div class="url">localhost:5173/auditoria</div></div>
+    <div class="mockup-body">
+      <div class="m-sidebar">
+        <div class="m-logo"><div class="m-logo-icon">V</div><div class="m-logo-text">VerticalTech</div></div>
+        <div class="m-nav-group"><div class="m-nav-label">Sistema</div>
+          <div class="m-nav-item active"><span class="ico">🛡</span> Auditoría</div>
+          <div class="m-nav-item"><span class="ico">⚙️</span> Configuración</div>
+        </div>
+      </div>
+      <div class="m-content">
+        <div class="m-topbar"><h1>Auditoría</h1><span style="font-size:11px;color:#94a3b8">Solo lectura</span></div>
+        <div class="m-search">🔍 Filtrar por módulo, usuario o acción...</div>
+        <div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden">
+          <div class="m-audit-row" style="background:#f8fafc;font-weight:600;font-size:10px;color:#64748b"><span style="min-width:80px">Acción</span><span style="min-width:100px">Usuario</span><span style="flex:1">Descripción</span><span style="min-width:80px;text-align:right">Hora</span></div>
+          <div class="m-audit-row"><span class="m-audit-action aa-create">CREAR</span><span class="m-audit-user">@andrea</span><span class="m-audit-desc">Producto "Coca Cola 600ml" creado</span><span class="m-audit-time">14:35</span></div>
+          <div class="m-audit-row"><span class="m-audit-action aa-login">LOGIN</span><span class="m-audit-user">@luis</span><span class="m-audit-desc">Inicio de sesión desde 192.168.1.5</span><span class="m-audit-time">14:12</span></div>
+          <div class="m-audit-row"><span class="m-audit-action aa-update">EDITAR</span><span class="m-audit-user">@andrea</span><span class="m-audit-desc">Precio de "Leche Entera 1L" actualizado</span><span class="m-audit-time">13:55</span></div>
+          <div class="m-audit-row"><span class="m-audit-action aa-delete">ANULAR</span><span class="m-audit-user">@andrea</span><span class="m-audit-desc">Venta #0034 anulada</span><span class="m-audit-time">10:08</span></div>
+          <div class="m-audit-row"><span class="m-audit-action aa-create">CREAR</span><span class="m-audit-user">@roberto</span><span class="m-audit-desc">Usuario "@carla" creado con rol Vendedor</span><span class="m-audit-time">09:30</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h3>Tipos de eventos registrados</h3>
+  <table class="ftable">
+    <thead><tr><th>Tipo</th><th>Eventos</th></tr></thead>
+    <tbody>
+      <tr><td><span class="m-audit-action aa-login" style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600">LOGIN</span></td><td>Inicio y cierre de sesión de todos los usuarios</td></tr>
+      <tr><td><span class="m-audit-action aa-create" style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600">CREAR</span></td><td>Creación de productos, usuarios, compras, ventas</td></tr>
+      <tr><td><span class="m-audit-action aa-update" style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600">EDITAR</span></td><td>Modificaciones a cualquier registro del sistema</td></tr>
+      <tr><td><span class="m-audit-action aa-delete" style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600">ANULAR</span></td><td>Anulación de ventas, cambio de estado de compras</td></tr>
+    </tbody>
+  </table>
+
+  <div class="note danger"><span class="note-icon">🔒</span><div>El módulo de Auditoría es de <strong>solo lectura</strong>. Ningún usuario, incluyendo el Super Admin, puede modificar ni eliminar los registros de auditoría. Esto garantiza la trazabilidad total de todas las operaciones.</div></div>
+</section>
+
+<!-- ══════════ §11 CONFIGURACION ══════════ -->
+<section id="s11">
+  <div class="sec-hdr"><div class="sec-num">11</div><h2 class="sec-title">Configuración</h2></div>
+
+  <p>El módulo de Configuración permite al Super Admin personalizar la información de la empresa (nombre, logo, datos fiscales) y gestionar su propio perfil de usuario. Está dividido en dos pestañas: Empresa y Perfil.</p>
+
+  <!-- Mockup Configuración -->
+  <div class="mockup">
+    <div class="mockup-bar"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div><div class="url">localhost:5173/configuracion</div></div>
+    <div class="mockup-body">
+      <div class="m-sidebar">
+        <div class="m-logo"><div class="m-logo-icon">V</div><div class="m-logo-text">VerticalTech</div></div>
+        <div class="m-nav-group"><div class="m-nav-label">Sistema</div>
+          <div class="m-nav-item"><span class="ico">👤</span> Usuarios</div>
+          <div class="m-nav-item"><span class="ico">🛡</span> Auditoría</div>
+          <div class="m-nav-item active"><span class="ico">⚙️</span> Configuración</div>
+        </div>
+      </div>
+      <div class="m-content">
+        <div class="m-topbar"><h1>Configuración</h1></div>
+        <div style="display:flex;gap:0;border-bottom:1px solid #e2e8f0;margin-bottom:16px">
+          <div style="padding:7px 16px;border-bottom:2px solid #2563eb;font-size:12px;font-weight:600;color:#2563eb">🏢 Empresa</div>
+          <div style="padding:7px 16px;font-size:12px;color:#64748b">👤 Mi Perfil</div>
+          <div style="padding:7px 16px;font-size:12px;color:#64748b">🔒 Contraseña</div>
+        </div>
+        <div class="m-card">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px">
+            <div style="width:64px;height:64px;background:#dbeafe;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;color:#1e40af">V</div>
+            <div><button class="m-btn m-btn-ghost" style="font-size:10px">📷 Cambiar logo</button><p style="font-size:10px;color:#94a3b8;margin-top:4px">PNG, JPG. Max 2MB</p></div>
+          </div>
+          <div class="m-form-grid">
+            <div class="m-form-field"><label>Nombre de la empresa</label><input type="text" value="VerticalTech" readonly/></div>
+            <div class="m-form-field"><label>NIT</label><input type="text" value="0614-280500-101-1" readonly/></div>
+            <div class="m-form-field"><label>NRC</label><input type="text" value="123456-7" readonly/></div>
+            <div class="m-form-field"><label>Teléfono</label><input type="text" value="2222-3333" readonly/></div>
+          </div>
+          <div class="m-modal-footer"><button class="m-btn m-btn-primary">💾 Guardar cambios</button></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h3>Pestañas disponibles</h3>
+  <table class="ftable">
+    <thead><tr><th>Pestaña</th><th>Qué permite configurar</th></tr></thead>
+    <tbody>
+      <tr><td><strong>🏢 Empresa</strong></td><td>Nombre, logo, NIT, NRC, teléfono, correo y dirección fiscal de la empresa. Estos datos aparecen en el encabezado del sistema y en los reportes.</td></tr>
+      <tr><td><strong>👤 Mi Perfil</strong></td><td>Nombre, nombre de usuario, correo, teléfono y foto de perfil del Super Admin activo.</td></tr>
+      <tr><td><strong>🔒 Contraseña</strong></td><td>Cambio de contraseña propia. Requiere ingresar la contraseña actual para confirmar.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ══════════ §12 ROLES ══════════ -->
+<section id="s12">
+  <div class="sec-hdr"><div class="sec-num">12</div><h2 class="sec-title">Roles y permisos del sistema</h2></div>
+
+  <p>El sistema usa tres niveles de acceso. Cada usuario solo ve y puede hacer lo que su rol permite. Los módulos que no están disponibles para un rol simplemente no aparecen en el menú lateral.</p>
+
+  <table class="ftable">
+    <thead><tr><th>Módulo</th><th style="text-align:center">Super Admin</th><th style="text-align:center">Admin</th><th style="text-align:center">Vendedor</th></tr></thead>
+    <tbody>
+      <tr><td>Dashboard</td><td style="text-align:center"><span class="badge b-green">✓</span></td><td style="text-align:center"><span class="badge b-green">✓</span></td><td style="text-align:center"><span class="badge b-gray">—</span></td></tr>
+      <tr><td>Punto de Venta (POS)</td><td style="text-align:center"><span class="badge b-green">✓</span></td><td style="text-align:center"><span class="badge b-green">✓</span></td><td style="text-align:center"><span class="badge b-green">✓</span></td></tr>
+      <tr><td>Historial de Ventas</td><td style="text-align:center"><span class="badge b-green">✓</span></td><td style="text-align:center"><span class="badge b-green">✓</span></td><td style="text-align:center"><span class="badge b-green">✓</span></td></tr>
+      <tr><td>Compras</td><td style="text-align:center"><span class="badge b-green">✓</span></td><td style="text-align:center"><span class="badge b-green">✓</span></td><td style="text-align:center"><span class="badge b-gray">—</span></td></tr>
+      <tr><td>Productos</td><td style="text-align:center"><span class="badge b-green">✓</span></td><td style="text-align:center"><span class="badge b-green">✓</span></td><td style="text-align:center">Solo lectura</td></tr>
+      <tr><td>Categorías / Proveedores</td><td style="text-align:center"><span class="badge b-green">✓</span></td><td style="text-align:center"><span class="badge b-green">✓</span></td><td style="text-align:center"><span class="badge b-gray">—</span></td></tr>
+      <tr><td>Clientes</td><td style="text-align:center"><span class="badge b-green">✓</span></td><td style="text-align:center"><span class="badge b-green">✓</span></td><td style="text-align:center"><span class="badge b-green">✓</span></td></tr>
+      <tr><td>Usuarios</td><td style="text-align:center"><span class="badge b-green">✓</span></td><td style="text-align:center"><span class="badge b-green">✓</span></td><td style="text-align:center"><span class="badge b-gray">—</span></td></tr>
+      <tr><td>Reportes</td><td style="text-align:center"><span class="badge b-green">✓</span></td><td style="text-align:center"><span class="badge b-green">✓</span></td><td style="text-align:center"><span class="badge b-gray">—</span></td></tr>
+      <tr><td>Promociones</td><td style="text-align:center"><span class="badge b-green">✓</span></td><td style="text-align:center"><span class="badge b-green">✓</span></td><td style="text-align:center"><span class="badge b-gray">—</span></td></tr>
+      <tr><td><strong>Auditoría</strong></td><td style="text-align:center"><span class="badge b-green">✓</span></td><td style="text-align:center"><span class="badge b-red">✗</span></td><td style="text-align:center"><span class="badge b-red">✗</span></td></tr>
+      <tr><td><strong>Configuración</strong></td><td style="text-align:center"><span class="badge b-green">✓</span></td><td style="text-align:center"><span class="badge b-red">✗</span></td><td style="text-align:center"><span class="badge b-red">✗</span></td></tr>
+    </tbody>
+  </table>
+
+  <div class="note info"><span class="note-icon">ℹ️</span><div>Si un usuario intenta acceder a una URL de un módulo sin permiso, el sistema lo redirige automáticamente al Dashboard. No hay mensaje de error visible — simplemente no puede entrar.</div></div>
+
+  <h3>Diferencias clave entre roles</h3>
+  <table class="ftable">
+    <thead><tr><th>Escenario</th><th>¿Quién puede hacerlo?</th></tr></thead>
+    <tbody>
+      <tr><td>Ver el log de auditoría</td><td><span class="badge" style="background:#fef3c7;color:#92400e">Solo Super Admin</span></td></tr>
+      <tr><td>Cambiar datos de la empresa y logo</td><td><span class="badge" style="background:#fef3c7;color:#92400e">Solo Super Admin</span></td></tr>
+      <tr><td>Crear y eliminar usuarios</td><td><span class="badge b-blue">Admin</span> y <span class="badge" style="background:#fef3c7;color:#92400e">Super Admin</span></td></tr>
+      <tr><td>Editar cuenta de un Super Admin</td><td><span class="badge" style="background:#fef3c7;color:#92400e">Solo Super Admin</span></td></tr>
+      <tr><td>Registrar ventas desde el POS</td><td>Todos los roles</td></tr>
+      <tr><td>Registrar compras de proveedores</td><td><span class="badge b-blue">Admin</span> y <span class="badge" style="background:#fef3c7;color:#92400e">Super Admin</span></td></tr>
+    </tbody>
+  </table>
+
+  <hr/>
+
+  <div class="note tip"><span class="note-icon">💡</span><div><strong>Para imprimir este manual como PDF:</strong> Abre este archivo en Chrome o Edge → Presiona <kbd>Ctrl + P</kbd> → Destino: <strong>Guardar como PDF</strong> → Gráficos de fondo: <strong>activado</strong> → Guardar.</div></div>
+</section>
+
+<footer>
+  <p>Manual de Usuario · Sistema st_ventas v1.0 · 2025</p>
+  <p style="margin-top:4px">Para soporte técnico, contacta al administrador del sistema</p>
+</footer>
+
+</div>
+</body>
+</html>

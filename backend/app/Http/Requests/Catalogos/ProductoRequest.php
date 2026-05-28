@@ -34,10 +34,10 @@ class ProductoRequest extends FormRequest
 
         return [
             'codigo'        => [
-                'required',
+                'nullable',
                 'string',
                 'max:60',
-                Rule::unique('productos', 'codigo')->ignore($id),
+                Rule::unique('productos', 'codigo')->ignore($id)->whereNotNull('codigo'),
             ],
             'nombre'        => ['required', 'string', 'max:150'],
             'descripcion'   => ['nullable', 'string', 'max:2000'],

@@ -6,7 +6,7 @@ import { Eye, EyeOff, Lock, User } from 'lucide-react';
 import { useState, useEffect } from 'react';  // ← useEffect añadido
 import axios from 'axios';
 import { loginSchema } from '../schemas';
-import useAuthStore from '../store/authStore';
+import { useAuth } from '../context/AuthContext';
 
 const api = axios.create({
   baseURL: 'http://127.0.0.1:8000/api',
@@ -84,9 +84,40 @@ const styles = `
     position: relative;
     z-index: 2;
     animation: fade-up 0.7s cubic-bezier(.22,1,.36,1) both;
+    overflow: hidden;
   }
 
-  .vt-card-header { margin-bottom: 2rem; }
+  /* Header con logo de fondo */
+  .vt-card-header {
+    position: relative;
+    margin-bottom: 2rem;
+    text-align: center;
+    min-height: 90px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+  }
+
+  /* Logo como capa de fondo, detrás del texto */
+  .vt-logo-bg {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -52%);
+    width: 88%;
+    object-fit: contain;
+    opacity: 0.6;
+    pointer-events: none;
+    z-index: 0;
+    margin-bottom: 25px;
+    filter:
+      saturate(3)
+      drop-shadow(0 0 22px rgba(99,102,241,1))
+      drop-shadow(0 0 8px rgba(99,102,241,0.7));
+  }
+
+  /* Texto encima del logo */
+  .vt-card-header-text { position: relative; z-index: 1; }
   .vt-card-eyebrow {
     font-size: 0.68rem;
     font-weight: 500;
@@ -109,6 +140,8 @@ const styles = `
     color: #94A3B8;
     margin: 0;
     font-weight: 300;
+    margin-bottom: -30px;
+    font-style: bold;
   }
 
   /* Form */
@@ -256,7 +289,7 @@ const styles = `
 /* ─── Component ─────────────────────────────────────────────────────────── */
 export default function LoginPage() {
   const navigate = useNavigate();
-  const login = useAuthStore((s) => s.login);
+  const { login } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [remember, setRemember] = useState(false);
@@ -337,9 +370,18 @@ export default function LoginPage() {
 
       <div className="vt-card">
         <div className="vt-card-header">
-          <p className="vt-card-eyebrow">VerticalTech</p>
-          <h2 className="vt-card-title">Bienvenido</h2>
-          <p className="vt-card-sub">Accede a tu panel de gestión</p>
+          {/* Logo detrás del texto — capa de fondo con glow */}
+          <img
+            src="/logovertical.png"
+            alt=""
+            aria-hidden="true"
+            className="vt-logo-bg"
+          />
+          {/* Texto encima */}
+          <div className="vt-card-header-text">
+            <h2 className="vt-card-title"></h2> <br />
+            <p className="vt-card-sub">Accede a tu panel de gestión</p>
+          </div>
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="vt-form" noValidate>

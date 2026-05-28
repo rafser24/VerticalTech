@@ -4,13 +4,34 @@ namespace App\Http\Controllers\Api\Catalogos;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Catalogos\ProductoRequest;
+use App\Http\Resources\Catalogos\CategoriaResource;
 use App\Http\Resources\Catalogos\ProductoResource;
+use App\Http\Resources\Catalogos\ProveedorResource;
+use App\Models\Catalogos\Categoria;
 use App\Models\Catalogos\Producto;
+use App\Models\Catalogos\Proveedor;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class ProductoController extends Controller
 {
+    /**
+     * Inicialización del módulo Productos.
+     * Devuelve productos + catálogos de formulario en un solo request.
+     */
+    public function init(): JsonResponse
+    {
+        $productos   = Producto::with(['categoria', 'proveedor'])->orderBy('nombre')->get();
+        $categorias  = Categoria::orderBy('nombre')->get();
+        $proveedores = Proveedor::where('activo', true)->orderBy('nombre')->get();
+
+        return $this->success([
+            'productos'   => ProductoResource::collection($productos),
+            'categorias'  => CategoriaResource::collection($categorias),
+            'proveedores' => ProveedorResource::collection($proveedores),
+        ]);
+    }
+
     public function index(Request $request): JsonResponse
     {
         $query = Producto::with(['categoria', 'proveedor'])
@@ -33,6 +54,9 @@ class ProductoController extends Controller
             ->when($request->filled('stock_bajo') && $request->boolean('stock_bajo'), fn($q) =>
                 $q->whereColumn('stock', '<=', 'stock_minimo')
             )
+            ->when($request->filled('con_stock') && $request->boolean('con_stock'), fn($q) =>
+                $q->where('stock', '>', 0)
+            )
             ->orderBy($request->get('sort', 'nombre'), $request->get('dir', 'asc'));
 
         $resultado = $request->filled('per_page')
@@ -48,7 +72,25 @@ class ProductoController extends Controller
 
     public function store(ProductoRequest $request): JsonResponse
     {
-        $producto = Producto::create($request->validated());
+        $data = $request->validated();
+        // El stock inicial siempre es 0 — solo se mueve mediante compras y ventas.
+        $data['stock'] = 0;
+
+        // Si el usuario no ingresó código, asignar uno temporal único antes
+        // de insertar (la columna es UNIQUE, no puede quedar vacía).
+        // Se sobreescribe con el ID real justo después del insert.
+        $codigoEsAutogenerado = empty($data['codigo']);
+        if ($codigoEsAutogenerado) {
+            $data['codigo'] = 'TMP-' . uniqid();
+        }
+
+        $producto = Producto::create($data);
+
+        // Reemplazar el temporal con el código definitivo basado en el ID (ej: PROD-0042)
+        if ($codigoEsAutogenerado) {
+            $producto->update(['codigo' => 'PROD-' . str_pad($producto->id, 4, '0', STR_PAD_LEFT)]);
+        }
+
         $producto->load(['categoria', 'proveedor']);
 
         return $this->success(new ProductoResource($producto), 'Producto creado.', 201);
@@ -71,7 +113,10 @@ class ProductoController extends Controller
          * Ahora se busca manualmente con findOrFail($i).
          */
         $producto = Producto::findOrFail($i);
-        $producto->update($request->validated());
+        $data = $request->validated();
+        // Nunca actualizar stock por esta vía — solo se mueve mediante compras y ventas.
+        unset($data['stock']);
+        $producto->update($data);
         $producto->load(['categoria', 'proveedor']);
 
         return $this->success(new ProductoResource($producto), 'Producto actualizado.');

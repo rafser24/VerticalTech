@@ -1,26 +1,9 @@
-import { create } from 'zustand';
-
-const useAppStore = create((set) => ({
-  sidebarOpen: true,
-  toggleSidebar: () => set((s) => ({ sidebarOpen: !s.sidebarOpen })),
-
-  modalOpen: false,
-  modalContent: null,
-  openModal: (content) => set({ modalOpen: true, modalContent: content }),
-  closeModal: () => set({ modalOpen: false, modalContent: null }),
-
-  // ── Datos de empresa (para sidebar y reportes) ──
-  empresa: {
-    nombre: 'VerticalTech',
-    logo_url: null,
-    nit: '',
-    nrc: '',
-    telefono: '',
-    correo: '',
-    direccion: '',
-  },
-  setEmpresa: (data) =>
-    set((s) => ({ empresa: { ...s.empresa, ...data } })),
-}));
-
-export default useAppStore;
+/**
+ * ARCHIVO OBSOLETO — NO USAR
+ *
+ * Este store fue migrado a React Context API.
+ * Ver: src/context/AppContext.jsx
+ *
+ * Se mantiene el archivo para que el historial de git quede claro.
+ * Puede eliminarse en el próximo cleanup.
+ */

@@ -37,24 +37,7 @@ class UsuarioSeeder extends Seeder
                 'activo'    => true,
                 'role'      => 'vendedor',
             ],
-            [
-                'nombre'    => 'María',
-                'apellido'  => 'García',
-                'usuario'   => 'bodeguero1',
-                'email'     => 'bodeguero1@sistema.com',
-                'contrasena'=> 'Bode123$!',
-                'activo'    => true,
-                'role'      => 'bodeguero',
-            ],
-            [
-                'nombre'    => 'Carlos',
-                'apellido'  => 'López',
-                'usuario'   => 'tecnico1',
-                'email'     => 'tecnico1@sistema.com',
-                'contrasena'=> 'Tec1123$!',
-                'activo'    => true,
-                'role'      => 'tecnico',
-            ],
+            // bodeguero1 y tecnico1 eliminados — roles bodeguero/tecnico ya no existen
         ];
 
         foreach ($usuarios as $datos) {

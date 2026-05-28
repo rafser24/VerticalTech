@@ -336,8 +336,8 @@ export default function TicketVenta({ venta, onClose }) {
                 Soluciones inteligentes en tecnología
               </div>
               <div style={{ marginTop: 10, fontSize: 8.5, color: '#CBD5E1', lineHeight: 1.7 }}>
-                <div>📍 Col. Escalón, Calle La Reforma #123, San Salvador</div>
-                <div>📞 +503 2222-3333 &nbsp;|&nbsp; <strong style={{ color: '#E2E8F0' }}>NIT:</strong> 0614-010101-001-0</div>
+                <div>📍 Av. Alberto Masferrer, San Juan Nonualco , La Paz</div>
+                <div>📞 +503 2334-3333 &nbsp;|&nbsp; <strong style={{ color: '#E2E8F0' }}>NIT:</strong> 0614-010101-001-0</div>
               </div>
             </div>
 
@@ -410,16 +410,15 @@ export default function TicketVenta({ venta, onClose }) {
                 </div>
               ))}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 6, paddingTop: 6, borderTop: '2px solid #0F172A' }}>
-                <span style={{ fontSize: 11, fontWeight: 700, color: '#0F172A' }}>TOTAL</span>
-                <span style={{ fontSize: 18, fontWeight: 700, color: '#1D4ED8', fontFamily: 'monospace' }}>${total.toFixed(2)}</span>
+                <span style={{ fontSize: 11, fontWeight: 700, color: '#64748B' }}>TOTAL</span>
+                <span style={{ fontSize: 11, fontWeight: 700, color: '#64748B', fontFamily: 'monospace' }}>${total.toFixed(2)}</span>
               </div>
             </div>
 
             {/* ── Método de pago ── */}
             <div style={{ padding: '8px 14px', borderBottom: '1px dashed #CBD5E1', display: 'flex', alignItems: 'center', gap: 8, fontSize: 9.5 }}>
               <div style={{ width: 24, height: 24, background: '#EFF6FF', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12 }}>
-                💳
-              </div>
+                            </div>
               <div>
                 <div style={{ color: '#64748B' }}>Método de pago</div>
                 <div style={{ fontWeight: 600, color: '#0F172A' }}>
@@ -431,18 +430,14 @@ export default function TicketVenta({ venta, onClose }) {
             {/* ── Gracias ── */}
             <div style={{ padding: '14px', textAlign: 'center' }}>
               <div style={{ fontSize: 12, fontWeight: 700, color: '#0F172A', marginBottom: 4 }}>
-                ¡Gracias por su compra! 🎉
+                ¡Gracias por su compra! 
               </div>
               <div style={{ fontSize: 8.5, color: '#94A3B8', lineHeight: 1.6 }}>
-                Conserve este ticket como comprobante.<br />
-                Cambios y garantías con ticket en 30 días.
+                NO SE ACEPTAN DEVOLUCIONES.<br />
+                
               </div>
 
-              {/* QR placeholder */}
-              <div style={{ margin: '12px auto', width: 60, height: 60, border: '2px solid #E2E8F0', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 7, color: '#CBD5E1', textAlign: 'center' }}>
-                QR<br/>venta
-              </div>
-
+             
               {/* Redes */}
               <div style={{ display: 'flex', justifyContent: 'center', gap: 16, fontSize: 8, color: '#64748B', marginTop: 4 }}>
                 <span>📘 /VerticalTech</span>

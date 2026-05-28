@@ -73,7 +73,7 @@ class DashboardController extends Controller
                 ->where('estado', 'completada');
 
             $comprasPeriodo = Compra::whereBetween('fecha_compra', [$inicio, $fin])
-                ->where('estado', 'completada');
+                ->where('estado', 'recibida');
 
             $ingresosPeriodo = (float) $ventasPeriodo->sum('total');
             $egresosPeriodo  = (float) $comprasPeriodo->sum('total');
@@ -175,7 +175,7 @@ class DashboardController extends Controller
                 ->limit(15)
                 ->get();
 
-            return response()->json($productos);
+            return $this->success($productos, 'Productos más vendidos');
 
         } catch (\Throwable $th) {
             return $this->error('Error al obtener productos más vendidos: ' . $th->getMessage());
@@ -211,7 +211,7 @@ class DashboardController extends Controller
                 ->limit(10)
                 ->get();
 
-            return response()->json($clientes);
+            return $this->success($clientes, 'Top clientes');
 
         } catch (\Throwable $th) {
             return $this->error('Error al obtener top clientes: ' . $th->getMessage());
@@ -289,7 +289,7 @@ class DashboardController extends Controller
                 ->orderBy('fecha_compra', 'desc')
                 ->get();
 
-            $completadas = $compras->where('estado', 'completada');
+            $completadas = $compras->where('estado', 'recibida');
 
             return $this->success([
                 'tipo'     => $rango['tipo'],
@@ -302,6 +302,128 @@ class DashboardController extends Controller
 
         } catch (\Throwable $th) {
             return $this->error('Error al generar reporte de compras: ' . $th->getMessage());
+        }
+    }
+
+    // ─── GET /api/dashboard/reporte-completo ─────────────────────────────
+    /**
+     * Consolida los 5 endpoints del módulo Reportes en una sola llamada.
+     * Acepta los mismos query params que los endpoints individuales:
+     *   tipo, fecha, mes, anio
+     */
+    public function reporteCompleto(Request $request)
+    {
+        try {
+            $rango  = $this->calcularRango($request);
+            $inicio = $rango['inicio'];
+            $fin    = $rango['fin'];
+
+            // ── Resumen ───────────────────────────────────────────────────
+            $hoy = now()->toDateString();
+
+            $ventasHoy     = Venta::whereDate('fecha_venta', $hoy)->where('estado', 'completada');
+            $ventasPeriodo = Venta::whereBetween('fecha_venta', [$inicio, $fin])->where('estado', 'completada');
+            $comprasPeriodo = Compra::whereBetween('fecha_compra', [$inicio, $fin])->where('estado', 'recibida');
+
+            $ingresosPeriodo = (float) $ventasPeriodo->sum('total');
+            $egresosPeriodo  = (float) $comprasPeriodo->sum('total');
+
+            $resumen = [
+                'ventas' => [
+                    'hoy' => ['cantidad' => $ventasHoy->count(),     'total' => (float) $ventasHoy->sum('total')],
+                    'mes' => ['cantidad' => $ventasPeriodo->count(), 'total' => $ingresosPeriodo],
+                ],
+                'compras'              => ['mes' => ['cantidad' => $comprasPeriodo->count(), 'total' => $egresosPeriodo]],
+                'margen_mes'           => round($ingresosPeriodo - $egresosPeriodo, 2),
+                'total_clientes'       => Cliente::where('activo', true)->count(),
+                'total_productos'      => Producto::where('activo', true)->count(),
+                'total_sales'          => $ingresosPeriodo,
+                'total_products'       => Producto::where('activo', true)->count(),
+                'total_clients'        => Cliente::where('activo', true)->count(),
+                'low_stock_count'      => Producto::where('activo', true)->whereRaw('stock <= stock_minimo')->count(),
+                'productos_stock_bajo' => Producto::where('activo', true)->whereRaw('stock <= stock_minimo')->count(),
+            ];
+
+            // ── Reporte de ventas ─────────────────────────────────────────
+            $ventasDetalle = Venta::with(['cliente', 'usuario', 'metodoPago', 'detalles.producto'])
+                ->whereBetween('fecha_venta', [$inicio, $fin])
+                ->orderBy('fecha_venta', 'desc')
+                ->get();
+
+            $completadas = $ventasDetalle->where('estado', 'completada');
+
+            $reporteVentas = [
+                'tipo'     => $rango['tipo'],
+                'inicio'   => $inicio->toDateString(),
+                'fin'      => $fin->toDateString(),
+                'cantidad' => $ventasDetalle->count(),
+                'total'    => (float) $completadas->sum('total'),
+                'promedio' => $completadas->count() > 0
+                    ? round($completadas->sum('total') / $completadas->count(), 2)
+                    : 0,
+                'ventas'   => $ventasDetalle->values(),
+            ];
+
+            // ── Productos más vendidos ────────────────────────────────────
+            $topProductos = DB::table('detalle_venta')
+                ->join('productos', 'detalle_venta.producto_id', '=', 'productos.id')
+                ->join('ventas', 'detalle_venta.venta_id', '=', 'ventas.id')
+                ->select(
+                    'productos.id',
+                    'productos.nombre as nombre_producto',
+                    DB::raw('SUM(detalle_venta.cantidad) as unidades_vendidas'),
+                    DB::raw('SUM(detalle_venta.subtotal) as total_generado')
+                )
+                ->whereBetween('ventas.fecha_venta', [$inicio, $fin])
+                ->where('ventas.estado', 'completada')
+                ->groupBy('productos.id', 'productos.nombre')
+                ->orderByDesc('unidades_vendidas')
+                ->limit(15)
+                ->get();
+
+            // ── Top clientes ──────────────────────────────────────────────
+            $topClientes = DB::table('ventas')
+                ->join('clientes', 'ventas.cliente_id', '=', 'clientes.id')
+                ->select(
+                    'clientes.id',
+                    DB::raw("CONCAT(clientes.nombre, ' ', clientes.apellido) as nombre_cliente"),
+                    'clientes.telefono',
+                    DB::raw('COUNT(ventas.id) as total_compras'),
+                    DB::raw('SUM(ventas.total) as total_gastado')
+                )
+                ->whereBetween('ventas.fecha_venta', [$inicio, $fin])
+                ->where('ventas.estado', 'completada')
+                ->groupBy('clientes.id', 'clientes.nombre', 'clientes.apellido', 'clientes.telefono')
+                ->orderByDesc('total_gastado')
+                ->limit(10)
+                ->get();
+
+            // ── Stock bajo ────────────────────────────────────────────────
+            $stockBajo = Producto::with(['categoria', 'proveedor'])
+                ->where('activo', true)
+                ->whereRaw('stock <= stock_minimo')
+                ->orderBy('stock', 'asc')
+                ->get()
+                ->map(fn($p) => [
+                    'id'           => $p->id,
+                    'nombre'       => $p->nombre,
+                    'stock'        => $p->stock,
+                    'stock_minimo' => $p->stock_minimo,
+                    'diferencia'   => $p->stock_minimo - $p->stock,
+                    'categoria'    => $p->categoria?->nombre,
+                    'proveedor'    => $p->proveedor?->nombre,
+                ]);
+
+            return $this->success([
+                'resumen'        => $resumen,
+                'reporte_ventas' => $reporteVentas,
+                'top_productos'  => $topProductos,
+                'top_clientes'   => $topClientes,
+                'stock_bajo'     => $stockBajo,
+            ], 'Reporte completo');
+
+        } catch (\Throwable $th) {
+            return $this->error('Error al generar el reporte completo: ' . $th->getMessage());
         }
     }
 

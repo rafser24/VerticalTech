@@ -6,7 +6,7 @@ import CarritoActivo from './CarritoActivo';
 import CatalogoProductos from './CatalogoProductos';
 import DrawerVentasEspera from './DrawerVentasEspera';
 import TicketVenta from './TicketVenta';
-import api, { clientService, productService, paymentMethodService, saleService } from '../../services/api';
+import api, { saleService } from '../../services/api';
 import { formatCurrency } from '../../utils/helpers';
 
 /**
@@ -41,34 +41,18 @@ export default function PosScreen({ onVolver }) {
     const cargarDatos = async () => {
       try {
         setLoadingData(true);
-        const [prodRes, clientRes, pagoRes, promRes] = await Promise.allSettled([
-          productService.getAll(),
-          clientService.getAll(),
-          paymentMethodService.getAll(),
-          api.get('/promociones', { params: { activo: true } }),
-        ]);
 
-        const unwrap = (settled) => {
-          if (settled.status === 'rejected') return [];
-          const d = settled.value?.data?.data ?? settled.value?.data;
-          return Array.isArray(d) ? d : d?.data ?? d?.items ?? [];
-        };
+        // Un solo request en lugar de 4 — más rápido y con caché unificada
+        const res  = await api.get('/pos/init');
+        const data = res.data?.data ?? {};
 
-        const unwrapPromociones = (settled) => {
-          if (settled.status === 'rejected') return [];
-          const d = settled.value?.data;
-          if (d?.data?.data && Array.isArray(d.data.data)) return d.data.data;
-          if (d?.data && Array.isArray(d.data)) return d.data;
-          return [];
-        };
-
-        setProductos(unwrap(prodRes));
-        setClientes(unwrap(clientRes));
-        setMetodosPago(unwrap(pagoRes));
-        setPromociones(unwrapPromociones(promRes));
+        setProductos(  Array.isArray(data.productos)    ? data.productos    : []);
+        setClientes(   Array.isArray(data.clientes)     ? data.clientes     : []);
+        setMetodosPago(Array.isArray(data.metodos_pago) ? data.metodos_pago : []);
+        setPromociones(Array.isArray(data.promociones)  ? data.promociones  : []);
       } catch (err) {
         console.error(err);
-        toast.error('Error al cargar catálogos');
+        toast.error('Error al cargar catálogos del POS');
       } finally {
         setLoadingData(false);
       }
@@ -166,30 +150,24 @@ export default function PosScreen({ onVolver }) {
   if (loadingData) {
     return (
       <MainLayout title="Punto de Venta">
-        <div className="flex flex-col items-center justify-center h-[65vh] gap-6">
-          <div className="relative w-20 h-20">
-            <div className="absolute inset-0 rounded-full border-4 border-gray-100" />
-            <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-blue-500 border-r-blue-400 animate-spin" />
-            <div className="absolute inset-2 rounded-full border-4 border-transparent border-t-indigo-300 animate-spin" style={{ animationDuration: '0.6s', animationDirection: 'reverse' }} />
+        {/* Overlay centrado en toda la pantalla disponible */}
+        <div className="fixed inset-0 flex flex-col items-center justify-center gap-8 bg-white/80 backdrop-blur-sm z-50">
+          {/* Spinner */}
+          <div className="relative w-32 h-32">
+            <div className="absolute inset-0 rounded-full border-[6px] border-gray-100" />
+            <div className="absolute inset-0 rounded-full border-[6px] border-transparent border-t-blue-500 border-r-blue-400 animate-spin" />
+            <div className="absolute inset-3 rounded-full border-[6px] border-transparent border-t-indigo-300 animate-spin" style={{ animationDuration: '0.6s', animationDirection: 'reverse' }} />
             <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-3 h-3 rounded-full bg-blue-500 animate-pulse" />
+              <div className="w-5 h-5 rounded-full bg-blue-500 animate-pulse" />
             </div>
           </div>
-          <div className="text-center space-y-1">
-            <p className="text-sm font-semibold text-gray-700 tracking-wide">Iniciando Punto de Venta</p>
-            <div className="flex items-center justify-center gap-1">
-              {[0,1,2].map(i => (
-                <div key={i} className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
-              ))}
-            </div>
-          </div>
-          <div className="flex gap-4 w-full max-w-5xl mt-2 px-4">
-            <div className="w-[38%] space-y-3">
-              {[1,2,3].map(i => <div key={i} className="h-12 bg-gray-100 rounded-xl animate-pulse" style={{ opacity: 1 - i * 0.2 }} />)}
-            </div>
-            <div className="flex-1 grid grid-cols-3 gap-3">
-              {Array.from({ length: 9 }).map((_, i) => (
-                <div key={i} className="h-28 bg-gray-100 rounded-xl animate-pulse" style={{ opacity: 1 - i * 0.08 }} />
+
+          {/* Texto */}
+          <div className="text-center space-y-2">
+            <p className="text-base font-semibold text-gray-700 tracking-wide">Iniciando Punto de Venta</p>
+            <div className="flex items-center justify-center gap-1.5">
+              {[0, 1, 2].map(i => (
+                <div key={i} className="w-2 h-2 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
               ))}
             </div>
           </div>

@@ -33,7 +33,7 @@ class AuthenticationController extends Controller
             'password' => $request->input('password'),
         ];
 
-        if (! $token = auth()->attempt($credentials)) {
+        if (! $token = auth('api')->attempt($credentials)) {
             RateLimiter::hit($key, (int) config('auth.login_decay_seconds', 60));
 
             return response()->json([

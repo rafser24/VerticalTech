@@ -158,53 +158,37 @@ export default function PromocionesPage() {
     formState: { errors },
   } = useForm({ resolver: zodResolver(promocionSchema) });
 
-  // ── Carga inicial ────────────────────────────────────────
+  // ── Carga inicial: un solo request con todos los catálogos ──────────────
   const fetchAll = async () => {
     try {
       setLoading(true);
-
-      // allSettled: si /promociones falla (ej: tabla aún no migrada),
-      // los selectores de producto y categoría del formulario siguen cargando.
-      const [resPromos, resProductos, resCategorias] = await Promise.allSettled([
-        api.get('/promociones'),
-        api.get('/productos'),
-        api.get('/categorias'),
-      ]);
-
-      // Extrae el array de items de la respuesta anidada de Laravel Resource
-      const extract = (settled) => {
-        if (settled.status === 'rejected') {
-          console.error('[PromocionesPage] request failed:', settled.reason?.response?.data ?? settled.reason);
-          return [];
-        }
-        const d = settled.value?.data;
-        // Estructura: { status, message, data: { data: [...] } }  ← Laravel ResourceCollection
-        if (d?.data?.data && Array.isArray(d.data.data)) return d.data.data;
-        // Estructura: { status, message, data: [...] }            ← array plano
-        if (d?.data && Array.isArray(d.data)) return d.data;
-        if (Array.isArray(d)) return d;
-        console.warn('[PromocionesPage] unexpected shape:', d);
-        return [];
-      };
-
-      setPromociones(extract(resPromos));
-      setProductos(extract(resProductos));
-      setCategorias(extract(resCategorias));
-
-      // Avisar si la tabla de promociones aún no existe
-      if (resPromos.status === 'rejected') {
-        const status = resPromos.reason?.response?.status;
-        if (status === 500) {
-          toast.error('Error del servidor al cargar promociones. ¿Ejecutaste php artisan migrate?');
-        } else {
-          toast.error('No se pudieron cargar las promociones');
-        }
-      }
+      const res  = await api.get('/promociones/init');
+      const data = res.data?.data ?? {};
+      setPromociones(Array.isArray(data.promociones) ? data.promociones : []);
+      setProductos(  Array.isArray(data.productos)   ? data.productos   : []);
+      setCategorias( Array.isArray(data.categorias)  ? data.categorias  : []);
     } catch (err) {
-      console.error('[PromocionesPage] unexpected error:', err);
-      toast.error('Error inesperado al cargar datos');
+      console.error('[PromocionesPage] error:', err);
+      const status = err.response?.status;
+      if (status === 500) {
+        toast.error('Error del servidor. ¿Ejecutaste php artisan migrate?');
+      } else {
+        toast.error('Error al cargar promociones');
+      }
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Solo recarga promociones tras mutaciones (catálogos no cambian)
+  const recargarPromociones = async () => {
+    try {
+      const res  = await api.get('/promociones');
+      const data = res.data?.data ?? res.data;
+      const list = Array.isArray(data) ? data : (data?.data ?? []);
+      setPromociones(list);
+    } catch {
+      toast.error('Error al actualizar promociones');
     }
   };
 
@@ -259,7 +243,7 @@ export default function PromocionesPage() {
         toast.success('Promoción creada');
       }
       closeModal();
-      fetchAll();
+      recargarPromociones();
     } catch (err) {
       const msg = err.response?.data?.message || 'Error al guardar';
       toast.error(msg);
@@ -272,7 +256,7 @@ export default function PromocionesPage() {
       await promocionService.delete(deleteTarget.id);
       toast.success('Promoción eliminada');
       setDeleteTarget(null);
-      fetchAll();
+      recargarPromociones();
     } catch {
       toast.error('No se pudo eliminar la promoción');
     }
@@ -283,7 +267,7 @@ export default function PromocionesPage() {
     try {
       await promocionService.toggleActivo(promo.id);
       toast.success(`Promoción ${promo.activo ? 'desactivada' : 'activada'}`);
-      fetchAll();
+      recargarPromociones();
     } catch {
       toast.error('Error al cambiar el estado');
     }

@@ -7,6 +7,7 @@ use App\Traits\HasApiCache;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\DB;
 
 class Producto extends Model
 {
@@ -88,15 +89,26 @@ class Producto extends Model
 
     public function decrementarStock(int $cantidad): void
     {
-        // decrement() ejecuta UPDATE directo y NO dispara eventos Eloquent,
-        // por eso invalidamos la caché manualmente después.
-        $this->decrement('stock', $cantidad);
-        $this->invalidateCache(['productos', 'dashboard']);
+        // Usa DB::table() para el UPDATE directo (más eficiente que increment(),
+        // que haría un SELECT + UPDATE). La invalidación la hace el llamador
+        // una sola vez fuera del loop, no aquí dentro.
+        DB::table('productos')
+            ->where('id', $this->id)
+            ->whereNull('deleted_at')
+            ->update([
+                'stock'      => DB::raw("GREATEST(stock - {$cantidad}, 0)"),
+                'updated_at' => now(),
+            ]);
     }
 
     public function incrementarStock(int $cantidad): void
     {
-        $this->increment('stock', $cantidad);
-        $this->invalidateCache(['productos', 'dashboard']);
+        DB::table('productos')
+            ->where('id', $this->id)
+            ->whereNull('deleted_at')
+            ->update([
+                'stock'      => DB::raw("stock + {$cantidad}"),
+                'updated_at' => now(),
+            ]);
     }
 }

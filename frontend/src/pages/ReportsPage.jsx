@@ -14,7 +14,7 @@ import MainLayout from '../components/layout/MainLayout';
 import StatCard from '../components/ui/StatCard';
 import { formatCurrency, formatDate, statusColors } from '../utils/helpers';
 import api from '../services/api';
-import useAppStore from '../store/appStore';
+import { useApp } from '../context/AppContext';
 
 // ─────────────────────────────────────────────────────────────
 // API
@@ -149,7 +149,7 @@ function ProgressBar({ value, max, color = 'bg-blue-400' }) {
 // PÁGINA PRINCIPAL
 // ─────────────────────────────────────────────────────────────
 export default function ReportsPage() {
-  const empresa = useAppStore((s) => s.empresa);
+  const { empresa } = useApp();
 
   const [tipo, setTipo]             = useState('mes');
   const [fecha, setFecha]           = useState(todayStr);
@@ -168,24 +168,21 @@ export default function ReportsPage() {
     try {
       setLoading(true);
       const params = buildParams(tipo, { fecha, mes, anio });
-      const [r0, r1, r2, r3, r4] = await Promise.allSettled([
-        reportService.getSummary(params),
-        reportService.getSalesReport(params),
-        reportService.getTopProducts(params),
-        reportService.getTopClients(params),
-        reportService.getLowStock(),
-      ]);
-      if (r0.status === 'fulfilled') setSummary(unwrapData(r0.value) || {});
-      if (r1.status === 'fulfilled') {
-        const d = unwrapData(r1.value);
-        const v = Array.isArray(d?.ventas) ? d.ventas : Array.isArray(d) ? d : [];
-        setSalesReport(v.sort((a, b) =>
-          new Date(b.fecha_venta || b.created_at) - new Date(a.fecha_venta || a.created_at)
-        ));
-      } else setSalesReport([]);
-      if (r2.status === 'fulfilled') setTopProducts(unwrapArray(r2.value)); else setTopProducts([]);
-      if (r3.status === 'fulfilled') setTopClients(unwrapArray(r3.value));  else setTopClients([]);
-      if (r4.status === 'fulfilled') setLowStock(unwrapArray(r4.value));    else setLowStock([]);
+      const res  = await api.get('/dashboard/reporte-completo', { params });
+      const data = res.data?.data ?? {};
+
+      setSummary(data.resumen ?? {});
+
+      const ventas = Array.isArray(data.reporte_ventas?.ventas)
+        ? data.reporte_ventas.ventas
+        : [];
+      setSalesReport(ventas.sort((a, b) =>
+        new Date(b.fecha_venta || b.created_at) - new Date(a.fecha_venta || a.created_at)
+      ));
+
+      setTopProducts(Array.isArray(data.top_productos) ? data.top_productos : []);
+      setTopClients( Array.isArray(data.top_clientes)  ? data.top_clientes  : []);
+      setLowStock(   Array.isArray(data.stock_bajo)    ? data.stock_bajo    : []);
     } catch (err) {
       console.error(err);
       toast.error('Error cargando reportes');

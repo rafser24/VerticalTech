@@ -206,39 +206,24 @@ export default function SalesPage() {
   if (loading) {
     return (
       <MainLayout title="Ventas">
-        <div className="flex flex-col items-center justify-center h-[65vh] gap-6">
-          {/* Spinner moderno multicapa */}
-          <div className="relative w-20 h-20">
-            <div className="absolute inset-0 rounded-full border-4 border-gray-100" />
-            <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-green-500 border-r-green-400 animate-spin" />
-            <div className="absolute inset-2 rounded-full border-4 border-transparent border-t-emerald-300 animate-spin" style={{ animationDuration: '0.6s', animationDirection: 'reverse' }} />
+        <div className="fixed inset-0 flex flex-col items-center justify-center gap-8 bg-white/80 backdrop-blur-sm z-50">
+          {/* Spinner */}
+          <div className="relative w-32 h-32">
+            <div className="absolute inset-0 rounded-full border-[6px] border-gray-100" />
+            <div className="absolute inset-0 rounded-full border-[6px] border-transparent border-t-blue-500 border-r-blue-400 animate-spin" />
+            <div className="absolute inset-3 rounded-full border-[6px] border-transparent border-t-indigo-300 animate-spin" style={{ animationDuration: '0.6s', animationDirection: 'reverse' }} />
             <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-3 h-3 rounded-full bg-green-500 animate-pulse" />
+              <div className="w-5 h-5 rounded-full bg-blue-500 animate-pulse" />
             </div>
           </div>
-          {/* Texto animado */}
-          <div className="text-center space-y-1">
-            <p className="text-sm font-semibold text-gray-700 tracking-wide">Cargando ventas</p>
-            <div className="flex items-center justify-center gap-1">
-              {[0,1,2].map(i => (
-                <div
-                  key={i}
-                  className="w-1.5 h-1.5 rounded-full bg-green-400 animate-bounce"
-                  style={{ animationDelay: `${i * 0.15}s` }}
-                />
+          {/* Texto */}
+          <div className="text-center space-y-2">
+            <p className="text-base font-semibold text-gray-700 tracking-wide">Cargando Ventas</p>
+            <div className="flex items-center justify-center gap-1.5">
+              {[0, 1, 2].map(i => (
+                <div key={i} className="w-2 h-2 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
               ))}
             </div>
-          </div>
-          {/* Skeleton de la tabla */}
-          <div className="w-full max-w-4xl space-y-3 px-4 mt-2">
-            <div className="h-10 bg-gray-100 rounded-xl animate-pulse" />
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="flex gap-3" style={{ opacity: 1 - i * 0.15 }}>
-                <div className="h-12 bg-gray-100 rounded-xl animate-pulse flex-1" />
-                <div className="h-12 bg-gray-100 rounded-xl animate-pulse w-32" />
-                <div className="h-12 bg-gray-100 rounded-xl animate-pulse w-24" />
-              </div>
-            ))}
           </div>
         </div>
       </MainLayout>

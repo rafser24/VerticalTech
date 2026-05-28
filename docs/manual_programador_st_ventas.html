@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manual del Programador — ST Ventas</title>
+<style>
+  @page { size: A4; margin: 2cm 2.2cm 2cm 2.2cm; }
+  @media print {
+    .cover { page-break-after: always; }
+    h2 { page-break-before: always; }
+    h2.no-break { page-break-before: avoid; }
+    pre, .card, table { page-break-inside: avoid; }
+  }
+  :root {
+    --blue:#1e40af;--blue-light:#dbeafe;--blue-mid:#3b82f6;
+    --gray:#374151;--gray-light:#f9fafb;--gray-mid:#e5e7eb;
+    --green:#065f46;--green-light:#d1fae5;
+    --red:#991b1b;--red-light:#fee2e2;
+    --orange:#92400e;--orange-light:#fef3c7;
+    --purple:#5b21b6;--purple-light:#ede9fe;
+  }
+  * { box-sizing:border-box;margin:0;padding:0; }
+  body { font-family:'Segoe UI',Arial,sans-serif;font-size:11px;color:#1f2937;line-height:1.6;background:#fff; }
+  /* PORTADA */
+  .cover { min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;background:linear-gradient(135deg,#1e40af 0%,#1e3a8a 50%,#0f172a 100%);color:#fff;padding:40px; }
+  .cover-badge { background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);border-radius:20px;padding:6px 18px;font-size:10px;letter-spacing:2px;text-transform:uppercase;margin-bottom:30px; }
+  .cover h1 { font-size:44px;font-weight:800;margin-bottom:10px;letter-spacing:-1px; }
+  .cover h1 span { color:#93c5fd; }
+  .cover h2 { font-size:18px;font-weight:400;color:#bfdbfe;margin-bottom:40px;border:none;padding:0; }
+  .cover-line { width:80px;height:3px;background:#60a5fa;margin:0 auto 40px; }
+  .cover-grid { display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:50px;max-width:600px; }
+  .cover-item { background:rgba(255,255,255,0.1);border-radius:10px;padding:14px; }
+  .cover-item .label { font-size:9px;color:#93c5fd;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px; }
+  .cover-item .value { font-size:13px;font-weight:600; }
+  .cover-footer { font-size:10px;color:#93c5fd;border-top:1px solid rgba(255,255,255,0.2);padding-top:20px;width:100%;max-width:600px; }
+  /* LAYOUT */
+  .page { max-width:900px;margin:0 auto;padding:30px 20px; }
+  /* HEADINGS */
+  h2 { font-size:20px;font-weight:700;color:var(--blue);border-bottom:3px solid var(--blue);padding-bottom:8px;margin:40px 0 20px; }
+  h3 { font-size:14px;font-weight:700;color:#1e3a8a;margin:24px 0 10px; }
+  h4 { font-size:12px;font-weight:700;color:#374151;margin:16px 0 8px;border-left:3px solid var(--blue-mid);padding-left:8px; }
+  p { margin-bottom:10px; }
+  ul,ol { margin:8px 0 12px 20px; }
+  li { margin-bottom:4px; }
+  /* TOC */
+  .toc { background:var(--gray-light);border:1px solid var(--gray-mid);border-radius:10px;padding:24px 28px;margin:30px 0; }
+  .toc h3 { margin-top:0;color:var(--blue);font-size:15px; }
+  .toc-section { margin:6px 0; }
+  .toc-section a { text-decoration:none;color:var(--gray);display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px dotted #d1d5db; }
+  .toc-num { color:var(--blue-mid);font-weight:700;margin-right:8px;font-size:10px; }
+  /* CODE */
+  pre { background:#0f172a;color:#e2e8f0;border-radius:8px;padding:16px;font-size:10px;overflow-x:auto;margin:12px 0;line-height:1.5;border-left:4px solid var(--blue-mid); }
+  code { background:#f1f5f9;color:#be185d;padding:1px 5px;border-radius:4px;font-size:10px;font-family:'Courier New',monospace; }
+  pre code { background:none;color:inherit;padding:0; }
+  .cm { color:#94a3b8; } .kw { color:#c084fc; } .st { color:#86efac; } .fn { color:#67e8f9; } .cn { color:#fbbf24; }
+  /* TABLES */
+  table { width:100%;border-collapse:collapse;margin:12px 0;font-size:10px; }
+  th { background:var(--blue);color:#fff;padding:8px 10px;text-align:left;font-size:10px; }
+  td { padding:7px 10px;border-bottom:1px solid var(--gray-mid);vertical-align:top; }
+  tr:nth-child(even) td { background:var(--gray-light); }
+  /* CARDS */
+  .card { background:var(--gray-light);border:1px solid var(--gray-mid);border-radius:8px;padding:16px;margin:12px 0; }
+  .card-blue { background:var(--blue-light);border-color:#93c5fd; }
+  .card-green { background:var(--green-light);border-color:#6ee7b7; }
+  .card-orange { background:var(--orange-light);border-color:#fcd34d; }
+  .card-red { background:var(--red-light);border-color:#fca5a5; }
+  .card h4 { border:none;padding:0;margin-top:0; }
+  /* ALERTS */
+  .alert { border-radius:8px;padding:12px 16px;margin:12px 0;border-left:4px solid; }
+  .alert-info { background:var(--blue-light);border-color:var(--blue-mid);color:#1e3a8a; }
+  .alert-warn { background:var(--orange-light);border-color:#f59e0b;color:var(--orange); }
+  .alert-success { background:var(--green-light);border-color:#10b981;color:var(--green); }
+  .alert-danger { background:var(--red-light);border-color:#ef4444;color:var(--red); }
+  .alert strong { display:block;margin-bottom:4px; }
+  /* FLOW */
+  .flow { display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin:12px 0; }
+  .flow-box { background:var(--blue);color:#fff;padding:6px 12px;border-radius:6px;font-size:10px;font-weight:600; }
+  .flow-box.gray { background:var(--gray); }
+  .flow-box.green { background:#059669; }
+  .flow-box.red { background:#dc2626; }
+  .flow-box.orange { background:#d97706; }
+  .flow-arrow { color:var(--blue-mid);font-size:14px;font-weight:700; }
+  /* GRID */
+  .grid2 { display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:12px 0; }
+  .grid3 { display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin:12px 0; }
+  /* TREE */
+  .tree { background:#0f172a;color:#e2e8f0;border-radius:8px;padding:16px;font-family:'Courier New',monospace;font-size:10px;line-height:1.8; }
+  .tree .dir { color:#67e8f9;font-weight:700; }
+  .tree .imp { color:#86efac;font-weight:700; }
+  .tree .ct { color:#64748b;font-style:italic; }
+  /* SECTION HEADER */
+  .sh { background:linear-gradient(135deg,var(--blue) 0%,#1e3a8a 100%);color:#fff;border-radius:10px;padding:16px 20px;margin-bottom:20px; }
+  .sh h2 { border:none;color:#fff;margin:0;padding:0;font-size:18px; }
+  .sh p { color:#bfdbfe;margin:4px 0 0;font-size:11px; }
+  /* BADGES */
+  .badge { display:inline-block;padding:2px 8px;border-radius:10px;font-size:9px;font-weight:600;text-transform:uppercase; }
+  .bb { background:var(--blue-light);color:var(--blue); }
+  .bg { background:var(--green-light);color:var(--green); }
+  .br { background:var(--red-light);color:var(--red); }
+  .bo { background:var(--orange-light);color:var(--orange); }
+  /* HTTP METHODS */
+  .get { background:#059669;color:#fff;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:700; }
+  .post { background:#2563eb;color:#fff;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:700; }
+  .put { background:#d97706;color:#fff;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:700; }
+  .del { background:#dc2626;color:#fff;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:700; }
+  .patch { background:#7c3aed;color:#fff;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:700; }
+  hr { border:none;border-top:2px solid var(--gray-mid);margin:30px 0; }
+</style>
+</head>
+<body>
+
+<!-- PORTADA -->
+<div class="cover">
+  <div class="cover-badge">Documentación Técnica</div>
+  <h1>ST <span>VENTAS</span></h1>
+  <h2>Manual del Programador</h2>
+  <div class="cover-line"></div>
+  <div class="cover-grid">
+    <div class="cover-item"><div class="label">Backend</div><div class="value">Laravel 12 · PHP 8.2</div></div>
+    <div class="cover-item"><div class="label">Frontend</div><div class="value">React 19 · Vite 8</div></div>
+    <div class="cover-item"><div class="label">Base de Datos</div><div class="value">PostgreSQL</div></div>
+    <div class="cover-item"><div class="label">Autenticación</div><div class="value">JWT (tymon/jwt-auth)</div></div>
+    <div class="cover-item"><div class="label">Caché</div><div class="value">Redis (predis)</div></div>
+    <div class="cover-item"><div class="label">Versión</div><div class="value">1.0.0 · 2026</div></div>
+  </div>
+  <div class="cover-footer">Sistema de Gestión de Ventas &nbsp;|&nbsp; Manual de uso interno del equipo de desarrollo</div>
+</div>
+
+<div class="page">
+
+<!-- TOC -->
+<div class="toc">
+  <h3>📋 Tabla de Contenido</h3>
+  <div class="toc-section"><a href="#s1"><span><span class="toc-num">1.</span> Visión General</span><span>→</span></a></div>
+  <div class="toc-section"><a href="#s2"><span><span class="toc-num">2.</span> Stack Tecnológico</span><span>→</span></a></div>
+  <div class="toc-section"><a href="#s3"><span><span class="toc-num">3.</span> Estructura de Directorios</span><span>→</span></a></div>
+  <div class="toc-section"><a href="#s4"><span><span class="toc-num">4.</span> Configuración del Entorno</span><span>→</span></a></div>
+  <div class="toc-section"><a href="#s5"><span><span class="toc-num">5.</span> Arquitectura Backend — Capas y Traits</span><span>→</span></a></div>
+  <div class="toc-section"><a href="#s6"><span><span class="toc-num">6.</span> Base de Datos y Migraciones</span><span>→</span></a></div>
+  <div class="toc-section"><a href="#s7"><span><span class="toc-num">7.</span> Sistema de Autenticación JWT</span><span>→</span></a></div>
+  <div class="toc-section"><a href="#s8"><span><span class="toc-num">8.</span> Roles y Permisos (Spatie)</span><span>→</span></a></div>
+  <div class="toc-section"><a href="#s9"><span><span class="toc-num">9.</span> Sistema de Caché Redis</span><span>→</span></a></div>
+  <div class="toc-section"><a href="#s10"><span><span class="toc-num">10.</span> Sistema de Auditoría</span><span>→</span></a></div>
+  <div class="toc-section"><a href="#s11"><span><span class="toc-num">11.</span> Referencia Completa de API</span><span>→</span></a></div>
+  <div class="toc-section"><a href="#s12"><span><span class="toc-num">12.</span> Arquitectura Frontend React</span><span>→</span></a></div>
+  <div class="toc-section"><a href="#s13"><span><span class="toc-num">13.</span> Estado Global — Context API</span><span>→</span></a></div>
+  <div class="toc-section"><a href="#s14"><span><span class="toc-num">14.</span> Capa de Servicios api.js</span><span>→</span></a></div>
+  <div class="toc-section"><a href="#s15"><span><span class="toc-num">15.</span> Módulos del Frontend — Detalle</span><span>→</span></a></div>
+  <div class="toc-section"><a href="#s16"><span><span class="toc-num">16.</span> Patrones y Decisiones Técnicas</span><span>→</span></a></div>
+  <div class="toc-section"><a href="#s17"><span><span class="toc-num">17.</span> Guía de Despliegue</span><span>→</span></a></div>
+  <div class="toc-section"><a href="#s18"><span><span class="toc-num">18.</span> Guía: Agregar un Nuevo Módulo</span><span>→</span></a></div>
+</div>
+
+<!-- S1 -->
+<div class="sh" id="s1"><h2>1. Visión General del Proyecto</h2><p>Descripción, objetivos y alcance del sistema</p></div>
+<p><strong>ST Ventas</strong> es un sistema de gestión de punto de venta (POS) y administración de inventario con arquitectura desacoplada: API REST en Laravel 12 (PHP 8.2) y SPA en React 19. Permite registrar ventas, gestionar inventario, controlar compras a proveedores y generar reportes, con autenticación JWT, control de acceso por roles y auditoría automática de todos los cambios en la base de datos.</p>
+<div class="grid2">
+  <div class="card card-blue">
+    <h4>Módulos Funcionales</h4>
+    <ul>
+      <li><strong>Dashboard</strong> — KPIs, gráficos, resumen ejecutivo</li>
+      <li><strong>POS</strong> — Punto de venta con carrito, descuentos y tickets PDF</li>
+      <li><strong>Ventas</strong> — Historial, filtros, anulaciones, transferencias pendientes</li>
+      <li><strong>Compras</strong> — Flujo de estados: pendiente → confirmada → recibida</li>
+      <li><strong>Productos / Categorías / Proveedores</strong> — Catálogos</li>
+      <li><strong>Clientes</strong> — Directorio con historial de compras</li>
+      <li><strong>Usuarios</strong> — ABM con roles y permisos</li>
+      <li><strong>Reportes</strong> — Ventas, compras, top productos, top clientes, stock bajo</li>
+      <li><strong>Auditoría</strong> — Log completo de cambios (solo super-admin)</li>
+      <li><strong>Configuración</strong> — Datos de empresa y perfil (solo super-admin)</li>
+    </ul>
+  </div>
+  <div class="card card-green">
+    <h4>Características Técnicas Destacadas</h4>
+    <ul>
+      <li><strong>Init Endpoint Pattern</strong> — 1 HTTP carga N catálogos</li>
+      <li><strong>Caché Redis versionado</strong> — invalidación automática por modelo</li>
+      <li><strong>Trait Auditable</strong> — log CUD automático en todos los modelos</li>
+      <li><strong>JWT + Rate Limiter</strong> — 5 intentos por IP por minuto</li>
+      <li><strong>Transacciones BD</strong> — ventas y compras son atómicas</li>
+      <li><strong>storedAs PostgreSQL</strong> — subtotal calculado en BD</li>
+      <li><strong>Sanitización XSS</strong> — interceptor Axios limpia HTML antes de POST</li>
+      <li><strong>SoftDeletes</strong> — usuarios y productos nunca se borran realmente</li>
+    </ul>
+  </div>
+</div>
+<h3>Flujo General</h3>
+<div class="flow">
+  <div class="flow-box">React SPA</div><div class="flow-arrow">→</div>
+  <div class="flow-box gray">Axios + JWT Header</div><div class="flow-arrow">→</div>
+  <div class="flow-box">Laravel API</div><div class="flow-arrow">→</div>
+  <div class="flow-box orange">Middleware JWT + Roles</div><div class="flow-arrow">→</div>
+  <div class="flow-box orange">CacheApiResponse</div><div class="flow-arrow">→</div>
+  <div class="flow-box green">Controlador → PostgreSQL</div>
+</div>
+
+<!-- S2 -->
+<div class="sh" id="s2"><h2>2. Stack Tecnológico</h2><p>Dependencias de producción y desarrollo</p></div>
+<h3>Backend (composer.json — require)</h3>
+<table>
+  <tr><th>Paquete</th><th>Versión</th><th>Propósito</th></tr>
+  <tr><td><code>php</code></td><td>^8.2</td><td>Runtime. Se usan named arguments, fibers, readonly properties.</td></tr>
+  <tr><td><code>laravel/framework</code></td><td>^12.0</td><td>Framework principal — Eloquent, Routing, Middleware, Cache, Queue.</td></tr>
+  <tr><td><code>tymon/jwt-auth</code></td><td>^2.2</td><td>Autenticación stateless con tokens JWT firmados con HMAC-SHA256.</td></tr>
+  <tr><td><code>spatie/laravel-permission</code></td><td>^7.3</td><td>Roles y permisos granulares. Guard <code>api</code>. Tabla model_has_roles.</td></tr>
+  <tr><td><code>predis/predis</code></td><td>^3.1</td><td>Cliente Redis puro PHP — usado por el middleware CacheApiResponse.</td></tr>
+  <tr><td><code>laravel/sanctum</code></td><td>^4.0</td><td>Guard adicional; preparado para futuras rutas SPA con cookies.</td></tr>
+  <tr><td><code>dedoc/scramble</code></td><td>^0.12.23</td><td>Auto-genera documentación OpenAPI desde annotations PHP.</td></tr>
+</table>
+<h3>Frontend (package.json — dependencies)</h3>
+<table>
+  <tr><th>Paquete</th><th>Versión</th><th>Propósito</th></tr>
+  <tr><td><code>react + react-dom</code></td><td>^19.2.5</td><td>UI framework. Se usa Concurrent Mode por defecto.</td></tr>
+  <tr><td><code>react-router-dom</code></td><td>^7.14.2</td><td>Enrutamiento SPA con Data Router v7.</td></tr>
+  <tr><td><code>axios</code></td><td>^1.15.2</td><td>HTTP client. Se configuran interceptores de request y response.</td></tr>
+  <tr><td><code>react-hook-form</code></td><td>^7.74.0</td><td>Formularios con validación sin re-renders innecesarios.</td></tr>
+  <tr><td><code>@hookform/resolvers</code></td><td>^5.2.2</td><td>Integra zodResolver con react-hook-form.</td></tr>
+  <tr><td><code>zod</code></td><td>^4.3.6</td><td>Esquemas de validación TypeScript-friendly.</td></tr>
+  <tr><td><code>recharts</code></td><td>^3.8.1</td><td>Gráfico de barras en Dashboard (BarChart, LineChart).</td></tr>
+  <tr><td><code>lucide-react</code></td><td>^1.11.0</td><td>Iconos SVG (~100 usados en sidebar, botones, estadísticas).</td></tr>
+  <tr><td><code>react-hot-toast</code></td><td>^2.6.0</td><td>Toasts de éxito/error.</td></tr>
+  <tr><td><code>jspdf + html2canvas</code></td><td>^4.2.1 / ^1.4.1</td><td>Generación de tickets PDF en el POS.</td></tr>
+  <tr><td><code>tailwindcss</code></td><td>^3.4.19</td><td>Utilidades CSS — toda la UI usa clases Tailwind.</td></tr>
+  <tr><td><code>vite</code></td><td>^8.0.10</td><td>Build tool con HMR para desarrollo.</td></tr>
+</table>
+<div class="alert alert-warn"><strong>⚠️ Zustand en package.json</strong>La dependencia <code>zustand ^5.0.13</code> permanece pero los 3 stores fueron migrados a React Context + useReducer. Remover con: <code>npm uninstall zustand</code></div>
+
+<!-- S3 -->
+<div class="sh" id="s3"><h2>3. Estructura de Directorios</h2><p>Organización del monorepo completo</p></div>
+<div class="tree">
+<span class="dir">st_ventas/</span><br>
+├── <span class="dir">backend/</span>   <span class="ct"># Laravel 12 — API REST</span><br>
+│   ├── <span class="dir">app/Http/Controllers/</span><br>
+│   │   ├── <span class="dir">Auth/</span>           <span class="ct"># AuthenticationController, UsuarioController, RolPermissionController</span><br>
+│   │   └── <span class="dir">Api/</span><br>
+│   │       ├── <span class="dir">Catalogos/</span>  <span class="ct"># Producto, Categoria, Cliente, Proveedor, MetodoPago, Promocion</span><br>
+│   │       ├── <span class="dir">Ventas/</span>     <span class="ct"># VentaController — store, storePendiente, anular, confirmarTransferencia</span><br>
+│   │       ├── <span class="dir">Compras/</span>    <span class="ct"># CompraController — init + flujo de estados</span><br>
+│   │       ├── <span class="dir">Pos/</span>        <span class="ct"># PosController — init endpoint único</span><br>
+│   │       ├── <span class="dir">Dashboard/</span>  <span class="ct"># DashboardController — KPIs + reporte-completo</span><br>
+│   │       ├── <span class="dir">Auditoria/</span>  <span class="ct"># AuditoriaController — solo super-admin</span><br>
+│   │       └── <span class="dir">Configuracion/</span><br>
+│   ├── <span class="dir">app/Http/Middleware/</span><br>
+│   │   ├── <span class="imp">CacheApiResponse.php</span>    <span class="ct"># Redis cache versionado — HIT/MISS headers</span><br>
+│   │   └── <span class="ct">RoleOrPermissionMiddleware.php</span><br>
+│   ├── <span class="dir">app/Http/Requests/</span>      <span class="ct"># Form Requests con validación en español</span><br>
+│   ├── <span class="dir">app/Http/Resources/</span>     <span class="ct"># API Resources — transformación JSON</span><br>
+│   ├── <span class="dir">app/Models/</span><br>
+│   │   ├── <span class="imp">Usuario.php</span>             <span class="ct"># JWTSubject + HasRoles + Auditable + SoftDeletes</span><br>
+│   │   ├── <span class="dir">Catalogos/</span>              <span class="ct"># Producto (HasApiCache+Auditable), Categoria, Cliente…</span><br>
+│   │   ├── <span class="dir">Ventas/</span>                 <span class="ct"># Venta, DetalleVenta (subtotal storedAs)</span><br>
+│   │   ├── <span class="dir">Compras/</span>                <span class="ct"># Compra, DetalleCompra (subtotal storedAs)</span><br>
+│   │   └── <span class="dir">Logs/AuditoriaLog.php</span><br>
+│   ├── <span class="dir">app/Traits/</span><br>
+│   │   ├── <span class="imp">Auditable.php</span>           <span class="ct"># Boot: created/updated/deleted → AuditoriaLog</span><br>
+│   │   ├── <span class="imp">HasApiCache.php</span>         <span class="ct"># Boot: saved/deleted → cache_ver:{modulo}++</span><br>
+│   │   ├── <span class="imp">ApiResponse.php</span>         <span class="ct"># success()/error() helpers — todos los controllers</span><br>
+│   │   └── <span class="ct">Sanitizable.php</span><br>
+│   ├── <span class="dir">database/migrations/</span>    <span class="ct"># Una migración por tabla + alteraciones</span><br>
+│   ├── <span class="dir">database/seeders/</span>       <span class="ct"># RolePermissionSeeder, SistemaVentasSeeder</span><br>
+│   └── <span class="dir">routes/api.php</span>          <span class="ct"># Todas las rutas bajo /api/</span><br>
+│<br>
+└── <span class="dir">frontend/src/</span><br>
+    ├── <span class="imp">App.jsx</span>                 <span class="ct"># AuthProvider &gt; AppProvider &gt; BrowserRouter &gt; Routes</span><br>
+    ├── <span class="dir">context/</span><br>
+    │   ├── <span class="imp">AuthContext.jsx</span>     <span class="ct"># user, token, roles, permissions — useReducer + localStorage</span><br>
+    │   └── <span class="imp">AppContext.jsx</span>      <span class="ct"># sidebarOpen, empresa</span><br>
+    ├── <span class="dir">services/</span><br>
+    │   └── <span class="imp">api.js</span>              <span class="ct"># Axios + interceptores + crudService factory + todos los servicios</span><br>
+    ├── <span class="dir">components/</span><br>
+    │   ├── <span class="dir">layout/</span>             <span class="ct"># Header, Sidebar, RouteGuard, MainLayout</span><br>
+    │   ├── <span class="dir">ui/</span>                 <span class="ct"># Modal, DataTable, StatCard, CrudPage, ConfirmDialog, FormFields</span><br>
+    │   └── <span class="dir">pos/</span>                <span class="ct"># PosScreen, CatalogoProductos, CarritoActivo, TicketVenta…</span><br>
+    ├── <span class="dir">pages/</span>                  <span class="ct"># Una página por módulo (15 páginas)</span><br>
+    ├── <span class="dir">schemas/index.js</span>        <span class="ct"># Esquemas Zod centralizados</span><br>
+    └── <span class="dir">utils/helpers.js</span>        <span class="ct"># formatCurrency(), formatDate(), etc.</span><br>
+</div>
+
+<!-- S4 -->
+<div class="sh" id="s4"><h2>4. Configuración del Entorno</h2><p>Variables de entorno e instalación desde cero</p></div>
+<h3>Variables Backend (.env)</h3>
+<table>
+  <tr><th>Variable</th><th>Valor típico</th><th>Descripción</th></tr>
+  <tr><td><code>APP_ENV</code></td><td>local / production</td><td>Afecta debug, logging, cache drivers</td></tr>
+  <tr><td><code>APP_DEBUG</code></td><td>true / false</td><td>NUNCA true en producción</td></tr>
+  <tr><td><code>DB_CONNECTION</code></td><td>pgsql</td><td>Solo PostgreSQL soportado (ILIKE, jsonb, storedAs)</td></tr>
+  <tr><td><code>DB_HOST / PORT / DATABASE</code></td><td>127.0.0.1 / 5432 / st_ventas</td><td>Credenciales de PostgreSQL</td></tr>
+  <tr><td><code>CACHE_STORE</code></td><td>redis</td><td>Redis obligatorio — no usar file/array en producción</td></tr>
+  <tr><td><code>REDIS_HOST / PORT</code></td><td>127.0.0.1 / 6379</td><td>Servidor Redis</td></tr>
+  <tr><td><code>JWT_SECRET</code></td><td>generado por artisan</td><td>Clave HMAC-SHA256 para firmar tokens</td></tr>
+  <tr><td><code>JWT_TTL</code></td><td>1440</td><td>Minutos de vida del token (24 horas)</td></tr>
+  <tr><td><code>FILESYSTEM_DISK</code></td><td>public</td><td>Disco para fotos de perfil y logos de empresa</td></tr>
+</table>
+<h3>Variable Frontend</h3>
+<pre><code><span class="cm"># frontend/.env</span>
+VITE_API_URL=http://127.0.0.1:8000/api</code></pre>
+<h3>Instalación Completa</h3>
+<pre><code><span class="cm"># ─── BACKEND ───────────────────────────────────────────────</span>
+cd backend
+composer install
+cp .env.example .env
+php artisan key:generate            <span class="cm"># APP_KEY</span>
+php artisan jwt:secret              <span class="cm"># JWT_SECRET</span>
+php artisan migrate --seed          <span class="cm"># Tablas + roles + usuarios iniciales</span>
+php artisan storage:link            <span class="cm"># Enlace público para archivos</span>
+php artisan serve                   <span class="cm"># http://127.0.0.1:8000</span>
+
+<span class="cm"># ─── FRONTEND ──────────────────────────────────────────────</span>
+cd ../frontend
+npm install
+npm run dev                         <span class="cm"># http://localhost:5173 (Vite HMR)</span>
+
+<span class="cm"># ─── PRODUCCIÓN (Frontend) ─────────────────────────────────</span>
+npm run build                       <span class="cm"># Genera /dist/ para Nginx</span></code></pre>
+<h3>Usuarios Seed Iniciales</h3>
+<table>
+  <tr><th>Usuario</th><th>Rol</th><th>Acceso</th></tr>
+  <tr><td>superadmin</td><td>super-admin</td><td>Total — incluyendo auditoría y configuración</td></tr>
+  <tr><td>admin</td><td>admin</td><td>Todo excepto auditoría y configuración de sistema</td></tr>
+  <tr><td>vendedor1</td><td>vendedor</td><td>POS, ventas, clientes, consulta de productos</td></tr>
+</table>
+
+<!-- S5 -->
+<div class="sh" id="s5"><h2>5. Arquitectura Backend — Capas y Traits</h2><p>Controladores, Form Requests, Resources y Traits compartidos</p></div>
+<h3>Flujo de una Petición</h3>
+<div class="flow">
+  <div class="flow-box">HTTP Request</div><div class="flow-arrow">→</div>
+  <div class="flow-box gray">Middleware Stack</div><div class="flow-arrow">→</div>
+  <div class="flow-box orange">Form Request (validación)</div><div class="flow-arrow">→</div>
+  <div class="flow-box green">Controller Method</div><div class="flow-arrow">→</div>
+  <div class="flow-box gray">Eloquent / DB</div><div class="flow-arrow">→</div>
+  <div class="flow-box">API Resource</div><div class="flow-arrow">→</div>
+  <div class="flow-box green">JSON Response</div>
+</div>
+<h3>Trait ApiResponse — Respuestas Estandarizadas</h3>
+<pre><code><span class="cm">// Todos los controllers heredan Controller que usa ApiResponse:</span>
+<span class="kw">return</span> <span class="fn">$this->success</span>($data, <span class="st">'Mensaje'</span>, 200, $meta);
+<span class="cm">// { "status": true, "message": "...", "data": {...}, "meta": {...} }</span>
+
+<span class="kw">return</span> <span class="fn">$this->error</span>(<span class="st">'Error de stock.'</span>, 422, $erroresStock);
+<span class="cm">// { "status": false, "message": "...", "errors": [...] }</span></code></pre>
+<h3>Form Requests — Validación con Mensajes en Español</h3>
+<table>
+  <tr><th>Form Request</th><th>Módulo</th><th>Campos clave validados</th></tr>
+  <tr><td>AuthLoginRequest</td><td>Auth</td><td>usuario (required|string), password (required)</td></tr>
+  <tr><td>ProductoRequest</td><td>Productos</td><td>codigo (unique), nombre, precio_venta, categoria_id, stock_minimo (≥0)</td></tr>
+  <tr><td>VentaRequest</td><td>Ventas</td><td>items (array con producto_id, cantidad, precio_unitario), metodo_pago_id</td></tr>
+  <tr><td>CompraRequest</td><td>Compras</td><td>items, proveedor_id, metodo_pago_id; totales calculados en controller</td></tr>
+  <tr><td>UsuarioCreateRequest</td><td>Usuarios</td><td>usuario (unique:usuarios), email (unique), contrasena (min:8), rol (exists)</td></tr>
+  <tr><td>ConfiguracionEmpresaRequest</td><td>Configuración</td><td>nombre (required), nit, nrc, correo (email nullable), logo (image|max:2048)</td></tr>
+  <tr><td>CambiarPasswordRequest</td><td>Configuración</td><td>password_actual (required), password_nuevo (min:8|confirmed)</td></tr>
+</table>
+<h3>API Resources — Transformación JSON</h3>
+<p>Cada modelo tiene su Resource que controla qué campos se exponen. Los campos <code>$hidden</code> del modelo (<code>contrasena</code>, <code>remember_token</code>) nunca llegan al Resource. Se usan relaciones lazy con <code>whenLoaded()</code> para evitar N+1.</p>
+<pre><code><span class="cm">// Ejemplo: ProductoResource</span>
+<span class="kw">return</span> [
+    <span class="st">'id'</span>           => <span class="fn">$this->id</span>,
+    <span class="st">'codigo'</span>       => <span class="fn">$this->codigo</span>,
+    <span class="st">'nombre'</span>       => <span class="fn">$this->nombre</span>,
+    <span class="st">'precio_venta'</span> => (float) <span class="fn">$this->precio_venta</span>,
+    <span class="st">'stock'</span>        => <span class="fn">$this->stock</span>,
+    <span class="st">'activo'</span>       => <span class="fn">$this->activo</span>,
+    <span class="st">'categoria'</span>    => <span class="kw">new</span> <span class="cn">CategoriaResource</span>(<span class="fn">$this->whenLoaded</span>(<span class="st">'categoria'</span>)),
+];</code></pre>
+
+<!-- S6 -->
+<div class="sh" id="s6"><h2>6. Base de Datos y Migraciones</h2><p>Esquema PostgreSQL completo — tablas, relaciones e índices</p></div>
+<h3>Diagrama de Relaciones</h3>
+<div class="card">
+<pre style="background:#fff;color:#1f2937;border:none;font-size:10px;line-height:2;">
+ usuarios ──────┬──── ventas ────────── detalle_venta ──── productos ──── categorias
+                │                                               │
+                └──── compras ──────── detalle_compra ──────────┤
+                            │                                   │
+                       proveedores ←───────────────────────────┘
+                       metodo_pago ←──── ventas / compras
+                       clientes ←──── ventas (nullable)
+
+ auditoria_logs ──── usuarios (nullable FK)
+ configuracion_empresa  ← tabla singleton (siempre 1 registro)
+ permissions, roles, model_has_roles  ← Spatie Permission
+</pre>
+</div>
+<h3>Tabla: usuarios</h3>
+<table>
+  <tr><th>Campo</th><th>Tipo PG</th><th>Constraints</th><th>Notas</th></tr>
+  <tr><td>id</td><td>BIGSERIAL PK</td><td>NOT NULL</td><td></td></tr>
+  <tr><td>nombre, apellido</td><td>VARCHAR(150)</td><td>NOT NULL</td><td>Concatenados en getNombreCompletoAttribute()</td></tr>
+  <tr><td>usuario</td><td>VARCHAR UNIQUE</td><td>NOT NULL</td><td>Username de login — diferente al email</td></tr>
+  <tr><td>contrasena</td><td>VARCHAR</td><td>NOT NULL</td><td>bcrypt — alias de 'password' para JWT</td></tr>
+  <tr><td>email</td><td>VARCHAR UNIQUE</td><td>nullable</td><td>Accesible como correo (accessor Eloquent)</td></tr>
+  <tr><td>activo</td><td>BOOLEAN</td><td>DEFAULT true</td><td>false = bloqueado, login retorna 403</td></tr>
+  <tr><td>foto_path</td><td>VARCHAR</td><td>nullable</td><td>Ruta relativa en storage/app/public</td></tr>
+  <tr><td>cargo, telefono</td><td>VARCHAR</td><td>nullable</td><td>Agregados en migración 2026_05_22</td></tr>
+  <tr><td>deleted_at</td><td>TIMESTAMP</td><td>nullable</td><td>SoftDeletes — no borrado físico</td></tr>
+</table>
+<h3>Tabla: productos</h3>
+<table>
+  <tr><th>Campo</th><th>Tipo PG</th><th>Notas</th></tr>
+  <tr><td>codigo</td><td>VARCHAR(60) UNIQUE</td><td>SKU o código de barras</td></tr>
+  <tr><td>precio_compra</td><td>DECIMAL(12,2)</td><td>Costo de adquisición (no expuesto en POS Resource)</td></tr>
+  <tr><td>precio_venta</td><td>DECIMAL(12,2)</td><td>Precio al cliente</td></tr>
+  <tr><td>stock</td><td>INTEGER</td><td>Gestionado SOLO por decrementarStock()/incrementarStock()</td></tr>
+  <tr><td>stock_minimo</td><td>INTEGER DEFAULT 0</td><td>Umbral de alerta — stock &lt;= stock_minimo = alerta roja</td></tr>
+  <tr><td>unidad</td><td>VARCHAR(30)</td><td>'unidad', 'kg', 'litro', 'caja', etc.</td></tr>
+  <tr><td>categoria_id</td><td>FK → categorias</td><td>RESTRICT on delete — no se borra categoría con productos</td></tr>
+  <tr><td>proveedor_id</td><td>FK → proveedores nullable</td><td>NULL on delete — proveedor puede borrarse</td></tr>
+</table>
+<h3>Tablas: ventas y detalle_venta</h3>
+<table>
+  <tr><th>Campo</th><th>Tipo</th><th>Notas</th></tr>
+  <tr><td>numero_venta</td><td>VARCHAR(30) UNIQUE</td><td>Formato: VTA-YYYY-NNNNNN (generado en PHP)</td></tr>
+  <tr><td>estado</td><td>ENUM</td><td>pendiente | completada | cancelada | anulada</td></tr>
+  <tr><td>subtotal, descuento, impuesto, total</td><td>DECIMAL(12,2)</td><td>total = (subtotal - descuento) + impuesto</td></tr>
+  <tr><td>referencia_transferencia</td><td>VARCHAR nullable</td><td>Migración 2026_05_19 — número de transferencia bancaria</td></tr>
+  <tr><td>cliente_id</td><td>FK nullable</td><td>Venta anónima (consumidor final) es válida</td></tr>
+  <tr><td>detalle_venta.subtotal</td><td>DECIMAL storedAs</td><td><strong>(cantidad * precio_unitario) - descuento</strong> — calculado por PostgreSQL</td></tr>
+</table>
+<h3>Tabla: auditoria_logs</h3>
+<table>
+  <tr><th>Campo</th><th>Tipo</th><th>Valores</th></tr>
+  <tr><td>modelo</td><td>VARCHAR(120)</td><td>Nombre de clase: 'Producto', 'Venta', 'Usuario'…</td></tr>
+  <tr><td>accion</td><td>VARCHAR(30)</td><td>created | updated | deleted | login | logout</td></tr>
+  <tr><td>valores_anteriores</td><td>JSONB nullable</td><td>Estado antes del cambio (updated/deleted)</td></tr>
+  <tr><td>valores_nuevos</td><td>JSONB nullable</td><td>Estado después del cambio (created/updated)</td></tr>
+  <tr><td>usuario_id</td><td>FK nullable</td><td>NULL si el usuario fue eliminado</td></tr>
+  <tr><td>ip, user_agent</td><td>VARCHAR / TEXT</td><td>Para trazabilidad de accesos</td></tr>
+</table>
+<div class="alert alert-info"><strong>💡 Columna storedAs en PostgreSQL</strong> detalle_venta.subtotal y detalle_compra.subtotal son columnas generadas. El valor siempre es matemáticamente correcto aunque se actualice cantidad o precio directamente via SQL. No depende de PHP para el cálculo.</div>
+
+<!-- S7 -->
+<div class="sh" id="s7"><h2>7. Sistema de Autenticación JWT</h2><p>tymon/jwt-auth — login, refresh, guard api</p></div>
+<h3>Configuración del Guard</h3>
+<pre><code><span class="cm">// config/auth.php</span>
+<span class="st">'guards'</span> => [
+    <span class="st">'api'</span> => [<span class="st">'driver'</span> => <span class="st">'jwt'</span>, <span class="st">'provider'</span> => <span class="st">'usuarios'</span>],
+],
+<span class="st">'providers'</span> => [
+    <span class="st">'usuarios'</span> => [<span class="st">'driver'</span> => <span class="st">'eloquent'</span>, <span class="st">'model'</span> => <span class="cn">Usuario</span>::class],
+],</code></pre>
+<h3>Modelo Usuario — Interfaz JWTSubject</h3>
+<pre><code><span class="kw">class</span> <span class="cn">Usuario</span> <span class="kw">extends</span> Authenticatable <span class="kw">implements</span> JWTSubject {
+    <span class="cm">// Nuestro campo se llama 'contrasena', no 'password':</span>
+    <span class="kw">public function</span> <span class="fn">getAuthPassword</span>(): string { <span class="kw">return</span> <span class="fn">$this->contrasena</span>; }
+
+    <span class="cm">// Claims extras dentro del payload JWT:</span>
+    <span class="kw">public function</span> <span class="fn">getJWTCustomClaims</span>(): array {
+        <span class="kw">return</span> [<span class="st">'id'</span> => <span class="fn">$this->id</span>, <span class="st">'nombre'</span> => <span class="fn">$this->nombre_completo</span>, <span class="st">'usuario'</span> => <span class="fn">$this->usuario</span>];
+    }
+}</code></pre>
+<h3>Flujo de Login con Rate Limiting</h3>
+<div class="flow">
+  <div class="flow-box">POST /api/auth/login</div><div class="flow-arrow">→</div>
+  <div class="flow-box orange">RateLimiter (5/IP/min)</div><div class="flow-arrow">→</div>
+  <div class="flow-box gray">auth()->attempt({usuario, password})</div><div class="flow-arrow">→</div>
+  <div class="flow-box orange">Verificar activo=true</div><div class="flow-arrow">→</div>
+  <div class="flow-box green">JWT Token + AuditoriaLog</div>
+</div>
+<h4>Respuesta de Login Exitoso</h4>
+<pre><code>{
+  <span class="st">"status"</span>:       true,
+  <span class="st">"access_token"</span>: <span class="st">"eyJ0eXAiOiJKV1QiLCJhbGci..."</span>,
+  <span class="st">"token_type"</span>:   <span class="st">"bearer"</span>,
+  <span class="st">"expires_in"</span>:   86400,       <span class="cm">// JWT_TTL * 60 segundos</span>
+  <span class="st">"user"</span>:         { <span class="cm">/* UsuarioResource */</span> },
+  <span class="st">"roles"</span>:        [<span class="st">"admin"</span>],
+  <span class="st">"permissions"</span>:  [<span class="st">"ver-productos"</span>, <span class="st">"crear-ventas"</span>, ...]
+}</code></pre>
+<h3>Endpoints de Auth</h3>
+<table>
+  <tr><th>Método</th><th>URL</th><th>Auth</th><th>Descripción</th></tr>
+  <tr><td><span class="post">POST</span></td><td>/api/auth/login</td><td>Pública</td><td>Rate-limited 5 intentos/IP/min. Verifica activo=true.</td></tr>
+  <tr><td><span class="post">POST</span></td><td>/api/auth/logout</td><td>JWT</td><td>Invalida el token actual en el blacklist de JWT.</td></tr>
+  <tr><td><span class="post">POST</span></td><td>/api/auth/refresh</td><td>JWT</td><td>Renueva el token antes de que expire. Retorna nuevo token.</td></tr>
+  <tr><td><span class="get">GET</span></td><td>/api/auth/me</td><td>JWT</td><td>Usuario autenticado completo (roles + permisos).</td></tr>
+</table>
+
+<!-- S8 -->
+<div class="sh" id="s8"><h2>8. Roles y Permisos (Spatie Permission)</h2><p>spatie/laravel-permission ^7.3 — guard api</p></div>
+<h3>Roles y Permisos Completos</h3>
+<table>
+  <tr><th>Permiso</th><th>super-admin</th><th>admin</th><th>vendedor</th><th>bodeguero</th></tr>
+  <tr><td>ver/crear/editar/eliminar categorias</td><td>✅</td><td>✅</td><td>solo ver</td><td>ver/crear/editar</td></tr>
+  <tr><td>ver/crear/editar/eliminar proveedores</td><td>✅</td><td>✅</td><td>❌</td><td>ver/crear/editar</td></tr>
+  <tr><td>ver/crear/editar/eliminar clientes</td><td>✅</td><td>✅</td><td>ver/crear/editar</td><td>❌</td></tr>
+  <tr><td>ver/crear/editar/eliminar productos</td><td>✅</td><td>✅</td><td>solo ver</td><td>ver/crear/editar</td></tr>
+  <tr><td>ver/crear/cancelar ventas</td><td>✅</td><td>✅</td><td>ver/crear</td><td>❌</td></tr>
+  <tr><td>ver/crear/cancelar compras</td><td>✅</td><td>✅</td><td>❌</td><td>ver/crear</td></tr>
+  <tr><td>gestionar usuarios</td><td>✅</td><td>ver/crear/editar</td><td>❌</td><td>❌</td></tr>
+  <tr><td>ver-auditoria</td><td>✅</td><td>❌</td><td>❌</td><td>❌</td></tr>
+  <tr><td>ver-dashboard</td><td>✅</td><td>✅</td><td>✅</td><td>✅</td></tr>
+</table>
+<div class="alert alert-warn"><strong>⚠️ Protección Double-Layer del Super-Admin</strong>(1) Backend: HTTP 403 si admin intenta editar/borrar usuario con rol super-admin. (2) Frontend: botones de editar/eliminar ocultos en la fila del super-admin en UsersPage.jsx.</div>
+<h3>Middleware de Roles en Rutas</h3>
+<pre><code><span class="cm">// routes/api.php</span>
+Route::middleware([<span class="st">'auth:api'</span>, <span class="st">'role:super-admin'</span>])->group(<span class="kw">function</span>() {
+    Route::get(<span class="st">'auditoria'</span>, [AuditoriaController::class, <span class="st">'index'</span>]);
+    Route::apiResource(<span class="st">'configuracion'</span>, ConfiguracionController::class);
+});
+
+Route::middleware([<span class="st">'auth:api'</span>, <span class="st">'role:admin|super-admin'</span>])->group(<span class="kw">function</span>() {
+    Route::apiResource(<span class="st">'productos'</span>, ProductoController::class);
+    <span class="cm">// ...otros recursos de admin</span>
+});</code></pre>
+
+<!-- S9 -->
+<div class="sh" id="s9"><h2>9. Sistema de Caché Redis</h2><p>CacheApiResponse middleware + HasApiCache trait — invalidación versionada</p></div>
+<h3>Arquitectura del Sistema de Caché</h3>
+<div class="grid2">
+  <div class="card card-blue">
+    <h4>CacheApiResponse Middleware</h4>
+    <p>Intercepta todos los GET y construye una clave versionada:</p>
+    <pre style="margin:8px 0;font-size:9px;"><code>api_resp:{modulo}:v{version}:{sha256(URL)}</code></pre>
+    <p>Si existe en Redis → <code>X-Cache: HIT</code> sin tocar la BD.<br>Si no → procesa, guarda, <code>X-Cache: MISS</code>.</p>
+  </div>
+  <div class="card card-green">
+    <h4>HasApiCache Trait</h4>
+    <p>Adjunto a modelos. Al <code>saved()</code> o <code>deleted()</code>:</p>
+    <pre style="margin:8px 0;font-size:9px;"><code>Cache::increment("cache_ver:{modulo}");</code></pre>
+    <p>La versión cambia → claves antiguas quedan huérfanas → expiran por TTL solas.</p>
+  </div>
+</div>
+<h3>TTL por Módulo</h3>
+<table>
+  <tr><th>Módulo</th><th>TTL</th><th>Razón</th></tr>
+  <tr><td>metodos-pago</td><td>1800s (30 min)</td><td>Nunca cambia en operación normal</td></tr>
+  <tr><td>categorias, proveedores</td><td>600s (10 min)</td><td>Cambios esporádicos</td></tr>
+  <tr><td>promociones, productos</td><td>300s (5 min)</td><td>Gestión diaria</td></tr>
+  <tr><td>pos</td><td>120s (2 min)</td><td>Init combina 4 catálogos — stock cambia con cada venta</td></tr>
+  <tr><td>clientes, compras</td><td>120s (2 min)</td><td>Operaciones frecuentes</td></tr>
+  <tr><td>ventas, dashboard</td><td>60s (1 min)</td><td>Alta frecuencia de cambio</td></tr>
+  <tr><td>auth, auditoria, users</td><td>SKIP</td><td>Nunca se cachean — datos sensibles/siempre frescos</td></tr>
+</table>
+<h3>Uso del Trait en Modelos</h3>
+<pre><code><span class="cm">// Invalidación simple (usa nombre de tabla por defecto):</span>
+<span class="kw">class</span> <span class="cn">Categoria</span> <span class="kw">extends</span> Model { <span class="kw">use</span> HasApiCache; }
+
+<span class="cm">// Invalidación múltiple (Producto invalida también el dashboard):</span>
+<span class="kw">class</span> <span class="cn">Producto</span> <span class="kw">extends</span> Model {
+    <span class="kw">use</span> HasApiCache;
+    <span class="kw">protected array</span> $cacheModules = [<span class="st">'productos'</span>, <span class="st">'dashboard'</span>];
+}
+
+<span class="cm">// Invalidación manual (cuando decrement() no dispara eventos Eloquent):</span>
+<span class="fn">$this->decrement</span>(<span class="st">'stock'</span>, $cantidad);
+<span class="fn">$this->invalidateCache</span>([<span class="st">'productos'</span>, <span class="st">'dashboard'</span>]);</code></pre>
+
+<!-- S10 -->
+<div class="sh" id="s10"><h2>10. Sistema de Auditoría</h2><p>Trait Auditable + tabla auditoria_logs — log automático de todos los cambios</p></div>
+<pre><code><span class="cm">// Adjuntar al modelo — registra CUD automáticamente:</span>
+<span class="kw">class</span> <span class="cn">Venta</span> <span class="kw">extends</span> Model { <span class="kw">use</span> Auditable, HasApiCache; }
+
+<span class="cm">// Eventos registrados por el trait boot:</span>
+static::created  → accion=<span class="st">'created'</span>,  valores_nuevos=toArray()
+static::updated  → accion=<span class="st">'updated'</span>,  valores_anteriores=getOriginal(), valores_nuevos=getChanges()
+static::deleted  → accion=<span class="st">'deleted'</span>,  valores_anteriores=toArray()
+
+<span class="cm">// Los campos $hidden del modelo se excluyen automáticamente del log.
+// Si la auditoría falla, la operación principal NO se interrumpe (try/catch silencioso).</span></code></pre>
+<h3>Auditoría Manual (Login/Logout)</h3>
+<pre><code>AuditoriaLog::create([
+    <span class="st">'modelo'</span>     => <span class="st">'Usuario'</span>,
+    <span class="st">'modelo_id'</span>  => $usuario->id,
+    <span class="st">'accion'</span>     => <span class="st">'login'</span>,
+    <span class="st">'usuario_id'</span> => $usuario->id,
+    <span class="st">'ip'</span>         => $request->ip(),
+    <span class="st">'user_agent'</span> => $request->userAgent(),
+]);</code></pre>
+<h3>Modelos Auditados</h3>
+<div class="grid3">
+  <div class="card">Usuario — login, registro, perfil</div>
+  <div class="card">Producto — precios, stock, estado</div>
+  <div class="card">Venta — registro, anulación</div>
+  <div class="card">Compra — registro, estados</div>
+  <div class="card">Cliente — alta y modificaciones</div>
+  <div class="card">Categoria / Proveedor / Promocion</div>
+</div>
+
+<!-- S11 -->
+<div class="sh" id="s11"><h2>11. Referencia Completa de API</h2><p>Todos los endpoints — método, URL, roles requeridos</p></div>
+<h3>POS</h3>
+<table>
+  <tr><th>Método</th><th>URL</th><th>Descripción</th><th>Rol mínimo</th></tr>
+  <tr><td><span class="get">GET</span></td><td>/api/pos/init</td><td>Retorna en 1 request: productos activos con stock, clientes activos, metodos_pago activos, promociones vigentes.</td><td>vendedor</td></tr>
+</table>
+<h3>Productos</h3>
+<table>
+  <tr><th>Método</th><th>URL</th><th>Descripción</th><th>Rol mínimo</th></tr>
+  <tr><td><span class="get">GET</span></td><td>/api/productos/init</td><td>Lista productos + categorías + proveedores para formulario.</td><td>admin</td></tr>
+  <tr><td><span class="get">GET</span></td><td>/api/productos</td><td>Lista paginada. Params: search, categoria_id, activo, per_page, sort, dir.</td><td>vendedor</td></tr>
+  <tr><td><span class="post">POST</span></td><td>/api/productos</td><td>Crear. Stock bloqueado — solo se gestiona vía compras.</td><td>admin</td></tr>
+  <tr><td><span class="put">PUT</span></td><td>/api/productos/{id}</td><td>Actualizar (campos sin stock directo).</td><td>admin</td></tr>
+  <tr><td><span class="del">DELETE</span></td><td>/api/productos/{id}</td><td>SoftDelete.</td><td>admin</td></tr>
+  <tr><td><span class="patch">PATCH</span></td><td>/api/productos/{id}/toggle</td><td>Activar/desactivar.</td><td>admin</td></tr>
+</table>
+<h3>Ventas</h3>
+<table>
+  <tr><th>Método</th><th>URL</th><th>Descripción</th><th>Rol mínimo</th></tr>
+  <tr><td><span class="get">GET</span></td><td>/api/ventas</td><td>Filtros: search, estado, cliente_id, desde, hasta, per_page.</td><td>vendedor</td></tr>
+  <tr><td><span class="post">POST</span></td><td>/api/ventas</td><td>Registra venta completada. Valida stock → transacción DB → decrementa stock.</td><td>vendedor</td></tr>
+  <tr><td><span class="get">GET</span></td><td>/api/ventas/pendientes</td><td>Ventas con estado=pendiente (transferencias sin confirmar).</td><td>vendedor</td></tr>
+  <tr><td><span class="post">POST</span></td><td>/api/ventas/pendiente</td><td>Venta pendiente de transferencia — stock reservado inmediatamente.</td><td>vendedor</td></tr>
+  <tr><td><span class="patch">PATCH</span></td><td>/api/ventas/{id}/confirmar-transferencia</td><td>pendiente → completada.</td><td>admin</td></tr>
+  <tr><td><span class="patch">PATCH</span></td><td>/api/ventas/{id}/anular</td><td>Anula → restaura stock de todos los items.</td><td>admin</td></tr>
+</table>
+<h3>Compras — Flujo de Estados</h3>
+<div class="flow">
+  <div class="flow-box orange">pendiente</div><div class="flow-arrow">→ /confirmar →</div>
+  <div class="flow-box">confirmada</div><div class="flow-arrow">→ /recibir →</div>
+  <div class="flow-box green">recibida (+stock)</div>
+  <div class="flow-arrow">| /anular |</div>
+  <div class="flow-box red">anulada</div>
+</div>
+<table>
+  <tr><th>Método</th><th>URL</th><th>Efecto en stock</th></tr>
+  <tr><td><span class="get">GET</span></td><td>/api/compras/init</td><td>Lista compras + catálogos para formulario</td></tr>
+  <tr><td><span class="post">POST</span></td><td>/api/compras</td><td>Sin efecto en stock (estado pendiente)</td></tr>
+  <tr><td><span class="patch">PATCH</span></td><td>/api/compras/{id}/confirmar</td><td>pendiente → confirmada (sin efecto en stock)</td></tr>
+  <tr><td><span class="patch">PATCH</span></td><td>/api/compras/{id}/recibir</td><td>confirmada → recibida → <strong>incrementa stock</strong></td></tr>
+  <tr><td><span class="patch">PATCH</span></td><td>/api/compras/{id}/anular</td><td>Si era recibida: <strong>revierte stock</strong></td></tr>
+  <tr><td><span class="patch">PATCH</span></td><td>/api/compras/{id}/retroceder</td><td>recibida → confirmada (corrige error — <strong>decrementa stock</strong>)</td></tr>
+</table>
+<h3>Dashboard y Reportes</h3>
+<table>
+  <tr><th>Método</th><th>URL</th><th>Params / Descripción</th></tr>
+  <tr><td><span class="get">GET</span></td><td>/api/dashboard/resumen</td><td>tipo (dia|semana|mes|anio), fecha, mes, anio</td></tr>
+  <tr><td><span class="get">GET</span></td><td>/api/dashboard/ventas-por-periodo</td><td>Últimos 12 meses — datos para gráfico de barras</td></tr>
+  <tr><td><span class="get">GET</span></td><td>/api/dashboard/productos-mas-vendidos</td><td>Top 15 por período</td></tr>
+  <tr><td><span class="get">GET</span></td><td>/api/dashboard/top-clientes</td><td>Top 10 por monto gastado en período</td></tr>
+  <tr><td><span class="get">GET</span></td><td>/api/dashboard/stock-bajo</td><td>Productos donde stock &lt;= stock_minimo</td></tr>
+  <tr><td><span class="get">GET</span></td><td>/api/dashboard/reporte-completo</td><td><strong>Consolida los 5 endpoints en 1 sola llamada</strong></td></tr>
+</table>
+<h3>Auditoría y Configuración (solo super-admin)</h3>
+<table>
+  <tr><th>Método</th><th>URL</th><th>Descripción</th></tr>
+  <tr><td><span class="get">GET</span></td><td>/api/auditoria</td><td>Filtros: modelo, accion, usuario_id, desde, hasta, per_page=25</td></tr>
+  <tr><td><span class="get">GET</span></td><td>/api/auditoria/{id}</td><td>Detalle con valores_anteriores y valores_nuevos (JSONB)</td></tr>
+  <tr><td><span class="get">GET</span></td><td>/api/configuracion</td><td>Datos de empresa (tabla singleton)</td></tr>
+  <tr><td><span class="put">PUT</span></td><td>/api/configuracion/{id}</td><td>Actualiza empresa. Acepta multipart/form-data con logo.</td></tr>
+  <tr><td><span class="post">POST</span></td><td>/api/configuracion/actualizar-perfil</td><td>Edita nombre/usuario/correo/foto del auth user</td></tr>
+  <tr><td><span class="post">POST</span></td><td>/api/configuracion/cambiar-password</td><td>Requiere password_actual + password_nuevo + confirmación</td></tr>
+</table>
+<h3>Formato de Paginación</h3>
+<pre><code>{
+  <span class="st">"meta"</span>: {
+    <span class="st">"current_page"</span>: 1, <span class="st">"per_page"</span>: 20, <span class="st">"total"</span>: 150,
+    <span class="st">"last_page"</span>: 8, <span class="st">"from"</span>: 1, <span class="st">"to"</span>: 20
+  }
+}</code></pre>
+
+<!-- S12 -->
+<div class="sh" id="s12"><h2>12. Arquitectura Frontend React</h2><p>SPA con React 19, Vite 8, Tailwind CSS y React Router v7</p></div>
+<h3>Árbol de Providers</h3>
+<pre><code><span class="cn">&lt;AuthProvider&gt;</span>        <span class="cm">// user, token, roles, login(), logout(), updateUser()</span>
+  <span class="cn">&lt;AppProvider&gt;</span>         <span class="cm">// sidebarOpen, empresa, toggleSidebar(), setEmpresa()</span>
+    <span class="cn">&lt;BrowserRouter&gt;</span>
+      <span class="cn">&lt;Routes&gt;</span>
+        <span class="cn">&lt;PublicRoute&gt;</span>   <span class="cm">// Si autenticado → redirige a /dashboard</span>
+          <span class="cn">&lt;LoginPage /&gt;</span>
+        <span class="cn">&lt;PrivateRoute&gt;</span>  <span class="cm">// Si no autenticado → redirige a /login</span>
+          <span class="cn">&lt;DashboardPage /&gt;</span>
+        <span class="cn">&lt;AdminRoute&gt;</span>    <span class="cm">// isAdmin() = admin || super-admin</span>
+          <span class="cn">&lt;ProductsPage /&gt;</span> <span class="cm">// + 6 páginas más</span>
+        <span class="cn">&lt;SuperAdminRoute&gt;</span> <span class="cm">// isSuperAdmin()</span>
+          <span class="cn">&lt;AuditoriaPage /&gt;</span>
+          <span class="cn">&lt;ConfiguracionPage /&gt;</span>
+      <span class="cn">&lt;ToastContainer /&gt;</span>   <span class="cm">// react-toastify (posición top-right)</span></code></pre>
+<h3>Componentes UI Reutilizables</h3>
+<table>
+  <tr><th>Componente</th><th>Descripción</th></tr>
+  <tr><td>DataTable</td><td>Tabla genérica con paginación client-side, búsqueda y ordenamiento. Acepta columns[] y data[].</td></tr>
+  <tr><td>CrudPage</td><td>Wrapper completo: DataTable + botón "Nuevo" + Modal con formulario. Maneja el estado de apertura del modal.</td></tr>
+  <tr><td>Modal</td><td>Portal React, cierre con Escape y click en overlay, animación suave.</td></tr>
+  <tr><td>StatCard</td><td>KPI card: ícono Lucide, valor numérico formateado, etiqueta, delta opcional.</td></tr>
+  <tr><td>ConfirmDialog</td><td>Modal de confirmación para DELETE — requiere doble click.</td></tr>
+  <tr><td>FormFields</td><td>Input, Select y Textarea integrados con react-hook-form y mensajes de error Zod.</td></tr>
+</table>
+
+<!-- S13 -->
+<div class="sh" id="s13"><h2>13. Estado Global — Context API</h2><p>AuthContext + AppContext — migrado desde Zustand en esta versión</p></div>
+<h3>AuthContext — useReducer + localStorage</h3>
+<pre><code><span class="cm">// Estado (useReducer):</span>
+{ user, token, roles, permissions, isAuthenticated }
+
+<span class="cm">// Acciones del reducer:</span>
+<span class="st">'LOGIN'</span>       → establece todo el estado desde respuesta de /auth/login
+<span class="st">'LOGOUT'</span>      → resetea a { null, null, [], [], false }
+<span class="st">'UPDATE_USER'</span> → mezcla parcial del user (edición de perfil sin re-login)
+
+<span class="cm">// Persistencia: useEffect sincroniza con localStorage en cada cambio:</span>
+<span class="kw">if</span> (state.isAuthenticated) {
+  localStorage.setItem(<span class="st">'auth-storage'</span>, JSON.stringify(state));
+} <span class="kw">else</span> {
+  localStorage.removeItem(<span class="st">'auth-storage'</span>);
+}
+
+<span class="cm">// Helpers de rol exportados (checkan user.rol + state.roles + user.roles):</span>
+hasRole(roleOrRoles)   <span class="cm">// acepta string o array</span>
+isSuperAdmin()         isAdmin()    isVendedor()
+hasPermission(perm)    <span class="cm">// verifica permisos granulares</span></code></pre>
+<h3>Lectura del Token Fuera de React</h3>
+<pre><code><span class="cm">// api.js — interceptores Axios no pueden usar useContext():</span>
+<span class="kw">function</span> <span class="fn">getToken</span>() {
+  <span class="kw">const</span> raw = localStorage.getItem(<span class="st">'auth-storage'</span>);
+  <span class="kw">const</span> data = JSON.parse(raw);
+  <span class="cm">// Compat. con formato Zustand antiguo: { state: { token }, version }</span>
+  <span class="kw">return</span> (data.state ?? data)?.token ?? <span class="kw">null</span>;
+}</code></pre>
+
+<!-- S14 -->
+<div class="sh" id="s14"><h2>14. Capa de Servicios — api.js</h2><p>Axios configurado + factory CRUD + sanitización XSS</p></div>
+<pre><code><span class="cm">// Factory CRUD genérico — genera los 6 métodos base:</span>
+<span class="kw">const</span> <span class="fn">crudService</span> = (endpoint) => ({
+  getAll:  (params)   => api.get(endpoint, { params }),
+  getById: (id)       => api.get(`${endpoint}/${id}`),
+  create:  (data)     => api.post(endpoint, data),
+  update:  (id, data) => api.put(`${endpoint}/${id}`, data),
+  remove:  (id)       => api.delete(`${endpoint}/${id}`),
+  toggle:  (id)       => api.patch(`${endpoint}/${id}/toggle`),
+});
+
+<span class="kw">export const</span> productService  = <span class="fn">crudService</span>(<span class="st">'/productos'</span>);
+<span class="kw">export const</span> clientService   = <span class="fn">crudService</span>(<span class="st">'/clientes'</span>);
+<span class="kw">export const</span> categoryService = <span class="fn">crudService</span>(<span class="st">'/categorias'</span>);
+
+<span class="cm">// Servicios con endpoints extra:</span>
+<span class="kw">export const</span> purchaseService = {
+  ...<span class="fn">crudService</span>(<span class="st">'/compras'</span>),
+  confirmar:  (id) => api.patch(`/compras/${id}/confirmar`),
+  recibir:    (id) => api.patch(`/compras/${id}/recibir`),
+  anular:     (id) => api.patch(`/compras/${id}/anular`),
+  retroceder: (id) => api.patch(`/compras/${id}/retroceder`),
+};
+
+<span class="kw">export const</span> saleService = {
+  ...<span class="fn">crudService</span>(<span class="st">'/ventas'</span>),
+  getPendientes:          ()     => api.get(<span class="st">'/ventas/pendientes'</span>),
+  createPendiente:        (data) => api.post(<span class="st">'/ventas/pendiente'</span>, data),
+  confirmarTransferencia: (id)   => api.patch(`/ventas/${id}/confirmar-transferencia`),
+  anular:                 (id)   => api.patch(`/ventas/${id}/anular`),
+};
+
+<span class="cm">// Interceptor de request: inyecta token + sanitiza body (strip HTML tags):</span>
+api.interceptors.request.use((config) => {
+  <span class="kw">const</span> token = <span class="fn">getToken</span>();
+  <span class="kw">if</span> (token) config.headers.Authorization = `Bearer ${token}`;
+  <span class="kw">if</span> (config.data && !(config.data <span class="kw">instanceof</span> FormData)) {
+    config.data = <span class="fn">sanitizeObject</span>(config.data); <span class="cm">// strip &lt;tags&gt;</span>
+  }
+  <span class="kw">return</span> config;
+});</code></pre>
+
+<!-- S15 -->
+<div class="sh" id="s15"><h2>15. Módulos del Frontend — Detalle</h2><p>Patrón de carga, estado y funcionalidades por módulo</p></div>
+<h3>POS — El Módulo Más Complejo</h3>
+<p>El carrito se gestiona con <code>useState</code> local (no Context) porque es estado efímero que vive y muere con la sesión del componente.</p>
+<pre><code><span class="cm">// Estado local de PosScreen.jsx:</span>
+<span class="kw">const</span> [carrito, setCarrito]         = <span class="fn">useState</span>([]);
+<span class="kw">const</span> [productos, setProductos]     = <span class="fn">useState</span>([]);   <span class="cm">// de /pos/init</span>
+<span class="kw">const</span> [clientes, setClientes]       = <span class="fn">useState</span>([]);
+<span class="kw">const</span> [metodosPago, setMetosPago]   = <span class="fn">useState</span>([]);
+<span class="kw">const</span> [promociones, setPromociones] = <span class="fn">useState</span>([]);
+<span class="kw">const</span> [clienteSeleccionado, ...]    = <span class="fn">useState</span>(<span class="kw">null</span>);
+<span class="kw">const</span> [descuentoGlobal, ...]        = <span class="fn">useState</span>(0);</code></pre>
+<h4>Flujo completo de una venta POS</h4>
+<div class="flow">
+  <div class="flow-box">useEffect → /pos/init</div><div class="flow-arrow">→</div>
+  <div class="flow-box gray">CatalogoProductos (búsqueda)</div><div class="flow-arrow">→</div>
+  <div class="flow-box">agregarAlCarrito()</div><div class="flow-arrow">→</div>
+  <div class="flow-box orange">CarritoActivo (descuentos, totales)</div><div class="flow-arrow">→</div>
+  <div class="flow-box">POST /ventas</div><div class="flow-arrow">→</div>
+  <div class="flow-box green">TicketVenta → jsPDF</div>
+</div>
+<h3>Patrón Init Endpoint en Páginas</h3>
+<pre><code><span class="cm">// Patrón común en ProductsPage, PurchasesPage, PromocionesPage, ReportsPage:</span>
+<span class="fn">useEffect</span>(() => {
+  <span class="kw">const</span> <span class="fn">cargar</span> = <span class="kw">async</span> () => {
+    <span class="fn">setLoading</span>(<span class="kw">true</span>);
+    <span class="kw">try</span> {
+      <span class="kw">const</span> { data } = <span class="kw">await</span> api.get(<span class="st">'/productos/init'</span>);
+      <span class="fn">setProductos</span>(data.data.productos);
+      <span class="fn">setCategorias</span>(data.data.categorias);   <span class="cm">// para el selector del formulario</span>
+      <span class="fn">setProveedores</span>(data.data.proveedores);
+    } <span class="kw">finally</span> { <span class="fn">setLoading</span>(<span class="kw">false</span>); }
+  };
+  <span class="fn">cargar</span>();
+}, []);
+<span class="cm">// 1 HTTP en lugar de 3 separados.</span></code></pre>
+<h3>Validación Zod + React Hook Form</h3>
+<pre><code><span class="cm">// schemas/index.js — centralizado:</span>
+<span class="kw">export const</span> productoSchema = z.object({
+  nombre:       z.string().min(2),
+  precio_venta: z.number().positive(),
+  categoria_id: z.number().int().positive(),
+});
+
+<span class="cm">// En el componente:</span>
+<span class="kw">const</span> { register, handleSubmit, formState: { errors } } = <span class="fn">useForm</span>({
+  resolver: <span class="fn">zodResolver</span>(productoSchema),
+  defaultValues: producto ?? {}
+});</code></pre>
+
+<!-- S16 -->
+<div class="sh" id="s16"><h2>16. Patrones y Decisiones Técnicas</h2><p>Razones detrás de las decisiones de diseño</p></div>
+<table>
+  <tr><th>Patrón</th><th>Decisión y Razón</th></tr>
+  <tr><td><strong>Init Endpoint Pattern</strong></td><td>1 HTTP carga N catálogos. Con JWT + Redis cada request extra cuesta ~5-20ms de overhead. En conexiones lentas la percepción de velocidad mejora notablemente.</td></tr>
+  <tr><td><strong>storedAs en subtotal</strong></td><td>PostgreSQL garantiza que subtotal = (cantidad * precio_unitario) - descuento siempre. No depende de PHP. Si alguien actualiza via SQL raw, el valor sigue correcto.</td></tr>
+  <tr><td><strong>Caché versionada (no flush)</strong></td><td>Incrementar un entero es O(1). Borrar claves con SCAN es O(N). Las claves huérfanas expiran por TTL sin intervención manual.</td></tr>
+  <tr><td><strong>Trait en lugar de BaseModel</strong></td><td>Composición > herencia. No todos los modelos necesitan caché o auditoría. Cada uno declara sus módulos independientemente.</td></tr>
+  <tr><td><strong>Context + useReducer</strong></td><td>Auth cambia 2-3 veces por sesión (login/logout/updateUser). No justifica dependencia externa. El reducer hace el código más explícito y testeable.</td></tr>
+  <tr><td><strong>useState local en POS</strong></td><td>El carrito es efímero. Context global causaría re-renders en todos los consumidores del AuthContext con cada item agregado.</td></tr>
+  <tr><td><strong>getToken() leyendo localStorage</strong></td><td>Los interceptores de Axios se ejecutan fuera del árbol React. No pueden llamar a useContext(). Es la única solución correcta sin singleton de estado externo.</td></tr>
+  <tr><td><strong>SoftDeletes en usuarios/productos</strong></td><td>Un usuario "eliminado" sigue referenciado en ventas históricas. SoftDelete preserva la integridad referencial y el historial.</td></tr>
+  <tr><td><strong>Rate Limiter en login</strong></td><td>5 intentos/IP/min sin CAPTCHA. El decay es por IP (no por usuario) para evitar DoS contra cuentas específicas — un atacante no puede bloquear a un usuario.</td></tr>
+  <tr><td><strong>Solo PostgreSQL</strong></td><td>Se usan ILIKE, jsonb, storedAs con expresiones, NOW() - INTERVAL '12 months'. Migrar a MySQL requeriría reescribir todas estas queries.</td></tr>
+  <tr><td><strong>Número de venta correlativo</strong></td><td>VTA-YYYY-NNNNNN. Se usa COUNT sin lockForUpdate porque PostgreSQL no permite FOR UPDATE con funciones de agregación. Para producción de alto volumen considerar SEQUENCE nativa.</td></tr>
+</table>
+
+<!-- S17 -->
+<div class="sh" id="s17"><h2>17. Guía de Despliegue</h2><p>Backend producción + Nginx + checklist de seguridad</p></div>
+<h3>Backend — Comandos de Producción</h3>
+<pre><code><span class="cm"># Dependencias sin devDependencies:</span>
+composer install --optimize-autoloader --no-dev
+
+<span class="cm"># Cachear configuración, rutas y vistas (acelera ~30%):</span>
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+php artisan event:cache
+
+<span class="cm"># Ejecutar migraciones pendientes:</span>
+php artisan migrate --force
+
+<span class="cm"># Enlace simbólico de storage:</span>
+php artisan storage:link
+
+<span class="cm"># Permisos de directorios (Linux):</span>
+chmod -R 775 storage bootstrap/cache
+chown -R www-data:www-data storage bootstrap/cache</code></pre>
+<h3>Frontend — Build y Nginx</h3>
+<pre><code><span class="cm"># Build de producción:</span>
+npm run build     <span class="cm"># → genera /dist/</span>
+
+<span class="cm"># nginx.conf — SPA con proxy a Laravel:</span>
+server {
+    listen 80;
+    root /var/www/dist;
+    index index.html;
+
+    location / {
+        try_files $uri $uri/ /index.html;   <span class="cm"># SPA fallback obligatorio</span>
+    }
+
+    location /api {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+
+    location /storage {
+        proxy_pass http://127.0.0.1:8000/storage;
+    }
+}</code></pre>
+<h3>Checklist de Seguridad</h3>
+<div class="card card-red">
+  <ul>
+    <li>✅ <code>APP_DEBUG=false</code> — nunca exponer stack traces en producción</li>
+    <li>✅ <code>JWT_SECRET</code> único por entorno — regenerar con <code>php artisan jwt:secret</code></li>
+    <li>✅ HTTPS obligatorio — el JWT viaja en Authorization header</li>
+    <li>✅ Redis con contraseña si es servidor compartido (<code>REDIS_PASSWORD</code>)</li>
+    <li>✅ PostgreSQL sin acceso público (solo localhost o VPC interna)</li>
+    <li>✅ <code>CORS_ALLOWED_ORIGINS</code> restringido al dominio exacto del frontend</li>
+    <li>✅ <code>storage/app</code> no accesible directamente (solo vía storage:link)</li>
+    <li>✅ Rotación de logs con logrotate para <code>storage/logs/laravel.log</code></li>
+  </ul>
+</div>
+
+<!-- S18 -->
+<div class="sh" id="s18"><h2>18. Guía: Agregar un Nuevo Módulo</h2><p>Paso a paso completo — ejemplo: módulo Almacenes</p></div>
+<h3>Paso 1 — Migración (Backend)</h3>
+<pre><code>php artisan make:migration create_almacenes_table
+
+<span class="cm">// Contenido de la migración:</span>
+Schema::create(<span class="st">'almacenes'</span>, <span class="kw">function</span>(Blueprint $table) {
+    $table->id();
+    $table->string(<span class="st">'nombre'</span>, 100);
+    $table->string(<span class="st">'ubicacion'</span>)->nullable();
+    $table->boolean(<span class="st">'activo'</span>)->default(<span class="kw">true</span>);
+    $table->timestamps();
+    $table->softDeletes();
+});
+
+php artisan migrate</code></pre>
+<h3>Paso 2 — Modelo con Traits</h3>
+<pre><code><span class="cm">// app/Models/Almacen.php</span>
+<span class="kw">namespace</span> App\Models;
+
+<span class="kw">class</span> <span class="cn">Almacen</span> <span class="kw">extends</span> Model {
+    <span class="kw">use</span> HasFactory, SoftDeletes, Auditable, HasApiCache;
+    <span class="kw">protected</span> $fillable = [<span class="st">'nombre'</span>, <span class="st">'ubicacion'</span>, <span class="st">'activo'</span>];
+    <span class="cm">// Sin $cacheModules → usa nombre de tabla 'almacenes' por defecto</span>
+}</code></pre>
+<h3>Paso 3 — Form Request, Resource y Controlador</h3>
+<pre><code>php artisan make:request AlmacenRequest
+php artisan make:resource AlmacenResource
+php artisan make:controller Api/Almacenes/AlmacenController --api
+
+<span class="cm">// AlmacenController — todos los métodos retornan $this->success() / $this->error()</span></code></pre>
+<h3>Paso 4 — Ruta API</h3>
+<pre><code><span class="cm">// routes/api.php — dentro del grupo auth:api + rol admin:</span>
+Route::middleware([<span class="st">'auth:api'</span>, <span class="st">'role:admin|super-admin'</span>])
+    ->apiResource(<span class="st">'almacenes'</span>, AlmacenController::class);</code></pre>
+<h3>Paso 5 — Permisos en RolePermissionSeeder</h3>
+<pre><code><span class="cm">// Agregar al array $permisos:</span>
+<span class="st">'ver-almacenes'</span>, <span class="st">'crear-almacenes'</span>, <span class="st">'editar-almacenes'</span>, <span class="st">'eliminar-almacenes'</span>
+
+<span class="cm">// Asignar al rol admin:</span>
+$admin->givePermissionTo([<span class="st">'ver-almacenes'</span>, <span class="st">'crear-almacenes'</span>, ...]);
+
+php artisan db:seed --class=RolePermissionSeeder</code></pre>
+<h3>Paso 6 — Servicio Frontend</h3>
+<pre><code><span class="cm">// src/services/api.js — agregar una línea:</span>
+<span class="kw">export const</span> almacenService = <span class="fn">crudService</span>(<span class="st">'/almacenes'</span>);</code></pre>
+<h3>Paso 7 — Página React</h3>
+<pre><code><span class="cm">// src/pages/AlmacenesPage.jsx</span>
+<span class="kw">export default function</span> <span class="fn">AlmacenesPage</span>() {
+  <span class="kw">const</span> [data, setData]     = <span class="fn">useState</span>([]);
+  <span class="kw">const</span> [loading, setLoading] = <span class="fn">useState</span>(<span class="kw">true</span>);
+
+  <span class="fn">useEffect</span>(() => {
+    almacenService.<span class="fn">getAll</span>()
+      .then(r => <span class="fn">setData</span>(r.data.data))
+      .<span class="fn">finally</span>(() => <span class="fn">setLoading</span>(<span class="kw">false</span>));
+  }, []);
+
+  <span class="kw">return</span> (
+    <span class="cn">&lt;CrudPage</span>
+      title=<span class="st">"Almacenes"</span>
+      data={data}
+      loading={loading}
+      columns={[
+        { key: <span class="st">'nombre'</span>, label: <span class="st">'Nombre'</span> },
+        { key: <span class="st">'ubicacion'</span>, label: <span class="st">'Ubicación'</span> },
+      ]}
+      onSave={(id, payload) => id
+        ? almacenService.<span class="fn">update</span>(id, payload)
+        : almacenService.<span class="fn">create</span>(payload)}
+      onDelete={(id) => almacenService.<span class="fn">remove</span>(id)}
+    /&gt;
+  );
+}</code></pre>
+<h3>Paso 8 — Ruta en App.jsx</h3>
+<pre><code><span class="cn">&lt;Route</span> path=<span class="st">"/almacenes"</span>
+  element={<span class="cn">&lt;AdminRoute&gt;&lt;AlmacenesPage /&gt;&lt;/AdminRoute&gt;</span>} /&gt;</code></pre>
+<h3>Paso 9 — Link en Sidebar.jsx</h3>
+<pre><code>{ path: <span class="st">'/almacenes'</span>, label: <span class="st">'Almacenes'</span>, icon: <span class="cn">Warehouse</span>, roles: [<span class="st">'admin'</span>, <span class="st">'super-admin'</span>] }</code></pre>
+<div class="alert alert-success">
+  <strong>✅ Checklist de Nuevo Módulo Completo</strong>
+  Migración → Modelo (Auditable + HasApiCache) → Form Request → API Resource → Controlador → Ruta API → Permisos en Seeder → Servicio frontend → Página React → Ruta en App.jsx → Link en Sidebar
+</div>
+
+<hr>
+<div style="text-align:center;padding:24px;color:#6b7280;font-size:10px;border-top:2px solid #e5e7eb;">
+  <strong style="color:#1e40af;font-size:13px;">ST Ventas — Manual del Programador</strong><br><br>
+  Laravel 12 · PHP 8.2 · React 19 · Vite 8 · PostgreSQL · Redis · JWT<br>
+  Spatie Permission · Tailwind CSS · React Hook Form · Zod · Recharts<br><br>
+  Versión 1.0.0 &nbsp;·&nbsp; 2026 &nbsp;·&nbsp; Documento de uso interno del equipo de desarrollo<br>
+  <em>Para convertir a PDF: Ctrl+P → Guardar como PDF (márgenes: Ninguno)</em>
+</div>
+
+</div>
+</body>
+</html>

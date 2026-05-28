@@ -18,8 +18,8 @@ import {
 
 import MainLayout from '../components/layout/MainLayout';
 import api from '../services/api';
-import useAppStore from '../store/appStore';
-import useAuthStore from '../store/authStore';
+import { useApp }  from '../context/AppContext';
+import { useAuth } from '../context/AuthContext';
 
 // ─────────────────────────────────────────────────────────────
 // SERVICES
@@ -87,8 +87,8 @@ function Field({ label, error, children }) {
 // PAGE
 // ─────────────────────────────────────────────────────────────
 export default function ConfiguracionPage() {
-    const setEmpresaGlobal = useAppStore((s) => s.setEmpresa);
-    const authUser = useAuthStore((s) => s.user);
+    const { setEmpresa: setEmpresaGlobal } = useApp();
+    const { user: authUser, token, roles, permissions, updateUser } = useAuth();
 
     // ── Estado empresa ──────────────────────────────────────────
     const [empresa, setEmpresa] = useState({
@@ -246,9 +246,6 @@ export default function ConfiguracionPage() {
             });
             if (fotoFile) formData.append('foto', fotoFile);
 
-            // Usamos getState() para obtener siempre los valores actuales del store
-            const { user: currentUser, token: currentToken, roles: currentRoles, permissions: currentPerms, login } = useAuthStore.getState();
-
             let nuevaFotoUrl = fotoPreview; // la url actual del preview
 
             try {
@@ -262,17 +259,16 @@ export default function ConfiguracionPage() {
                 // El endpoint aún no existe en el backend — actualizamos solo localmente
             }
 
-            // Actualizar authStore: mezclar datos actuales con los nuevos del perfil
-            const updatedUser = {
-                ...currentUser,
-                nombre: perfil.nombre,
-                usuario: perfil.usuario,
-                correo: perfil.correo,
+            // updateUser mezcla parcialmente los campos del usuario activo
+            // sin necesidad de volver a llamar login() con todos los datos.
+            updateUser({
+                nombre:   perfil.nombre,
+                usuario:  perfil.usuario,
+                correo:   perfil.correo,
                 telefono: perfil.telefono,
-                cargo: perfil.cargo,
+                cargo:    perfil.cargo,
                 foto_url: nuevaFotoUrl,
-            };
-            login(updatedUser, currentToken, currentRoles, currentPerms);
+            });
 
             setFotoFile(null);
             toast.success('Perfil actualizado correctamente');

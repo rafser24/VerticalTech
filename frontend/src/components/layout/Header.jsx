@@ -2,11 +2,11 @@ import { Bell, LogOut, ChevronDown } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import useAuthStore from '../../store/authStore';
+import { useAuth } from '../../context/AuthContext';
 import { getInitials } from '../../utils/helpers';
 
 export default function Header({ title }) {
-  const { user, logout } = useAuthStore();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);

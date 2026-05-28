@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\Auditoria\AuditoriaController;
+use App\Http\Controllers\Api\Pos\PosController;
 use App\Http\Controllers\Api\Catalogos\CategoriaController;
 use App\Http\Controllers\Api\Catalogos\ClienteController;
 use App\Http\Controllers\Api\Catalogos\MetodoPagoController;
@@ -27,9 +28,10 @@ use Spatie\Permission\Middleware\RoleMiddleware;
 //  AUTENTICACIÓN — Rutas públicas (sin token)
 // ═══════════════════════════════════════════════════════════════════════════════
 Route::prefix('auth')->group(function () {
-    Route::post('/login',         [AuthenticationController::class, 'login']);
-    Route::post('/valiate-token', [AuthenticationController::class, 'valiatedToken']);
-    Route::middleware(['auth:api', 'role:super-admin|admin'])->group(function () {
+    Route::post('/login', [AuthenticationController::class, 'login']);
+
+    // Cualquier usuario autenticado puede cerrar sesión, refrescar token y ver su perfil
+    Route::middleware('auth:api')->group(function () {
         Route::post('/logout',  [AuthenticationController::class, 'logout']);
         Route::post('/refresh', [AuthenticationController::class, 'refresh']);
         Route::get('/me',       [AuthenticationController::class, 'me']);
@@ -41,6 +43,10 @@ Route::prefix('auth')->group(function () {
 // ═══════════════════════════════════════════════════════════════════════════════
 Route::middleware('auth:api')->group(function () {
 
+    // ── POS — inicialización en un solo request ───────────────────────────────
+    Route::get('/pos/init', [PosController::class, 'init'])
+        ->middleware('role:super-admin|admin|vendedor');
+
     // ── Dashboard ────────────────────────────────────────────────────────────
     Route::prefix('dashboard')->group(function () {
         Route::get('/stats',                  [DashboardController::class, 'stats']);
@@ -49,10 +55,12 @@ Route::middleware('auth:api')->group(function () {
         Route::get('/productos-mas-vendidos', [DashboardController::class, 'productosMasVendidos']);
         Route::get('/top-clientes',           [DashboardController::class, 'topClientes']);
         Route::get('/stock-bajo',             [DashboardController::class, 'stockBajo']);
+        Route::get('/reporte-completo',       [DashboardController::class, 'reporteCompleto'])
+            ->middleware('role:super-admin|admin');
         Route::get('/reporte-ventas',         [DashboardController::class, 'reporteVentas'])
             ->middleware('role:super-admin|admin');
         Route::get('/reporte-compras',        [DashboardController::class, 'reporteCompras'])
-            ->middleware('role:super-admin|admin|bodeguero');
+            ->middleware('role:super-admin|admin');
     });
 
     // ── Usuarios ─────────────────────────────────────────────────────────────
@@ -97,23 +105,18 @@ Route::middleware('auth:api')->group(function () {
     });
 
     // ── Proveedores ───────────────────────────────────────────────────────────
-    Route::prefix('proveedores')->group(function () {
-        Route::get('/',                     [ProveedorController::class, 'index'])
-            ->middleware('role:super-admin|admin|bodeguero');
-        Route::post('/',                    [ProveedorController::class, 'store'])
-            ->middleware('role:super-admin|admin');
-        Route::get('/{proveedor}',          [ProveedorController::class, 'show'])
-            ->middleware('role:super-admin|admin|bodeguero');
-        Route::put('/{proveedor}',          [ProveedorController::class, 'update'])
-            ->middleware('role:super-admin|admin');
-        Route::patch('/{proveedor}/toggle', [ProveedorController::class, 'toggleActivo'])
-            ->middleware('role:super-admin|admin');
+    Route::prefix('proveedores')->middleware('role:super-admin|admin')->group(function () {
+        Route::get('/',                     [ProveedorController::class, 'index']);
+        Route::post('/',                    [ProveedorController::class, 'store']);
+        Route::get('/{proveedor}',          [ProveedorController::class, 'show']);
+        Route::put('/{proveedor}',          [ProveedorController::class, 'update']);
+        Route::patch('/{proveedor}/toggle', [ProveedorController::class, 'toggleActivo']);
     });
 
     // ── Categorías ────────────────────────────────────────────────────────────
     Route::prefix('categorias')->group(function () {
         Route::get('/',                     [CategoriaController::class, 'index'])
-            ->middleware('role:super-admin|admin|vendedor|bodeguero');
+            ->middleware('role:super-admin|admin|vendedor');
         Route::post('/',                    [CategoriaController::class, 'store'])
             ->middleware('role:super-admin|admin');
         Route::get('/{categoria}',          [CategoriaController::class, 'show'])
@@ -138,16 +141,18 @@ Route::middleware('auth:api')->group(function () {
 
     // ── Productos ─────────────────────────────────────────────────────────────
     Route::prefix('productos')->group(function () {
+        Route::get('/init',         [ProductoController::class, 'init'])
+            ->middleware('role:super-admin|admin|vendedor');
         Route::get('/stock-bajo',   [ProductoController::class, 'stockBajo'])
-            ->middleware('role:super-admin|admin|bodeguero');
+            ->middleware('role:super-admin|admin');
         Route::get('/',             [ProductoController::class, 'index'])
-            ->middleware('role:super-admin|admin|vendedor|bodeguero|tecnico');
+            ->middleware('role:super-admin|admin|vendedor');
         Route::post('/',            [ProductoController::class, 'store'])
-            ->middleware('role:super-admin|admin|bodeguero');
+            ->middleware('role:super-admin|admin|vendedor');
         Route::get('/{i}',          [ProductoController::class, 'show'])
-            ->middleware('role:super-admin|admin|vendedor|bodeguero|tecnico');
+            ->middleware('role:super-admin|admin|vendedor');
         Route::put('/{i}',          [ProductoController::class, 'update'])
-            ->middleware('role:super-admin|admin|bodeguero');
+            ->middleware('role:super-admin|admin');
         Route::patch('/{i}/toggle', [ProductoController::class, 'toggleActivo'])
             ->middleware('role:super-admin|admin');
     });
@@ -171,25 +176,19 @@ Route::middleware('auth:api')->group(function () {
     });
 
     // ── Compras ───────────────────────────────────────────────────────────────
-    Route::prefix('compras')->group(function () {
-        Route::get('/',                 [CompraController::class, 'index'])
-            ->middleware('role:super-admin|admin|bodeguero');
-        Route::post('/',                [CompraController::class, 'store'])
-            ->middleware('role:super-admin|admin|bodeguero');
-        Route::get('/{i}',              [CompraController::class, 'show'])
-            ->middleware('role:super-admin|admin|bodeguero');
-        Route::patch('/{i}/confirmar',  [CompraController::class, 'confirmar'])
-            ->middleware('role:super-admin|admin|bodeguero');
-        Route::patch('/{i}/recibir',    [CompraController::class, 'recibir'])
-            ->middleware('role:super-admin|admin|bodeguero');
-        Route::patch('/{i}/anular',     [CompraController::class, 'anular'])
-            ->middleware('role:super-admin|admin');
-        Route::patch('/{i}/retroceder', [CompraController::class, 'retroceder'])
-            ->middleware('role:super-admin|admin|bodeguero');
+    Route::prefix('compras')->middleware('role:super-admin|admin')->group(function () {
+        Route::get('/init',             [CompraController::class, 'init']);
+        Route::get('/',                 [CompraController::class, 'index']);
+        Route::post('/',                [CompraController::class, 'store']);
+        Route::get('/{i}',              [CompraController::class, 'show']);
+        Route::patch('/{i}/confirmar',  [CompraController::class, 'confirmar']);
+        Route::patch('/{i}/recibir',    [CompraController::class, 'recibir']);
+        Route::patch('/{i}/anular',     [CompraController::class, 'anular']);
+        Route::patch('/{i}/retroceder', [CompraController::class, 'retroceder']);
     });
 
     // ── Auditoría ─────────────────────────────────────────────────────────────
-    Route::prefix('auditoria')->middleware('role:super-admin|admin')->group(function () {
+    Route::prefix('auditoria')->middleware('role:super-admin')->group(function () {
         Route::get('/',    [AuditoriaController::class, 'index']);
         Route::get('/{i}', [AuditoriaController::class, 'show']);
     });
@@ -197,18 +196,26 @@ Route::middleware('auth:api')->group(function () {
     // ── Configuración ─────────────────────────────────────────────────────────
     Route::prefix('configuracion')->group(function () {
         Route::get('/empresa',           [ConfiguracionController::class, 'getEmpresa'])
-            ->middleware('role:super-admin|admin');
+            ->middleware('role:super-admin');
         Route::post('/empresa',          [ConfiguracionController::class, 'updateEmpresa'])
-            ->middleware('role:super-admin|admin');
+            ->middleware('role:super-admin');
         Route::post('/cambiar-password', [ConfiguracionController::class, 'cambiarPassword']);
         Route::post('/perfil',           [ConfiguracionController::class, 'updatePerfil']);
     });
 
     // ── Promociones ───────────────────────────────────────────────────────────
+    // Lectura: admin + vendedor (el POS necesita las promociones activas)
+    Route::prefix('promociones')->group(function () {
+        Route::get('/init',        [PromocionController::class, 'init'])
+            ->middleware('role:super-admin|admin');
+        Route::get('/',            [PromocionController::class, 'index'])
+            ->middleware('role:super-admin|admin|vendedor');
+        Route::get('/{promocion}', [PromocionController::class, 'show'])
+            ->middleware('role:super-admin|admin|vendedor');
+    });
+    // Escritura: solo admin / super-admin
     Route::prefix('promociones')->middleware('role:super-admin|admin')->group(function () {
-        Route::get('/',                     [PromocionController::class, 'index']);
         Route::post('/',                    [PromocionController::class, 'store']);
-        Route::get('/{promocion}',          [PromocionController::class, 'show']);
         Route::put('/{promocion}',          [PromocionController::class, 'update']);
         Route::delete('/{promocion}',       [PromocionController::class, 'destroy']);
         Route::patch('/{promocion}/toggle', [PromocionController::class, 'toggleActivo']);

@@ -1,27 +1,27 @@
 import { Navigate } from 'react-router-dom';
-import useAuthStore from '../../store/authStore';
+import { useAuth } from '../../context/AuthContext';
 
 export function PrivateRoute({ children }) {
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const { isAuthenticated } = useAuth();
   return isAuthenticated ? children : <Navigate to="/login" replace />;
 }
 
 export function AdminRoute({ children }) {
-  const { isAuthenticated, isAdmin } = useAuthStore();
+  const { isAuthenticated, isAdmin } = useAuth();
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   if (!isAdmin())       return <Navigate to="/dashboard" replace />;
   return children;
 }
 
 export function SuperAdminRoute({ children }) {
-  const { isAuthenticated, isSuperAdmin } = useAuthStore();
+  const { isAuthenticated, isSuperAdmin } = useAuth();
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   if (!isSuperAdmin())  return <Navigate to="/dashboard" replace />;
   return children;
 }
 
 export function VendedorRoute({ children }) {
-  const { isAuthenticated, hasRole } = useAuthStore();
+  const { isAuthenticated, hasRole } = useAuth();
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   // Vendedor, Admin y SuperAdmin pueden acceder
   if (!hasRole(['vendedor', 'admin', 'super-admin'])) return <Navigate to="/dashboard" replace />;
@@ -29,6 +29,6 @@ export function VendedorRoute({ children }) {
 }
 
 export function PublicRoute({ children }) {
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const { isAuthenticated } = useAuth();
   return isAuthenticated ? <Navigate to="/dashboard" replace /> : children;
 }
