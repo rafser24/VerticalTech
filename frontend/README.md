@@ -1,10 +1,9 @@
-# InveSys – Sistema de Gestión de Inventario
+# VerticalTech – Sistema de Ventas 
 
 Frontend React moderno para gestión de inventario, compras y ventas.
 
 ## Tecnologías
 - **React 19** + Vite
-- **Zustand** – manejo de estado
 - **React Router DOM** – enrutamiento
 - **React Hook Form + Zod** – formularios con validación
 - **Axios** – consumo de API REST
