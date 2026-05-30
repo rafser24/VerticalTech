@@ -11,11 +11,10 @@
  * Este estado no se persiste en localStorage porque:
  *   — El sidebar se puede preferir cerrado o abierto según el contexto,
  *     pero recuperarlo del storage no aporta mucho valor de UX.
- *   — Los datos de empresa se cargan desde el backend al montar
- *     ConfiguracionPage y se actualizan desde ahí.
+
  */
 
-import { createContext, useContext, useReducer } from 'react';
+import { createContext, useContext, useReducer, useCallback } from 'react';
 
 /* ─── Estado inicial ─────────────────────────────────────────────────────── */
 const initialState = {
@@ -51,8 +50,8 @@ const AppContext = createContext(null);
 export function AppProvider({ children }) {
   const [state, dispatch] = useReducer(appReducer, initialState);
 
-  const toggleSidebar = () => dispatch({ type: 'TOGGLE_SIDEBAR' });
-  const setEmpresa    = (data) => dispatch({ type: 'SET_EMPRESA', payload: data });
+  const toggleSidebar = useCallback(() => dispatch({ type: 'TOGGLE_SIDEBAR' }), []);
+  const setEmpresa    = useCallback((data) => dispatch({ type: 'SET_EMPRESA', payload: data }), []);
 
   return (
     <AppContext.Provider value={{ ...state, toggleSidebar, setEmpresa }}>

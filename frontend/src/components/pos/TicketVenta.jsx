@@ -1,9 +1,10 @@
 import { useRef } from 'react';
-import { Printer, X, Zap, MapPin, Phone, Wifi } from 'lucide-react';
+import { Printer, X, Zap } from 'lucide-react';
+import { useApp } from '../../context/AppContext';
 
 /**
  * TicketVenta
- * Ticket de consumidor final / no contribuyente para VerticalTech.
+ * Ticket de consumidor final — usa los datos de empresa de AppContext.
  * Se imprime via window.print() con estilos CSS dedicados.
  *
  * Props:
@@ -11,6 +12,7 @@ import { Printer, X, Zap, MapPin, Phone, Wifi } from 'lucide-react';
  *  - onClose: función para cerrar el modal del ticket
  */
 export default function TicketVenta({ venta, onClose }) {
+  const { empresa } = useApp();
   const ticketRef = useRef(null);
 
   if (!venta) return null;
@@ -324,20 +326,32 @@ export default function TicketVenta({ venta, onClose }) {
             ref={ticketRef}
             style={{ width: '300px', fontFamily: "'DM Sans', sans-serif", fontSize: '11px', background: '#fff', color: '#1E293B' }}
           >
-            {/* ── Header ── */}
+            {/* ── Header — datos desde ConfiguracionPage → AppContext ── */}
             <div style={{ background: 'linear-gradient(160deg,#0F172A 0%,#1E3A8A 100%)', padding: '18px 16px 14px', textAlign: 'center', color: '#fff' }}>
-              <div style={{ width: 36, height: 36, background: 'rgba(255,255,255,0.15)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 8px' }}>
-                <Zap size={20} color="#60A5FA" />
-              </div>
+              {empresa?.logo_url ? (
+                <img
+                  src={empresa.logo_url}
+                  alt={empresa.nombre}
+                  style={{ height: 40, maxWidth: 140, objectFit: 'contain', margin: '0 auto 8px', display: 'block' }}
+                />
+              ) : (
+                <div style={{ width: 36, height: 36, background: 'rgba(255,255,255,0.15)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 8px' }}>
+                  <Zap size={20} color="#60A5FA" />
+                </div>
+              )}
               <div style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-0.03em', color: '#fff' }}>
-                Vertical<span style={{ color: '#60A5FA' }}>Tech</span>
-              </div>
-              <div style={{ fontSize: 8, color: '#93C5FD', letterSpacing: '0.08em', textTransform: 'uppercase', marginTop: 3 }}>
-                Soluciones inteligentes en tecnología
+                {empresa?.nombre || 'Mi Empresa'}
               </div>
               <div style={{ marginTop: 10, fontSize: 8.5, color: '#CBD5E1', lineHeight: 1.7 }}>
-                <div>📍 Av. Alberto Masferrer, San Juan Nonualco , La Paz</div>
-                <div>📞 +503 2334-3333 &nbsp;|&nbsp; <strong style={{ color: '#E2E8F0' }}>NIT:</strong> 0614-010101-001-0</div>
+                {empresa?.direccion && <div>📍 {empresa.direccion}</div>}
+                {(empresa?.telefono || empresa?.nit) && (
+                  <div>
+                    {empresa?.telefono && <>📞 {empresa.telefono}</>}
+                    {empresa?.telefono && empresa?.nit && <>&nbsp;|&nbsp;</>}
+                    {empresa?.nit && <><strong style={{ color: '#E2E8F0' }}>NIT:</strong> {empresa.nit}</>}
+                  </div>
+                )}
+                {empresa?.correo && <div>✉ {empresa.correo}</div>}
               </div>
             </div>
 
@@ -452,7 +466,8 @@ export default function TicketVenta({ venta, onClose }) {
 
             {/* ── Pie ── */}
             <div style={{ background: '#F8FAFC', padding: '6px 14px', textAlign: 'center', fontSize: 7.5, color: '#94A3B8', borderTop: '1px dashed #CBD5E1' }}>
-              <strong style={{ color: '#475569' }}>VerticalTech</strong> — Sistema POS v1.0<br />
+              <strong style={{ color: '#475569' }}>{empresa?.nombre || 'Mi Empresa'}</strong> — Sistema POS v1.0<br />
+              {empresa?.nrc && <>NRC: {empresa.nrc} &nbsp;|&nbsp;</>}
               Documento no válido como crédito fiscal
             </div>
           </div>

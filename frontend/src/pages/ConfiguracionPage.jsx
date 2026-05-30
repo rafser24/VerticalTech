@@ -167,10 +167,61 @@ export default function ConfiguracionPage() {
         if (authUser?.foto_url) setFotoPreview(authUser.foto_url);
     }, [authUser]);
 
+    // ── Formateadores automáticos ───────────────────────────────
+    const formatNit = (value) => {
+        // Elimina todo lo que no sea dígito
+        const digits = value.replace(/\D/g, '').slice(0, 14);
+        // Aplica máscara: 0000-000000-000-0
+        let result = '';
+        if (digits.length > 0)  result += digits.slice(0, 4);
+        if (digits.length > 4)  result += '-' + digits.slice(4, 10);
+        if (digits.length > 10) result += '-' + digits.slice(10, 13);
+        if (digits.length > 13) result += '-' + digits.slice(13, 14);
+        return result;
+    };
+
+    const formatNrc = (value) => {
+        // Máscara: 000000-0
+        const digits = value.replace(/\D/g, '').slice(0, 7);
+        let result = '';
+        if (digits.length > 0) result += digits.slice(0, 6);
+        if (digits.length > 6) result += '-' + digits.slice(6, 7);
+        return result;
+    };
+
+    const formatTelefono = (value) => {
+        // Máscara: 0000-0000
+        const digits = value.replace(/\D/g, '').slice(0, 8);
+        let result = '';
+        if (digits.length > 0) result += digits.slice(0, 4);
+        if (digits.length > 4) result += '-' + digits.slice(4, 8);
+        return result;
+    };
+
+    // Validadores en cliente
+    const validarEmpresaForm = (data) => {
+        const errs = {};
+        if (!data.nombre.trim()) errs.nombre = 'El nombre es obligatorio.';
+        if (data.nit && !/^\d{4}-\d{6}-\d{3}-\d{1}$/.test(data.nit))
+            errs.nit = 'Formato inválido. Ejemplo: 0614-310890-101-8';
+        if (data.nrc && !/^\d{1,6}-\d{1}$/.test(data.nrc))
+            errs.nrc = 'Formato inválido. Ejemplo: 123456-7';
+        if (data.telefono && !/^\d{4}-\d{4}$/.test(data.telefono))
+            errs.telefono = 'Formato inválido. Ejemplo: 2222-3333';
+        if (data.correo && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.correo))
+            errs.correo = 'Correo electrónico inválido.';
+        return errs;
+    };
+
     // ── Handlers empresa ────────────────────────────────────────
     const handleEmpresaChange = (e) => {
-        setEmpresa((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-        setErroresEmpresa((prev) => ({ ...prev, [e.target.name]: null }));
+        const { name, value } = e.target;
+        let formatted = value;
+        if (name === 'nit')      formatted = formatNit(value);
+        if (name === 'nrc')      formatted = formatNrc(value);
+        if (name === 'telefono') formatted = formatTelefono(value);
+        setEmpresa((prev) => ({ ...prev, [name]: formatted }));
+        setErroresEmpresa((prev) => ({ ...prev, [name]: null }));
     };
 
     const handleLogoChange = (e) => {
@@ -189,8 +240,9 @@ export default function ConfiguracionPage() {
 
     const guardarEmpresa = async (e) => {
         e.preventDefault();
-        setErroresEmpresa({});
-        if (!empresa.nombre.trim()) { setErroresEmpresa({ nombre: 'El nombre es obligatorio.' }); return; }
+        const errs = validarEmpresaForm(empresa);
+        setErroresEmpresa(errs);
+        if (Object.keys(errs).length > 0) return;
         try {
             setSavingEmpresa(true);
             const formData = new FormData();
@@ -537,16 +589,16 @@ export default function ConfiguracionPage() {
 
                             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                 <Field label="NIT" error={erroresEmpresa.nit}>
-                                    <input type="text" name="nit" value={empresa.nit} onChange={handleEmpresaChange} className="w-full input-field" placeholder="0000-000000-000-0" />
+                                    <input type="text" name="nit" value={empresa.nit} onChange={handleEmpresaChange} className={`w-full input-field ${erroresEmpresa.nit ? 'border-red-400' : ''}`} placeholder="0000-000000-000-0" maxLength={17} />
                                 </Field>
                                 <Field label="NRC" error={erroresEmpresa.nrc}>
-                                    <input type="text" name="nrc" value={empresa.nrc} onChange={handleEmpresaChange} className="w-full input-field" placeholder="000000-0" />
+                                    <input type="text" name="nrc" value={empresa.nrc} onChange={handleEmpresaChange} className={`w-full input-field ${erroresEmpresa.nrc ? 'border-red-400' : ''}`} placeholder="000000-0" maxLength={8} />
                                 </Field>
                             </div>
 
                             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                 <Field label="Teléfono" error={erroresEmpresa.telefono}>
-                                    <input type="text" name="telefono" value={empresa.telefono} onChange={handleEmpresaChange} className="w-full input-field" placeholder="2222-3333" />
+                                    <input type="text" name="telefono" value={empresa.telefono} onChange={handleEmpresaChange} className={`w-full input-field ${erroresEmpresa.telefono ? 'border-red-400' : ''}`} placeholder="2222-3333" maxLength={9} />
                                 </Field>
                                 <Field label="Correo electrónico" error={erroresEmpresa.correo}>
                                     <input type="email" name="correo" value={empresa.correo} onChange={handleEmpresaChange} className="w-full input-field" placeholder="contacto@empresa.com" />

@@ -25,7 +25,7 @@ const MODELOS = [
 
 const ACCIONES = ['', 'created', 'updated', 'deleted', 'login', 'logout'];
 
-const PER_PAGE = 20;
+const PER_PAGE_OPTIONS = [20, 50, 100];
 
 // ── Componente badge de acción ────────────────────────────────────────────────
 function AccionBadge({ accion }) {
@@ -222,6 +222,7 @@ export default function AuditoriaPage() {
   const [lastPage, setLastPage] = useState(1);
   const [total, setTotal]       = useState(0);
 
+  const [perPage,  setPerPage]  = useState(20);
   const [filters, setFilters] = useState({
     modelo:     '',
     accion:     '',
@@ -236,7 +237,7 @@ export default function AuditoriaPage() {
   const fetchLogs = useCallback(async () => {
     setLoading(true);
     try {
-      const params = { page, per_page: PER_PAGE };
+      const params = { page, per_page: perPage };
       if (filters.modelo) params.modelo = filters.modelo;
       if (filters.accion) params.accion = filters.accion;
       if (filters.desde)  params.desde  = filters.desde;
@@ -247,16 +248,18 @@ export default function AuditoriaPage() {
 
       setLogs(Array.isArray(body.data) ? body.data : []);
 
-      if (body.pagination) {
-        setTotal(body.pagination.total ?? 0);
-        setLastPage(body.pagination.last_page ?? 1);
+      // El controlador base emite la paginación bajo la clave 'meta'
+      const pag = body.meta ?? body.pagination;
+      if (pag) {
+        setTotal(pag.total ?? 0);
+        setLastPage(pag.last_page ?? 1);
       }
     } catch {
       toast.error('Error al cargar los registros de auditoría');
     } finally {
       setLoading(false);
     }
-  }, [page, filters]);
+  }, [page, perPage, filters]);
 
   useEffect(() => { fetchLogs(); }, [fetchLogs]);
 
@@ -382,14 +385,23 @@ export default function AuditoriaPage() {
           </div>
         </div>
 
-        {/* Contador */}
+        {/* Contador + selector de registros por página */}
         <div className="flex items-center justify-between text-sm text-gray-500">
           <span>
             {loading ? 'Cargando...' : `${total.toLocaleString('es-SV')} registros encontrados`}
           </span>
-          <span className="text-xs">
-            Página {page} de {lastPage}
-          </span>
+          <div className="flex items-center gap-3">
+            <span className="text-xs">Página {page} de {lastPage}</span>
+            <select
+              value={perPage}
+              onChange={e => { setPerPage(Number(e.target.value)); setPage(1); }}
+              className="text-xs border border-gray-200 rounded-lg px-2 py-1 bg-white text-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-300"
+            >
+              {PER_PAGE_OPTIONS.map(n => (
+                <option key={n} value={n}>{n} por página</option>
+              ))}
+            </select>
+          </div>
         </div>
 
         {/* Tabla */}

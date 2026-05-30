@@ -64,7 +64,7 @@ Route::middleware('auth:api')->group(function () {
     });
 
     // ── Usuarios ─────────────────────────────────────────────────────────────
-    Route::prefix('users')->middleware('role:super-admin|admin')->group(function () {
+    Route::prefix('usuarios')->middleware('role:super-admin|admin')->group(function () {
         Route::get('/',                                  [UserController::class, 'index']);
         Route::post('/',                                 [UserController::class, 'createUser']);
         Route::put('/{i}',                               [UserController::class, 'update']);
