@@ -1,10 +1,9 @@
-# InveSys – Sistema de Gestión de Inventario
+# VerticalTech – Sistema de Ventas 
 
 Frontend React moderno para gestión de inventario, compras y ventas.
 
 ## Tecnologías
 - **React 19** + Vite
-- **Zustand** – manejo de estado
 - **React Router DOM** – enrutamiento
 - **React Hook Form + Zod** – formularios con validación
 - **Axios** – consumo de API REST
@@ -19,8 +18,8 @@ src/
 │   ├── layout/         # Sidebar, Header, MainLayout, RouteGuard
 │   └── ui/             # Modal, DataTable, StatCard, FormFields, CrudPage, ConfirmDialog
 ├── pages/              # Dashboard, Products, Categories, Suppliers, Clients, Purchases, Sales, Users, Login
-├── store/              # authStore (Zustand), appStore (Zustand)
-├── services/           # api.js (Axios + interceptors), mockData.js
+├── context/              # React Context + useReducer
+├── services/           # api.js (Axios + interceptors)
 ├── schemas/            # Validaciones Zod
 └── utils/              # Helpers (formateo, paginación, filtros)
 ```
@@ -59,5 +58,3 @@ El frontend consume los siguientes endpoints:
 - GET    /api/payment-methods
 - GET    /api/dashboard/stats
 
-## Demo
-En modo demo (sin backend), cualquier email/contraseña funciona para iniciar sesión.
